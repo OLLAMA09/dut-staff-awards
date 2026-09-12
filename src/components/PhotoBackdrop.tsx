@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Drop-in photos: place files in /public/backdrops/ named 1.jpg, 2.jpg, …
@@ -50,7 +50,7 @@ export default function PhotoBackdrop() {
             key={idx}
             aria-label={`Show photo ${idx + 1}`}
             onClick={() => setI(idx)}
-            className={`h-1.5 rounded-full transition-all ${idx === i ? "w-8 bg-gold" : "w-3 bg-white/30 hover:bg-white/60"}`}
+            className={`h-1.5 rounded-full transition-all ${idx === i ? "w-8 bg-primary" : "w-3 bg-white/30 hover:bg-white/60"}`}
           />
         ))}
       </div>

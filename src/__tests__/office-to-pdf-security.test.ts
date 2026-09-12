@@ -50,7 +50,7 @@ function isValidSourceUrl(rawUrl: string): { valid: boolean; reason?: string } {
 }
 
 const ALLOWED_ORIGINS = [
-  "https://salea2026.netlify.app",
+  "https://registrars-ambit-staff-awards.netlify.app",
   "http://localhost:3000",
   "http://localhost:5173",
 ];
@@ -138,7 +138,7 @@ describe("isValidSourceUrl — SSRF prevention", () => {
 
 describe("isAllowedOrigin — CSRF prevention", () => {
   it("allows the production Netlify origin", () => {
-    expect(isAllowedOrigin("https://salea2026.netlify.app")).toBe(true);
+    expect(isAllowedOrigin("https://registrars-ambit-staff-awards.netlify.app")).toBe(true);
   });
 
   it("allows localhost dev origins", () => {
@@ -155,8 +155,8 @@ describe("isAllowedOrigin — CSRF prevention", () => {
   });
 
   it("does not allow origin that merely contains an allowed domain as a substring", () => {
-    // e.g. https://evil-salea2026.netlify.app.evil.com should be rejected
-    expect(isAllowedOrigin("https://evil-salea2026.netlify.app.evil.com")).toBe(false);
+    // e.g. https://evil-registrars-ambit-staff-awards.netlify.app.evil.com should be rejected
+    expect(isAllowedOrigin("https://evil-registrars-ambit-staff-awards.netlify.app.evil.com")).toBe(false);
   });
 });
 

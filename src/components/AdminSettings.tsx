@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Enhanced Admin Settings Panel
  * 
  * Features:
@@ -171,7 +171,7 @@ export function AdminSettings() {
       <Card className="p-4 md:p-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-start justify-between mb-6 gap-4">
           <div>
-            <h3 className="text-lg font-bold font-serif">System Status</h3>
+            <h3 className="text-lg font-bold">System Status</h3>
             <p className="text-sm text-muted-foreground">Real-time Firebase connectivity</p>
           </div>
           <Shield className="h-6 w-6 text-primary/60 shrink-0" />
@@ -261,7 +261,7 @@ export function AdminSettings() {
       {/* Audit Logs Tabs */}
       <Card className="p-4 md:p-6">
         <div className="mb-6">
-          <h3 className="text-lg font-bold font-serif mb-2">Account Settings</h3>
+          <h3 className="text-lg font-bold mb-2">Account Settings</h3>
           <p className="text-sm text-muted-foreground">Manage your account and security settings</p>
         </div>
 

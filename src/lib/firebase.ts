@@ -1,4 +1,4 @@
-// Firebase app initialisation — SALEA 2026
+// Firebase app initialisation — Registrar's Ambit Staff Awards
 // Reads credentials from .env (VITE_ prefixed for Vite's import.meta.env)
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";

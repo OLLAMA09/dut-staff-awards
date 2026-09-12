@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 
@@ -28,7 +28,7 @@ export function RouteTransitionLoader() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-gold via-primary to-gold"
+      className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-primary via-primary to-primary"
       style={{
         backgroundSize: "200% 100%",
         animation: "loading-bar 1.5s ease-in-out",

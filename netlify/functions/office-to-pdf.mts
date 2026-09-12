@@ -351,7 +351,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   const host = event.headers["host"] ?? "";
   const ALLOWED_ORIGINS = [
     `https://${host}`,
-    "https://salea2026.netlify.app",
+    "https://registrars-ambit-staff-awards.netlify.app",
     // allow local dev
     "http://localhost:3000",
     "http://localhost:5173",

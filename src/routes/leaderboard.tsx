@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import { motion } from "framer-motion";
@@ -86,8 +86,8 @@ export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
   head: () => ({
     meta: [
-      { title: "Leaderboard · SALEA 2026" },
-      { name: "description", content: "Per-category judge leaderboard for SALEA 2026." },
+      { title: "Leaderboard · Registrar's Ambit Staff Awards" },
+      { name: "description", content: "Per-category judge leaderboard for the Registrar's Ambit Staff Awards." },
     ],
   }),
 });
@@ -244,7 +244,7 @@ function DeclareWinnerButton({
                         key={t.value}
                         type="button"
                         onClick={() => setTier(t.value)}
-                        className={`flex-1 py-1.5 text-xs font-medium transition ${tier === t.value ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                        className={`flex-1 py-1.5 text-xs font-medium transition ${tier === t.value ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                       >
                         {t.label}
                       </button>
@@ -257,7 +257,7 @@ function DeclareWinnerButton({
                     type="button"
                     onClick={handleConfirm}
                     disabled={saving}
-                    className="flex-1 rounded-xl bg-gold py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                    className="flex-1 rounded-xl bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                   >
                     {saving ? "Saving…" : "Confirm"}
                   </button>
@@ -380,10 +380,10 @@ function LeaderboardPage() {
         <SiteNav />
         <main className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-28">
           <div className="mx-auto mt-20 max-w-md rounded-3xl border border-primary/30 bg-card/60 p-10 backdrop-blur">
-            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-gold shadow-gold">
+            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-primary shadow-elegant">
               <Lock className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-center font-serif text-3xl font-bold">Restricted Leaderboard</h1>
+            <h1 className="text-center text-3xl font-bold">Restricted Leaderboard</h1>
             <p className="mt-2 text-center text-xs text-muted-foreground">
               The leaderboard is visible to judges and admins only. Sign in to continue.
             </p>
@@ -421,7 +421,7 @@ function LeaderboardPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gold text-primary-foreground"
+                className="w-full bg-primary text-primary-foreground"
               >
                 {loading ? "Signing in…" : "Sign in"}
               </Button>
@@ -603,9 +603,9 @@ function LeaderboardContent({ role }: { role: string | null }) {
             <ChevronLeft className="h-3.5 w-3.5" /> Back to Judge Panel
           </Link>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">SALEA 2026</p>
-            <h1 className="mt-1 font-serif text-4xl font-bold sm:text-5xl">
-              Judge <span className="text-gradient-gold">Leaderboard</span>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards</p>
+            <h1 className="mt-1 text-4xl font-bold sm:text-5xl">
+              Judge <span className="text-primary">Leaderboard</span>
             </h1>
             <p className="mt-3 text-muted-foreground">
               Nominees ranked by total stars received from all judges. Updates live as judges submit scores.
@@ -627,7 +627,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
                 onClick={() => setViewMode("unified")}
                 className={`px-4 py-2 text-sm font-medium transition ${
                   viewMode === "unified"
-                    ? "border-b-2 border-gold text-gold"
+                    ? "border-b-2 border-primary text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -637,7 +637,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
                 onClick={() => setViewMode("bycategory")}
                 className={`px-4 py-2 text-sm font-medium transition ${
                   viewMode === "bycategory"
-                    ? "border-b-2 border-gold text-gold"
+                    ? "border-b-2 border-primary text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -647,7 +647,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
                 onClick={() => setViewMode("judges" as any)}
                 className={`px-4 py-2 text-sm font-medium transition ${
                   (viewMode as any) === "judges"
-                    ? "border-b-2 border-gold text-gold"
+                    ? "border-b-2 border-primary text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -665,7 +665,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
                   }}
                   className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
                     selectedCategory === null
-                      ? "bg-gold text-primary-foreground"
+                      ? "bg-primary text-primary-foreground"
                       : "border border-primary/20 bg-white text-muted-foreground hover:border-primary/40"
                   }`}
                 >
@@ -679,7 +679,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
                     }}
                     className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
                       selectedCategory?.toLowerCase() === catName.toLowerCase()
-                        ? "bg-gold text-primary-foreground"
+                        ? "bg-primary text-primary-foreground"
                         : "border border-primary/20 bg-white text-muted-foreground hover:border-primary/40"
                     }`}
                   >
@@ -860,7 +860,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
             >
               {/* Category header */}
               <div className="mb-4 flex items-center gap-3">
-                <h2 className="font-serif text-xl font-bold">{catName}</h2>
+                <h2 className="text-xl font-bold">{catName}</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
                 <Badge variant="outline" className="border-primary/30 text-primary text-[11px]">
                   {nominees.length} nominee{nominees.length !== 1 ? "s" : ""}

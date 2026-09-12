@@ -1,4 +1,4 @@
-// /guide — Role-based tutorial page for Admin and Judge users
+﻿// /guide — Role-based tutorial page for Admin and Judge users
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/guide")({
   component: GuidePage,
   head: () => ({
     meta: [
-      { title: "Guide · SALEA 2026" },
+      { title: "Guide · Registrar's Ambit Staff Awards" },
       { name: "description", content: "Role-based guide for Admin and Judge users." },
     ],
   }),
@@ -61,7 +61,7 @@ function Step({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-muted/30"
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold text-primary-foreground text-sm font-bold shadow-gold">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-elegant">
           {number}
         </div>
         <Icon className="h-5 w-5 shrink-0 text-primary" />
@@ -115,14 +115,14 @@ function GuidePage() {
           <div className="mb-2 flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              SALEA 2026 · User Guide
+              Registrar's Ambit Staff Awards · User Guide
             </p>
           </div>
-          <h1 className="font-serif text-4xl font-bold sm:text-5xl">
-            How it <span className="text-gradient-gold">works</span>
+          <h1 className="text-4xl font-bold sm:text-5xl">
+            How it <span className="text-primary">works</span>
           </h1>
           <p className="mt-3 text-base text-muted-foreground">
-            Step-by-step guide for each role in the SALEA 2026 platform. Choose your role below.
+            Step-by-step guide for each role in the Registrar's Ambit Staff Awards platform. Choose your role below.
           </p>
         </motion.div>
 
@@ -150,16 +150,16 @@ function GuidePage() {
               onClick={() => setActiveRole(role)}
               className={`flex flex-col items-center gap-2 rounded-2xl border p-5 text-center transition ${
                 activeRole === role
-                  ? "border-gold bg-gold/10 shadow-md"
+                  ? "border-primary bg-primary/10 shadow-md"
                   : "border-primary/20 bg-white hover:border-primary/40"
               }`}
             >
               <div
-                className={`grid h-12 w-12 place-items-center rounded-full ${activeRole === role ? "bg-gold text-primary-foreground shadow-gold" : "bg-primary/10 text-primary"}`}
+                className={`grid h-12 w-12 place-items-center rounded-full ${activeRole === role ? "bg-primary text-primary-foreground shadow-elegant" : "bg-primary/10 text-primary"}`}
               >
                 <Icon className="h-6 w-6" />
               </div>
-              <p className="font-serif font-bold text-foreground">{label}</p>
+              <p className="font-bold text-foreground">{label}</p>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </button>
           ))}
@@ -179,7 +179,7 @@ function GuidePage() {
                 <div className="flex items-center gap-3">
                   <Star className="h-6 w-6 text-yellow-500" />
                   <div>
-                    <p className="font-serif text-lg font-bold">Judge Panel</p>
+                    <p className="text-lg font-bold">Judge Panel</p>
                     <p className="text-xs text-muted-foreground">
                       Your role is to fairly evaluate shortlisted nominees and submit star ratings
                       with written justification.
@@ -191,7 +191,7 @@ function GuidePage() {
               <Step number={1} title="Sign in to the Judge Panel" icon={Lock} defaultOpen>
                 <p>
                   Go to <strong>/judge</strong> and sign in with the credentials provided by the
-                  SALEA admin team. You need a judge-role account — regular student accounts will
+                  Registrar's Ambit admin team. You need a judge-role account — regular staff accounts will
                   not work.
                 </p>
                 <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs">
@@ -210,7 +210,7 @@ function GuidePage() {
               <Step number={2} title="Browse shortlisted nominations" icon={ClipboardList}>
                 <p>
                   The dashboard lists all nominations that have been shortlisted by admin. Use the{" "}
-                  <strong>search box</strong> to find a nominee by name or student number, or filter
+                  <strong>search box</strong> to find a nominee by name or staff number, or filter
                   by <strong>category</strong> using the dropdown.
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -319,9 +319,8 @@ function GuidePage() {
                   scoring deadline. The leaderboard reflects your latest submission immediately.
                 </p>
                 <Tip>
-                  Scoring closes on{" "}
-                  <strong>15 August 2026</strong>. After that date the form is locked and you
-                  cannot edit scores.
+                  The scoring deadline will be announced closer to the ceremony. After that date
+                  the form is locked and you cannot edit scores.
                 </Tip>
               </Step>
 
@@ -338,15 +337,15 @@ function GuidePage() {
               </Step>
 
               {/* CTA */}
-              <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-gold/40 bg-gold/10 p-6 text-center">
+              <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-6 text-center">
                 <Sparkles className="h-8 w-8 text-primary" />
-                <p className="font-serif text-lg font-bold">Ready to practice?</p>
+                <p className="text-lg font-bold">Ready to practice?</p>
                 <p className="text-sm text-muted-foreground">
                   Try the demo sandbox — full rating experience with dummy nominees, no real data
                   affected.
                 </p>
                 <Link to="/demo">
-                  <Button className="bg-gold text-primary-foreground gap-2">
+                  <Button className="bg-primary text-primary-foreground gap-2">
                     <Play className="h-4 w-4" /> Open Demo Sandbox
                   </Button>
                 </Link>
@@ -364,7 +363,7 @@ function GuidePage() {
                 <div className="flex items-center gap-3">
                   <Shield className="h-6 w-6 text-primary" />
                   <div>
-                    <p className="font-serif text-lg font-bold">Admin Panel</p>
+                    <p className="text-lg font-bold">Admin Panel</p>
                     <p className="text-xs text-muted-foreground">
                       Full control over nominations, shortlisting, judge management, and results.
                     </p>
@@ -387,7 +386,7 @@ function GuidePage() {
               <Step number={2} title="Review incoming nominations" icon={ClipboardList}>
                 <p>
                   The <strong>Nominations</strong> tab shows every public submission in real time.
-                  Each card shows name, category, faculty, year, file count, and status badge.
+                  Each card shows name, category, department, file count, and status badge.
                 </p>
                 <div className="space-y-2">
                   {[
@@ -443,7 +442,7 @@ function GuidePage() {
               <Step number={4} title="Use filters & search" icon={Filter}>
                 <p>
                   Use the <strong>category chips</strong>, <strong>status filter</strong> tabs, and
-                  the <strong>search box</strong> (name / student number / nominator) to find
+                  the <strong>search box</strong> (name / staff number / nominator) to find
                   specific submissions quickly.
                 </p>
                 <p>
@@ -499,21 +498,21 @@ function GuidePage() {
               <Step number={9} title="Manage categories" icon={Users}>
                 <p>
                   The <strong>Categories</strong> tab lets you add custom award categories to
-                  Firestore. These appear alongside the eight built-in categories on the nomination
+                  Firestore. These appear alongside the six built-in categories on the nomination
                   form.
                 </p>
               </Step>
 
               {/* CTA */}
-              <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-gold/40 bg-gold/10 p-6 text-center">
+              <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-6 text-center">
                 <Sparkles className="h-8 w-8 text-primary" />
-                <p className="font-serif text-lg font-bold">Try the demo sandbox</p>
+                <p className="text-lg font-bold">Try the demo sandbox</p>
                 <p className="text-sm text-muted-foreground">
                   Practice the judge rating flow with dummy data — nothing is written to the
                   database.
                 </p>
                 <Link to="/demo">
-                  <Button className="bg-gold text-primary-foreground gap-2">
+                  <Button className="bg-primary text-primary-foreground gap-2">
                     <Play className="h-4 w-4" /> Open Demo Sandbox
                   </Button>
                 </Link>

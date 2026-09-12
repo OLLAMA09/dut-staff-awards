@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Star, Quote, School, GraduationCap, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Star, Quote, School, X, ChevronLeft, ChevronRight } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import { subscribePastWinners, type PastWinner, type WinnerTier } from "@/lib/firestore";
 
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/winners")({
   component: WinnersPage,
   head: () => ({
     meta: [
-      { title: "Past Winners — SALEA" },
+      { title: "Past Winners — Registrar's Ambit Staff Awards" },
       { name: "description", content: "Celebrating the legacy of excellence. View our past award winners." },
     ],
   }),
@@ -95,16 +95,10 @@ function WinnerModal({ winner, onClose }: { winner: PastWinner; onClose: () => v
             <p className="mt-1 text-sm font-semibold text-primary">{winner.categoryName}</p>
 
             <div className="mt-3 space-y-2">
-              {winner.faculty && (
+              {winner.department && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <School className="h-4 w-4 shrink-0" />
-                  {winner.faculty}
-                </div>
-              )}
-              {winner.programme && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <GraduationCap className="h-4 w-4 shrink-0" />
-                  {winner.programme}
+                  {winner.department}
                 </div>
               )}
             </div>
@@ -135,7 +129,7 @@ function WinnerCard({ winner, idx, onClick }: { winner: PastWinner; idx: number;
       viewport={{ once: true }}
       transition={{ delay: idx * 0.07 }}
       onClick={onClick}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-card/40 backdrop-blur-sm transition-all hover:shadow-gold cursor-pointer ${tier.border}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-card/40 backdrop-blur-sm transition-all hover:shadow-elegant cursor-pointer ${tier.border}`}
     >
       {/* Photo */}
       {winner.imageBase64 && (
@@ -162,16 +156,10 @@ function WinnerCard({ winner, idx, onClick }: { winner: PastWinner; idx: number;
         <p className="mt-1 text-sm font-medium text-primary">{winner.categoryName}</p>
 
         <div className="mt-3 space-y-1.5">
-          {winner.faculty && (
+          {winner.department && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <School className="h-3 w-3 shrink-0" />
-              {winner.faculty}
-            </div>
-          )}
-          {winner.programme && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <GraduationCap className="h-3 w-3 shrink-0" />
-              {winner.programme}
+              {winner.department}
             </div>
           )}
         </div>
@@ -179,7 +167,7 @@ function WinnerCard({ winner, idx, onClick }: { winner: PastWinner; idx: number;
         {winner.quote && (
           <div className="mt-auto border-t border-primary/5 pt-4">
             <div className="flex gap-2">
-              <Quote className="h-4 w-4 shrink-0 text-gold/40" />
+              <Quote className="h-4 w-4 shrink-0 text-primary/40" />
               <p className="text-sm italic text-muted-foreground">{winner.quote}</p>
             </div>
           </div>
@@ -247,10 +235,10 @@ function WinnersPage() {
           >
             <p className="text-xs uppercase tracking-[0.3em] text-primary">Hall of Fame</p>
             <h1 className="mt-4 text-4xl font-bold sm:text-6xl">
-              Past <span className="text-gradient-gold">Winners.</span>
+              Past <span className="text-primary">Winners.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Celebrating the legacy of student leaders and academic high-flyers who have
+              Celebrating the legacy of staff whose excellence and service have
               shaped the culture of excellence at DUT.
             </p>
           </motion.div>
@@ -271,7 +259,7 @@ function WinnersPage() {
               return (
                 <section key={year} className="relative">
                   <div className="mb-10 flex items-center gap-4">
-                    <h2 className="font-serif text-5xl font-bold opacity-20">{year}</h2>
+                    <h2 className="text-5xl font-bold opacity-20">{year}</h2>
                     <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
                     <span className="text-xs text-muted-foreground">{yearWinners.length} winner{yearWinners.length !== 1 ? "s" : ""}</span>
                   </div>
@@ -297,9 +285,9 @@ function WinnersPage() {
 
       <footer className="relative z-10 border-t border-primary/10 bg-background/60 py-12 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-muted-foreground sm:flex-row">
-          <p>© 2026 SALEA — Student Academic &amp; Leadership Excellence Awards</p>
+          <p>© 2026 Registrar's Ambit Staff Awards</p>
           <div className="flex gap-6">
-            <span className="text-primary">#SALEA2026</span>
+            <span className="text-primary">#RegistrarsAmbit</span>
             <span className="text-primary">#DUTExcellence</span>
           </div>
         </div>

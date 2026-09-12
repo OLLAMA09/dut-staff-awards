@@ -97,7 +97,8 @@ ${incompleteItems.map((item: string) => `  <li style="margin-bottom: 8px; color:
         category_name: categoryName,
         incomplete_items: incompleteItems.join('\n• '),
         incomplete_items_html: incompleteItemsHtml,
-        submission_url: `https://salea2026.netlify.app/nominate/${categoryId}#documents`,
+        // TODO: update once the Registrar's Ambit Staff Awards site is deployed.
+        submission_url: `https://registrars-ambit-staff-awards.netlify.app/nominate/${categoryId}#documents`,
         current_year: new Date().getFullYear(),
       };
 

@@ -1,13 +1,10 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Award, Sparkles, Calendar, MapPin, Users, Trophy, Heart, Briefcase, Home, Globe, GraduationCap, ChevronDown, ChevronRight, ShieldCheck, Star, FileText, Loader, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Award, Sparkles, Calendar, MapPin, Users, Trophy, Heart, ChevronDown, ShieldCheck, Star, Loader, AlertCircle } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import EventProgram from "@/components/EventProgram";
 import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
-import { downloadGuidePDF, downloadSession1ProgrammePDF, downloadSession2ProgrammePDF } from "@/lib/pdf-download";
-import DownloadProgressBar from "@/components/DownloadProgressBar";
 import { useNominationsOpen } from "@/lib/nomination-settings";
 import { AWARD_CATEGORIES, AWARD_THEME } from "@/data/awards";
 
@@ -19,45 +16,40 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "SALEA 2026 — Student Academic & Leadership Excellence Awards" },
+      { title: "Registrar's Ambit Staff Awards" },
       {
         name: "description",
         content:
-          "SALEA 2026: Recognising Excellence. Celebrating Leadership. Inspiring Greatness. Submit nominations for outstanding student leaders and academics.",
+          "Registrar's Ambit Staff Awards: Recognising Excellence. Celebrating Service. Honouring Our People. Submit nominations for outstanding DUT staff.",
       },
-      { property: "og:title", content: "SALEA 2026 — Student Academic & Leadership Excellence Awards" },
+      { property: "og:title", content: "Registrar's Ambit Staff Awards" },
       {
         property: "og:description",
-        content: "Recognising Excellence. Celebrating Leadership. Inspiring Greatness.",
+        content: "Recognising Excellence. Celebrating Service. Honouring Our People.",
       },
     ],
   }),
 });
 
 const CATEGORY_ICONS: Record<string, typeof Award> = {
-  dean: Trophy,
-  sport: Award,
-  wellness: Heart,
-  society: Users,
-  residence: Home,
-  entrepreneur: Briefcase,
-  emerging: GraduationCap,
-  diversity: Globe,
+  "living-values": ShieldCheck,
+  "best-performing-unit": Trophy,
+  "leadership-mentorship": Users,
+  "rising-star": Sparkles,
+  "best-collaboration": Heart,
+  "outstanding-registrars": Award,
 };
 
 const stats = [
   { num: "1", label: "Premier Awards Event" },
-  { num: "8", label: "Award Categories" },
+  { num: "6", label: "Award Categories" },
   { num: "2026", label: "Year of Excellence" },
 ];
 
 function Index() {
   const { open: nominationsOpen } = useNominationsOpen();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
   const [nominatingId, setNominatingId] = useState<string | null>(null);
-  const [downloadingSession, setDownloadingSession] = useState<"session1" | "session2" | null>(null);
   const navigate = useNavigate();
 
   const handleNominate = async (categoryId: string) => {
@@ -65,59 +57,6 @@ function Index() {
     // Brief delay for visual feedback
     await new Promise(resolve => setTimeout(resolve, 300));
     navigate({ to: "/nominate/$categoryId", params: { categoryId } });
-  };
-
-  const handleDownloadPDF = async () => {
-    setIsDownloading(true);
-    setDownloadProgress(0);
-    try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setDownloadProgress(prev => Math.min(prev + Math.random() * 40, 90));
-      }, 300);
-      
-      await downloadGuidePDF();
-      
-      clearInterval(progressInterval);
-      setDownloadProgress(100);
-      
-      // Keep it at 100% briefly for satisfaction
-      await new Promise(resolve => setTimeout(resolve, 600));
-    } catch (error) {
-      console.error("Failed to download PDF:", error);
-      alert("Failed to download PDF. Please try again.");
-    } finally {
-      setIsDownloading(false);
-      setDownloadProgress(0);
-    }
-  };
-
-  const handleDownloadSession1PDF = async () => {
-    setDownloadingSession("session1");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await downloadSession1ProgrammePDF();
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    } catch (error) {
-      console.error("Failed to download Session 1 programme PDF:", error);
-      alert("Failed to download Session 1 programme. Please try again.");
-    } finally {
-      setDownloadingSession(null);
-    }
-  };
-
-  const handleDownloadSession2PDF = async () => {
-    setDownloadingSession("session2");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await downloadSession2ProgrammePDF();
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    } catch (error) {
-      console.error("Failed to download Session 2 programme PDF:", error);
-      alert("Failed to download Session 2 programme. Please try again.");
-    } finally {
-      setDownloadingSession(null);
-    }
   };
 
   return (
@@ -136,63 +75,24 @@ function Index() {
             className="relative"
           >
             
-            <h1 className="text-4xl font-bold leading-[1.1] sm:text-6xl lg:text-7xl text-black">
-              SALEA — {AWARD_THEME.yearsBadge}
+            <h1 className="text-4xl font-bold leading-[1.1] sm:text-6xl lg:text-7xl text-foreground">
+              {AWARD_THEME.yearsBadge}
             </h1>
             <p className="mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-muted-foreground">
-              Recognising Excellence. Celebrating Leadership. Inspiring Greatness. 
-              Nominate outstanding students who exemplify academic achievement, inspiring leadership, and exceptional character.
+              Recognising Excellence. Celebrating Service. Honouring Our People.
+              Nominate outstanding DUT staff who exemplify our values, leadership, and exceptional service.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 lg:hidden">
                <Link to="/winners" className="w-full sm:w-auto">
                 <div className="h-12 border border-primary/20 rounded-md flex items-center justify-center bg-background hover:bg-accent transition-colors text-foreground font-medium">View Winners</div>
                </Link>
-               <motion.button 
-                 onClick={handleDownloadPDF} 
-                 disabled={isDownloading}
-                 className="w-full sm:w-auto h-12 bg-gold text-primary-foreground rounded-md flex items-center justify-center gap-2 disabled:opacity-70 transition-all font-medium"
-                 whileHover={!isDownloading ? { scale: 1.02 } : {}}
-                 whileTap={!isDownloading ? { scale: 0.98 } : {}}
-               >
-                <div className="relative flex items-center justify-center gap-2 w-full">
-                  {isDownloading ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Loader className="h-4 w-4" />
-                      </motion.div>
-                      <span>Generating PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <motion.div
-                        animate={{ y: [0, -2, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <FileText className="h-4 w-4" />
-                      </motion.div>
-                      Download as PDF
-                    </>
-                  )}
-                  {isDownloading && (
-                    <motion.div
-                      className="absolute inset-0 rounded-md"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.2 }}
-                      style={{
-                        background: `linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent)`,
-                        backgroundSize: '200% 100%',
-                      }}
-                    />
-                  )}
+               <Link to="/" hash="categories" className="w-full sm:w-auto">
+                <div className="h-12 bg-primary text-primary-foreground rounded-md flex items-center justify-center gap-2 transition-all font-medium">
+                  Nominate Now
                 </div>
-               </motion.button>
+               </Link>
             </div>
-
-
 
             <div className="mt-12 grid gap-4 sm:grid-cols-2">
               <InfoChip icon={Calendar} title="Recognition Period" value={AWARD_THEME.recognitionPeriod} />
@@ -207,7 +107,7 @@ function Index() {
 
         {/* Marquee */}
         <div className="relative overflow-hidden border-y border-primary/20 bg-primary/5 py-6">
-          <div className="flex gap-16 whitespace-nowrap font-serif text-3xl text-black" style={{animation:'marquee 24s linear infinite'}}>
+          <div className="flex gap-16 whitespace-nowrap text-3xl text-foreground" style={{animation:'marquee 24s linear infinite'}}>
             {Array.from({ length: 6 }).map((_, i) => (
               <span key={i}>EXCELLENCE · LEADERSHIP · SERVICE · COURAGE · LEGACY · DUT 2026 · </span>
             ))}
@@ -227,7 +127,7 @@ function Index() {
               transition={{ delay: i * 0.1 }}
               className="flex items-center gap-4 rounded-2xl border border-primary/20 bg-white px-6 py-5 sm:block sm:rounded-none sm:border-0 sm:p-8 sm:text-center"
             >
-              <p className="text-gradient-gold font-serif text-4xl font-bold sm:text-5xl">{s.num}</p>
+              <p className="text-primary text-4xl font-bold sm:text-5xl">{s.num}</p>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground sm:mt-2">{s.label}</p>
             </motion.div>
           ))}
@@ -254,7 +154,7 @@ function Index() {
                 Sign in to approve nominations, manage categories, and supervise judge activity.
               </p>
               <Link to="/admin" className="w-full">
-                <div className="w-full bg-gold text-primary-foreground rounded-md px-4 py-2 font-medium flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer">Go to Admin Panel</div>
+                <div className="w-full bg-primary text-primary-foreground rounded-md px-4 py-2 font-medium flex items-center justify-center hover:opacity-90 transition-opacity cursor-pointer">Go to Admin Panel</div>
               </Link>
             </div>
             <div className="rounded-2xl border border-primary/20 bg-card p-5">
@@ -277,51 +177,22 @@ function Index() {
       <section id="about" className="relative z-10 mx-auto max-w-7xl px-6 py-20">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">About SALEA 2026</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">About the Registrar's Ambit Staff Awards</p>
             <h2 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
-              Recognising <span className="text-gradient-gold">academic excellence</span> and leadership.
+              Recognising <span className="text-primary">excellence and service</span> across our staff.
             </h2>
-            <div className="mt-8">
-              <motion.button 
-                onClick={handleDownloadPDF} 
-                disabled={isDownloading}
-                whileHover={!isDownloading ? { scale: 1.05 } : {}}
-                whileTap={!isDownloading ? { scale: 0.95 } : {}}
-                className="inline-block"
-              >
-                <Button className="bg-gold text-primary-foreground hover:bg-gold/90 flex items-center gap-2 transition-all disabled:opacity-70" disabled={isDownloading}>
-                  {isDownloading ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Loader className="h-5 w-5" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      animate={{ y: [0, -2, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <FileText className="h-5 w-5" />
-                    </motion.div>
-                  )}
-                  {isDownloading ? "Generating PDF..." : "Download Criteria & Guidelines"}
-                </Button>
-              </motion.button>
-              <p className="mt-2 text-xs text-muted-foreground">PDF guide for nomination criteria and Portfolio of Evidence requirements</p>
-            </div>
           </div>
           <div className="space-y-6 text-muted-foreground lg:col-span-7">
             <p className="text-lg leading-relaxed">
-              The Student Academic &amp; Leadership Excellence Awards (SALEA) recognise the outstanding achievements of individuals and teams of
-              students whose academic excellence, leadership and character demonstrate the highest standards of achievement and integrity.
-              SALEA 2026 celebrates students who embody our mission:
-              <span className="text-foreground"> Recognising Excellence. Celebrating Leadership. Inspiring Greatness.</span>
+              The Registrar's Ambit Staff Awards recognise the outstanding achievements of staff whose
+              values, leadership and service demonstrate the highest standards of excellence and integrity.
+              The Registrar's Ambit Staff Awards celebrate staff who embody our mission:
+              <span className="text-foreground"> Recognising Excellence. Celebrating Service. Honouring Our People.</span>
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
               {[
-                { t: "Nominee", d: "A student or group put forward in recognition of their contributions." },
-                { t: "Nominator", d: "The person — peer, staff or self — who submits the nomination." },
+                { t: "Nominee", d: "A staff member or unit put forward in recognition of their contributions." },
+                { t: "Nominator", d: "The person — colleague, manager or self — who submits the nomination." },
                 { t: "Self-nomination", d: "Permitted and encouraged when supported by a credible Portfolio of Evidence." },
               ].map((d) => (
                 <div key={d.t} className="rounded-xl border border-primary/20 bg-white p-4">
@@ -331,8 +202,8 @@ function Index() {
               ))}
             </div>
             <p className="leading-relaxed">
-              SALEA 2026 — <span className="text-foreground">"{AWARD_THEME.title}: {AWARD_THEME.subtitle}"</span> —
-              honours students who exemplify academic excellence and inspiring leadership across the Durban University of Technology.
+              <span className="text-foreground">"{AWARD_THEME.title}: {AWARD_THEME.subtitle}"</span> —
+              honours staff who exemplify excellence and inspiring service across the Durban University of Technology.
             </p>
           </div>
         </div>
@@ -353,7 +224,7 @@ function Index() {
               <div className="flex-1">
                 <h3 className="font-bold text-red-900">Nomination Period Has Closed</h3>
                 <p className="text-sm text-red-800 mt-1">
-                  Thank you for your interest in SALEA 2026! Nominations are currently closed.
+                  Thank you for your interest in the Registrar's Ambit Staff Awards! Nominations are currently closed.
                   No new nominations are being accepted. Thank you to everyone who participated!
                 </p>
               </div>
@@ -365,13 +236,13 @@ function Index() {
       {/* Categories */}
       <section id="categories" className="relative z-10 mx-auto max-w-7xl px-6 py-20">
         <div className="mb-14 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-black">Eight Categories</p>
-          <h2 className="mt-3 text-4xl font-bold sm:text-5xl text-black">
-            Celebrating <span className="text-gradient-gold">student excellence.</span>
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground">Six Categories</p>
+          <h2 className="mt-3 text-4xl font-bold sm:text-5xl text-foreground">
+            Celebrating <span className="text-primary">staff excellence.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Each category recognises outstanding achievement in a distinct area of student life.
-            Read the criteria and nominate an exceptional student today.
+            Each category recognises outstanding achievement in a distinct area of staff service.
+            Read the criteria and nominate an exceptional colleague today.
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -387,8 +258,8 @@ function Index() {
                 transition={{ delay: i * 0.06, duration: 0.5 }}
                 className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition cursor-pointer ${
                   isExpanded
-                    ? "border-primary/60 shadow-gold"
-                    : "border-primary/20 hover:border-primary/50 hover:shadow-gold"
+                    ? "border-primary/60 shadow-elegant"
+                    : "border-primary/20 hover:border-primary/50 hover:shadow-elegant"
                 }`}
                 onClick={() => setExpandedId(isExpanded ? null : c.id)}
               >
@@ -397,7 +268,7 @@ function Index() {
                 {/* Card header */}
                 <div className="relative flex flex-1 flex-col p-6">
                   <div className="mb-5 flex items-start justify-between">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold shadow-gold transition group-hover:scale-110">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-elegant transition group-hover:scale-110">
                       <Icon className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <motion.div
@@ -415,8 +286,8 @@ function Index() {
                   {!isExpanded && (
                     <div className="mt-4 flex items-center gap-1.5">
                       <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                       </span>
                       <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
                         Tap to nominate
@@ -443,7 +314,7 @@ function Index() {
                         <ul className="space-y-2 text-xs text-foreground/80">
                           {c.recognises.map((r) => (
                             <li key={r} className="flex items-start gap-2">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                               {r}
                             </li>
                           ))}
@@ -458,7 +329,7 @@ function Index() {
                           disabled={nominatingId === c.id || !nominationsOpen}
                           whileHover={nominatingId !== c.id && nominationsOpen ? { scale: 1.05 } : {}}
                           whileTap={nominatingId !== c.id && nominationsOpen ? { scale: 0.95 } : {}}
-                          className="mt-4 w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-gold transition hover:opacity-90 disabled:opacity-70"
+                          className="mt-4 w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-90 disabled:opacity-70"
                           title={!nominationsOpen ? "Nomination period has closed" : ""}
                         >
                           <div className="flex items-center justify-center gap-2">
@@ -497,24 +368,23 @@ function Index() {
 
           <div className="relative grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-primary">The Gala Evening</p>
-              <h2 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl text-black">
-                Celebrating <span className="text-gradient-gold">academic excellence</span> and leadership.
+              <p className="text-xs uppercase tracking-[0.3em] text-primary">The Awards Ceremony</p>
+              <h2 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl text-foreground">
+                Celebrating <span className="text-primary">excellence</span> and service.
               </h2>
               <p className="mt-6 leading-relaxed text-gray-600">
-                Join us for an elegant evening honouring the brightest students. Doors open at 18:00 with a reception, 
-                followed by the awards ceremony at 19:00, featuring performances, recognition of excellence, 
-                and an evening of celebration of student achievement.
+                Join us for an evening honouring outstanding DUT staff. Ceremony date, time and schedule
+                details will be announced closer to the event.
               </p>
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
                 {[
-                  ["18:00", "Sparkling Reception"],
-                  ["19:00", "Ceremony Begins"],
-                  ["20:30", "Banquet & Performances"],
-                  ["22:00", "After-party"],
+                  ["TBC", "Reception"],
+                  ["TBC", "Ceremony Begins"],
+                  ["TBC", "Awards & Recognition"],
+                  ["TBC", "Closing"],
                 ].map(([t, l]) => (
                   <div key={t} className="rounded-xl border border-primary/20 bg-gray-50 p-4">
-                    <p className="text-gradient-gold font-serif text-2xl font-bold">{t}</p>
+                    <p className="text-primary text-2xl font-bold">{t}</p>
                     <p className="mt-1 text-xs uppercase tracking-wider text-gray-500">{l}</p>
                   </div>
                 ))}
@@ -524,11 +394,11 @@ function Index() {
             <div className="relative">
               <div className="relative rounded-3xl border border-primary/30 bg-gray-50 p-8">
                 <Trophy className="mb-4 h-10 w-10 text-primary" />
-                <p className="font-serif text-3xl font-bold leading-tight text-black">
-                  "Recognising Excellence. Celebrating Leadership. Inspiring Greatness."
+                <p className="text-3xl font-bold leading-tight text-foreground">
+                  "Recognising Excellence. Celebrating Service. Honouring Our People."
                 </p>
                 <p className="mt-6 text-sm uppercase tracking-[0.2em] text-gray-500">
-                  — SALEA 2026 Mission
+                  — Registrar's Ambit Staff Awards Mission
                 </p>
               </div>
             </div>
@@ -539,134 +409,11 @@ function Index() {
       {/* Detailed Programme & Venue */}
       <EventProgram />
 
-      {/* Download Programme */}
-      <section className="relative z-10 border-t border-primary/10 bg-gradient-to-b from-background to-white/50 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="rounded-2xl border border-primary/20 bg-white/80 backdrop-blur p-5 sm:p-12">
-            <div className="grid gap-8 sm:grid-cols-2 items-center">
-              <div>
-                <h3 className="font-serif text-3xl font-bold text-foreground mb-4">Event Programme</h3>
-                <p className="text-muted-foreground mb-6">
-                  Download the programme for the session you're attending, with clear session times and schedule details.
-                </p>
-                <ul className="space-y-3 text-sm mb-6">
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold mt-1">✓</span>
-                    <span><strong>Session 1:</strong> 10:00 – 13:00 (Morning Awards)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold mt-1">✓</span>
-                    <span><strong>Session 2:</strong> 16:00 – 22:00 (Evening Gala & Awards)</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold mt-1">✓</span>
-                    <span><strong>Venue:</strong> Fred Crookes Sports Centre, 76 Steve Biko Road</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="flex w-full flex-col gap-4">
-                <div>
-                  <motion.button
-                    onClick={handleDownloadSession1PDF}
-                    disabled={downloadingSession !== null}
-                    className="w-full"
-                    whileHover={downloadingSession === null ? { scale: 1.02 } : {}}
-                    whileTap={downloadingSession === null ? { scale: 0.98 } : {}}
-                  >
-                    <Button className="h-auto min-h-14 w-full whitespace-normal bg-gold px-4 py-3 text-center text-sm leading-snug text-primary-foreground hover:bg-gold/90 disabled:opacity-70 sm:px-8 sm:text-base" disabled={downloadingSession !== null}>
-                      {downloadingSession === "session1" ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Loader className="h-5 w-5 shrink-0" />
-                          </motion.div>
-                          <span>Downloading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-5 w-5 shrink-0" />
-                          <span>Download Session 1 Programme</span>
-                        </>
-                      )}
-                    </Button>
-                  </motion.button>
-                  {downloadingSession === "session1" && <DownloadProgressBar />}
-                </div>
-                <div>
-                  <motion.button
-                    onClick={handleDownloadSession2PDF}
-                    disabled={downloadingSession !== null}
-                    className="w-full"
-                    whileHover={downloadingSession === null ? { scale: 1.02 } : {}}
-                    whileTap={downloadingSession === null ? { scale: 0.98 } : {}}
-                  >
-                    <Button variant="outline" className="h-auto min-h-14 w-full whitespace-normal border-primary/30 px-4 py-3 text-center text-sm leading-snug text-foreground hover:bg-accent disabled:opacity-70 sm:px-8 sm:text-base" disabled={downloadingSession !== null}>
-                      {downloadingSession === "session2" ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Loader className="h-5 w-5 shrink-0" />
-                          </motion.div>
-                          <span>Downloading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-5 w-5 shrink-0" />
-                          <span>Download Session 2 Programme</span>
-                        </>
-                      )}
-                    </Button>
-                  </motion.button>
-                  {downloadingSession === "session2" && <DownloadProgressBar />}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
       <footer className="relative z-10 border-t border-primary/10 bg-background/60 backdrop-blur">
         <div className="mx-auto max-w-7xl px-6 py-12">
-          <div className="mb-8 rounded-2xl border border-primary/20 bg-white/50 p-4 sm:p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">Need Help with Your Nomination?</p>
-              <p className="text-sm text-muted-foreground mt-1">Download the complete guide with criteria and Portfolio of Evidence requirements.</p>
-            </div>
-            <motion.button 
-              onClick={handleDownloadPDF} 
-              disabled={isDownloading}
-              whileHover={!isDownloading ? { scale: 1.02 } : {}}
-              whileTap={!isDownloading ? { scale: 0.98 } : {}}
-              className="w-full sm:w-auto sm:shrink-0"
-            >
-              <Button className="w-full sm:w-auto bg-gold text-primary-foreground hover:bg-gold/90 flex items-center justify-center gap-2 transition-all disabled:opacity-70 h-11" disabled={isDownloading}>
-                {isDownloading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader className="h-4 w-4" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    animate={{ y: [0, -2, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <FileText className="h-4 w-4" />
-                  </motion.div>
-                )}
-                <span>{isDownloading ? "Generating PDF..." : "Download Guide"}</span>
-              </Button>
-            </motion.button>
-          </div>
           <div className="flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row border-t border-primary/10 pt-8">
-            <p>© 2026 SALEA — Student Academic &amp; Leadership Excellence Awards</p>
-            <p>Recognising Excellence · Celebrating Leadership · Inspiring Greatness</p>
+            <p>© 2026 Registrar's Ambit Staff Awards</p>
+            <p>Recognising Excellence · Celebrating Service · Honouring Our People</p>
           </div>
         </div>
       </footer>
@@ -677,11 +424,11 @@ function Index() {
 function InfoChip({ icon: Icon, title, value }: { icon: typeof Award; title: string; value: string }) {
   return (
     <div className="group flex items-center gap-4 rounded-2xl border border-primary/20 bg-white/60 p-4 shadow-sm backdrop-blur-sm transition hover:border-primary/40 hover:shadow-md">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold shadow-gold transition group-hover:scale-110">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary shadow-elegant transition group-hover:scale-110">
         <Icon className="h-5 w-5 text-primary-foreground" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black">{title}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground">{title}</p>
         <p className="mt-0.5 font-semibold text-foreground">{value}</p>
       </div>
     </div>

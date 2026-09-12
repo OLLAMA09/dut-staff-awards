@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Menu, Trophy, Calendar, Award, Sparkles, Users, ChevronRight, BookOpen, Play, Download, CheckCircle2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -127,9 +127,9 @@ export default function SiteNav() {
             <img src={logo} alt="DUT Logo" className="h-full w-auto object-contain" />
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold tracking-wider text-primary leading-tight">Student Academic &amp; Leadership Excellence Awards</p>
+            <p className="text-sm font-semibold tracking-wider text-primary leading-tight">Registrar's Ambit Staff Awards</p>
             <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-              SALEA 2026 · Durban University of Technology
+              Durban University of Technology
             </p>
           </div>
         </Link>
@@ -143,15 +143,15 @@ export default function SiteNav() {
           {/* Desktop CTA: "Download App" on browser, "Learn More" inside PWA */}
           {isPWA ? (
             <Link to="/" hash="about" className="hidden sm:flex items-center gap-2">
-              <Button className="bg-gold text-primary-foreground hover:opacity-90">
+              <Button className="bg-primary text-primary-foreground hover:opacity-90">
                 Learn More
               </Button>
             </Link>
           ) : (
             <div className="relative hidden sm:block">
               <Button
-                className="bg-gold text-primary-foreground hover:opacity-90 flex items-center gap-2"
-                title={`SALEA 2026 v${APP_VERSION}`}
+                className="bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-2"
+                title={`Registrar's Ambit Staff Awards v${APP_VERSION}`}
                 onClick={() => handleInstall(() =>
                   document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })
                 )}
@@ -166,10 +166,10 @@ export default function SiteNav() {
               </Button>
               {installState === "unavailable" && (
                 <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-primary/20 bg-white shadow-lg p-4 text-xs text-muted-foreground z-50 space-y-2">
-                  <p className="font-semibold text-foreground text-sm">Install SALEA 2026</p>
+                  <p className="font-semibold text-foreground text-sm">Install Registrar's Ambit Staff Awards</p>
                   <div>
                     <p className="font-medium text-foreground">💻 Desktop (Chrome / Edge)</p>
-                    <p>Look for the <strong>install icon ⊕</strong> in the address bar and click it, or open the browser menu → "Install SALEA 2026".</p>
+                    <p>Look for the <strong>install icon ⊕</strong> in the address bar and click it, or open the browser menu → "Install Registrar's Ambit Staff Awards".</p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground">🍎 iPhone / iPad</p>
@@ -199,7 +199,7 @@ export default function SiteNav() {
                     <img src={logo} alt="Logo" className="h-10 w-auto" />
                     <div>
                       <p className="font-bold text-sm tracking-tight">DUT AWARDS</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Student Services</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Registrar's Ambit</p>
                     </div>
                   </div>
                 </SheetHeader>
@@ -295,14 +295,14 @@ export default function SiteNav() {
                   <div className="mt-8 pt-8 border-t border-primary/10 space-y-2">
                     {isPWA ? (
                       <Link to="/" hash="about" onClick={() => setIsOpen(false)}>
-                        <Button className="w-full h-14 bg-gold text-primary-foreground text-lg font-bold shadow-lg shadow-gold/20 flex items-center justify-center gap-2">
+                        <Button className="w-full h-14 bg-primary text-primary-foreground text-lg font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
                           Learn More <ChevronRight className="h-5 w-5" />
                         </Button>
                       </Link>
                     ) : (
                       <>
                         <button
-                          className="w-full h-14 rounded-lg bg-gold text-primary-foreground text-lg font-bold shadow-lg shadow-gold/20 flex items-center justify-center gap-2"
+                          className="w-full h-14 rounded-lg bg-primary text-primary-foreground text-lg font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                           onClick={() => {
                             setIsOpen(false);
                             handleInstall();
@@ -318,8 +318,8 @@ export default function SiteNav() {
                         </button>
                         {installState === "unavailable" && (
                           <div className="rounded-lg border border-primary/15 bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                            <p className="font-semibold text-foreground">Install SALEA 2026</p>
-                            <p><strong>💻 Desktop:</strong> look for ⊕ in the address bar, or browser menu → "Install SALEA 2026".</p>
+                            <p className="font-semibold text-foreground">Install Registrar's Ambit Staff Awards</p>
+                            <p><strong>💻 Desktop:</strong> look for ⊕ in the address bar, or browser menu → "Install Registrar's Ambit Staff Awards".</p>
                             <p><strong>🍎 iOS:</strong> Share → "Add to Home Screen".</p>
                             <p><strong>🤖 Android:</strong> ⋮ menu → "Install app".</p>
                           </div>

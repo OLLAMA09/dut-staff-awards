@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 interface LeaderboardRow {
   rank: number;
   participant: string;
-  faculty: string;
+  department: string;
   "Total Score": number;
   "Avg Score": string;
   "Judge Breakdown": string;
@@ -14,7 +14,7 @@ interface NomineeWithScores {
   nominationId: string;
   nomineeName: string;
   categoryName: string;
-  faculty?: string;
+  department?: string;
   judges: string[];
   scores: number[];
 }
@@ -40,7 +40,7 @@ export function exportLeaderboardByCategory(judgeScores: JudgeScore[], nominatio
           nominationId: score.nominationId,
           nomineeName: score.nomineeName,
           categoryName: score.categoryName,
-          faculty: nom?.faculty || "N/A",
+          department: nom?.department || "N/A",
           judges: [],
           scores: [],
         });
@@ -95,7 +95,7 @@ export function exportLeaderboardByCategory(judgeScores: JudgeScore[], nominatio
         return {
           rank: index + 1,
           participant: nominee.nomineeName,
-          faculty: nominee.faculty,
+          department: nominee.department,
           "Total Score": totalScore,
           "Avg Score": avgScore,
           "Judge Breakdown": nominee.judges
@@ -145,7 +145,7 @@ export function exportLeaderboardUnified(judgeScores: JudgeScore[], nominations:
           nominationId: score.nominationId,
           nomineeName: score.nomineeName,
           categoryName: score.categoryName,
-          faculty: nom?.faculty || "N/A",
+          department: nom?.department || "N/A",
           judges: [],
           scores: [],
         });
@@ -168,7 +168,7 @@ export function exportLeaderboardUnified(judgeScores: JudgeScore[], nominations:
       rank: index + 1,
       participant: nominee.nomineeName,
       category: nominee.categoryName.toUpperCase(),
-      faculty: nominee.faculty,
+      department: nominee.department,
       "Total Score": nominee.scores.reduce((a, b) => a + b, 0),
       "Avg Score": (nominee.scores.reduce((a, b) => a + b, 0) / nominee.scores.length).toFixed(2),
       "Judge Count": nominee.scores.length,

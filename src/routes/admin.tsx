@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import {
@@ -121,7 +121,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 // Tabs components removed — sidebar navigation used instead
-import { AWARD_CATEGORIES, FACULTIES, getCriteriaForCategory } from "@/data/awards";
+import { AWARD_CATEGORIES, getCriteriaForCategory } from "@/data/awards";
 import {
   subscribePastWinners,
   addPastWinner,
@@ -144,9 +144,8 @@ type Nomination = {
   categoryName: string;
   nomineeName: string;
   nomineeEmail: string;
-  studentNumber: string;
-  faculty: string;
-  yearOfStudy: string;
+  staffNumber: string;
+  department: string;
   nominatorName: string;
   nominatorEmail: string;
   nominatorRelationship: string;
@@ -244,7 +243,7 @@ function isOfficeEmbeddableUrl(fileUrl: string): boolean {
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({
-    meta: [{ title: "Admin · SALEA 2026 Awards Management" }],
+    meta: [{ title: "Admin · Registrar's Ambit Staff Awards" }],
   }),
 });
 
@@ -526,24 +525,24 @@ function AdminPage() {
       <main className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-24 pb-16">
         {!authed || (usedTempPassword && !passwordChanged) ? (
           <div className="mx-auto mt-20 max-w-md rounded-3xl border border-primary/30 bg-card/60 p-10 backdrop-blur">
-            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-gold shadow-gold">
+            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-primary shadow-elegant">
               <Lock className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-center font-serif text-3xl font-bold">Admin Panel</h1>
+            <h1 className="text-center text-3xl font-bold">Admin Panel</h1>
 
             {/* Mode toggle */}
             <div className="mt-5 flex overflow-hidden rounded-xl border border-primary/20 bg-muted/40">
               <button
                 type="button"
                 onClick={() => switchMode("signin")}
-                className={`flex-1 py-2 text-sm font-medium transition ${mode === "signin" ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex-1 py-2 text-sm font-medium transition ${mode === "signin" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
               >
                 Sign in
               </button>
             </div>
 
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              Sign in with your Student Services administrator account.
+              Sign in with your Registrar's Ambit administrator account.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -630,7 +629,7 @@ function AdminPage() {
                           key={r}
                           type="button"
                           onClick={() => setRole(r)}
-                          className={`flex-1 py-2 text-sm font-medium capitalize transition ${role === r ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                          className={`flex-1 py-2 text-sm font-medium capitalize transition ${role === r ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           {r}
                         </button>
@@ -650,7 +649,7 @@ function AdminPage() {
                       to the Judge Panel after successful registration.
                     </p>
                     <p className="mt-1 text-muted-foreground">
-                      Tip: use role <strong>admin</strong> only for Student Services management
+                      Tip: use role <strong>admin</strong> only for Registrar's Ambit management
                       accounts.
                     </p>
                   </div>
@@ -665,7 +664,7 @@ function AdminPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gold text-primary-foreground"
+                className="w-full bg-primary text-primary-foreground"
               >
                 {loading ? "Signing in…" : "Sign in"}
               </Button>
@@ -1258,7 +1257,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         const s = search.toLowerCase();
         return (
           n.nomineeName?.toLowerCase().includes(s) ||
-          n.studentNumber?.toLowerCase().includes(s) ||
+          n.staffNumber?.toLowerCase().includes(s) ||
           n.nominatorName?.toLowerCase().includes(s) ||
           n.nomineeEmail?.toLowerCase().includes(s)
         );
@@ -1515,9 +1514,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     const baseHeaders = [
       "Category",
       "Nominee",
-      "Student #",
-      "Faculty",
-      "Year",
+      "Staff #",
+      "Department",
       "Email",
       "Nominator",
       "Relationship",
@@ -1539,9 +1537,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         const base = [
           r.categoryName ?? r.categoryId,
           r.nomineeName,
-          r.studentNumber,
-          r.faculty,
-          r.yearOfStudy,
+          r.staffNumber,
+          r.department,
           r.nomineeEmail,
           r.nominatorName,
           r.nominatorRelationship,
@@ -1649,8 +1646,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">SALEA 2026</p>
-            <h1 className="font-serif text-3xl font-bold sm:text-4xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards</p>
+            <h1 className="text-3xl font-bold sm:text-4xl">
               {canManage ? "Administration Panel" : "Review Panel"}
             </h1>
           </div>
@@ -1874,7 +1871,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
           onClick={() => setSelfNomFilter((v) => !v)}
           className={`rounded-2xl border p-4 text-center transition ${selfNomFilter ? "border-blue-400/60 bg-blue-50 shadow" : "border-primary/15 bg-white hover:border-primary/30"}`}
         >
-          <p className={`font-serif text-3xl font-bold ${selfNomFilter ? "text-blue-600" : "text-blue-500"}`}>{stats.selfNominated}</p>
+          <p className={`text-3xl font-bold ${selfNomFilter ? "text-blue-600" : "text-blue-500"}`}>{stats.selfNominated}</p>
           <p className="mt-1 text-xs text-muted-foreground">Self-nominated</p>
           {selfNomFilter && (
             <p className="mt-1 text-[10px] font-semibold text-blue-600">● Filtered</p>
@@ -1971,7 +1968,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
               <span className="flex-1">{item.label}</span>
               {item.badge !== undefined && (
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  activeSection === item.key ? "bg-white/20 text-white" : "bg-gold text-primary-foreground"
+                  activeSection === item.key ? "bg-white/20 text-white" : "bg-primary text-primary-foreground"
                 }`}>{item.badge}</span>
               )}
             </button>
@@ -2030,7 +2027,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-3 py-1.5 text-xs font-medium transition ${statusFilter === f.value ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`px-3 py-1.5 text-xs font-medium transition ${statusFilter === f.value ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {f.label}
                 </button>
@@ -2075,7 +2072,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                   <button
                     key={n.id}
                     onClick={() => setDetailNom(n)}
-                    className={`group text-left rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
+                    className={`group text-left rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isDateMissing(n.createdAt)
                         ? "border-amber-200 hover:border-amber-400"
                         : "border-primary/20 hover:border-primary/50"
@@ -2098,7 +2095,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                         {formatDate(n.createdAt)}
                       </span>
                     </div>
-                    <h3 className="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors">
+                    <h3 className="text-lg font-bold leading-snug group-hover:text-primary transition-colors">
                       {n.nomineeName}
                     </h3>
                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
@@ -2106,14 +2103,11 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                     </p>
                     <div className="mt-3 space-y-0.5 text-xs text-muted-foreground">
                       <p>
-                        <span className="font-medium text-foreground/70">Student #</span>{" "}
-                        {n.studentNumber}
+                        <span className="font-medium text-foreground/70">Staff #</span>{" "}
+                        {n.staffNumber}
                       </p>
                       <p>
-                        <span className="font-medium text-foreground/70">Faculty</span> {n.faculty}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground/70">Year</span> {n.yearOfStudy}
+                        <span className="font-medium text-foreground/70">Department</span> {n.department}
                       </p>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
@@ -2162,7 +2156,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         {canManage && activeSection === "categories" && <div className="space-y-6">
             {/* Add custom category form */}
             <Card className="p-6">
-              <h3 className="font-serif text-lg font-bold mb-1">Add custom category</h3>
+              <h3 className="text-lg font-bold mb-1">Add custom category</h3>
               <p className="text-xs text-muted-foreground mb-4">
                 Custom categories are saved to Firestore and appear on the nomination form alongside
                 the built-in eight.
@@ -2179,7 +2173,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                   value={newCat.tagline}
                   onChange={(e) => setNewCat({ ...newCat, tagline: e.target.value })}
                 />
-                <Button type="submit" className="bg-gold text-primary-foreground">
+                <Button type="submit" className="bg-primary text-primary-foreground">
                   Add
                 </Button>
               </form>
@@ -2283,7 +2277,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
               {/* Judges with incomplete work */}
               {Object.keys(judgeNotifications).length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-serif text-lg font-bold">Judges with Incomplete Submissions</h3>
+                  <h3 className="text-lg font-bold">Judges with Incomplete Submissions</h3>
                   <p className="text-xs text-muted-foreground">
                     Judges below have started scoring but haven't completed all criteria. Alert them to finish.
                   </p>
@@ -2327,7 +2321,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
               {/* Judge performance summary */}
               <div className="space-y-3">
-                <h3 className="font-serif text-lg font-bold">Judge Performance Summary</h3>
+                <h3 className="text-lg font-bold">Judge Performance Summary</h3>
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from(new Set(judgeScores.map(s => s.judgeEmail))).map(email => {
                     const judgeScores_ = judgeScores.filter(s => s.judgeEmail === email);
@@ -2358,7 +2352,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
               {/* All judge scores */}
               <div>
-                <h3 className="font-serif text-lg font-bold mb-3">All Judge Submissions</h3>
+                <h3 className="text-lg font-bold mb-3">All Judge Submissions</h3>
                 {judgeScores.length === 0 ? (
                   <Card className="p-12 text-center text-muted-foreground">
                     No judge scores submitted yet.
@@ -2381,7 +2375,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                               <p className="mt-0.5 text-xs text-muted-foreground">{s.categoryName}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="flex items-center gap-0.5 rounded-full bg-gold/10 px-3 py-1 font-bold text-yellow-700">
+                              <span className="flex items-center gap-0.5 rounded-full bg-primary/10 px-3 py-1 font-bold text-yellow-700">
                                 {Array.from({ length: 5 }).map((_, i) => (
                                   <Star
                                     key={i}
@@ -2431,7 +2425,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         {canManage && activeSection === "accounts" && (
           <div className="space-y-6">
             <Card className="p-6">
-              <h3 className="font-serif text-lg font-bold mb-1">Create new account</h3>
+              <h3 className="text-lg font-bold mb-1">Create new account</h3>
               <p className="text-xs text-muted-foreground mb-6">
                 Create new judge or admin accounts here. All accounts must use a strong password of at least 8 characters.
               </p>
@@ -2556,7 +2550,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                 <Button
                   type="submit"
                   disabled={creatingAccount}
-                  className="w-full bg-gold text-primary-foreground hover:bg-gold/90"
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {creatingAccount ? (
                     <>
@@ -2594,7 +2588,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         {canManage && activeSection === "audit-logs" && (
           <div className="space-y-6">
             <Card className="p-6">
-              <h3 className="font-serif text-lg font-bold mb-1">Audit Logs</h3>
+              <h3 className="text-lg font-bold mb-1">Audit Logs</h3>
               <p className="text-xs text-muted-foreground mb-6">
                 All administrative actions are logged for security and compliance. View recent activity including account creation, vote resets, exports, and configuration changes.
               </p>
@@ -2956,8 +2950,7 @@ function emptyForm(): WinnerFormState {
     name: "",
     categoryId: AWARD_CATEGORIES[0].id,
     categoryName: AWARD_CATEGORIES[0].name,
-    faculty: "",
-    programme: "",
+    department: "",
     quote: "",
     tier: "standard",
   };
@@ -2996,8 +2989,7 @@ function WinnersTab() {
       name: w.name,
       categoryId: w.categoryId,
       categoryName: w.categoryName,
-      faculty: w.faculty ?? "",
-      programme: w.programme ?? "",
+      department: w.department ?? "",
       quote: w.quote ?? "",
       tier: w.tier ?? "standard",
       imageBase64: w.imageBase64,
@@ -3047,8 +3039,7 @@ function WinnersTab() {
         name: form.name.trim(),
         categoryId: form.categoryId,
         categoryName: form.categoryName,
-        faculty: form.faculty?.trim() || undefined,
-        programme: form.programme?.trim() || undefined,
+        department: form.department?.trim() || undefined,
         quote: form.quote?.trim() || undefined,
         tier: form.tier,
         imageBase64: form.imageBase64,
@@ -3109,7 +3100,7 @@ function WinnersTab() {
           {seeding ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Trophy className="mr-1.5 h-3.5 w-3.5" />}
           Seed Historical Winners
         </Button>
-        <Button onClick={openAdd} className="bg-gold text-primary-foreground text-xs">
+        <Button onClick={openAdd} className="bg-primary text-primary-foreground text-xs">
           + Add Winner
         </Button>
       </div>
@@ -3149,7 +3140,7 @@ function WinnersTab() {
                     key={t.value}
                     type="button"
                     onClick={() => setField("tier", t.value)}
-                    className={`flex-1 py-1.5 text-xs font-medium transition ${form.tier === t.value ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`flex-1 py-1.5 text-xs font-medium transition ${form.tier === t.value ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     {t.label}
                   </button>
@@ -3183,27 +3174,13 @@ function WinnersTab() {
               </select>
             </div>
 
-            {/* Faculty */}
-            <div>
-              <Label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">Faculty / Campus</Label>
-              <Input
-                value={form.faculty ?? ""}
-                onChange={(e) => setField("faculty", e.target.value)}
-                placeholder="e.g. Health Sciences"
-                list="faculty-list"
-              />
-              <datalist id="faculty-list">
-                {FACULTIES.map((f) => <option key={f} value={f} />)}
-              </datalist>
-            </div>
-
-            {/* Programme */}
+            {/* Department */}
             <div className="sm:col-span-2">
-              <Label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">Programme / Qualification</Label>
+              <Label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">Department / Unit</Label>
               <Input
-                value={form.programme ?? ""}
-                onChange={(e) => setField("programme", e.target.value)}
-                placeholder="e.g. Bachelor of Health Sciences in Radiotherapy"
+                value={form.department ?? ""}
+                onChange={(e) => setField("department", e.target.value)}
+                placeholder="e.g. Student Enrolment Management"
               />
             </div>
 
@@ -3251,7 +3228,7 @@ function WinnersTab() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button type="submit" disabled={saving} className="bg-gold text-primary-foreground">
+            <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground">
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
               {editingId ? "Save changes" : "Add winner"}
             </Button>
@@ -3285,7 +3262,7 @@ function WinnersTab() {
           {years.map((year) => (
             <section key={year}>
               <div className="mb-3 flex items-center gap-3">
-                <h3 className="font-serif text-2xl font-bold opacity-30">{year}</h3>
+                <h3 className="text-2xl font-bold opacity-30">{year}</h3>
                 <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
                 <span className="text-xs text-muted-foreground">
                   {winners.filter((w) => w.year === year).length} winner{winners.filter((w) => w.year === year).length !== 1 ? "s" : ""}
@@ -3318,8 +3295,7 @@ function WinnersTab() {
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
-                          {w.categoryName}{w.faculty ? ` · ${w.faculty}` : ""}
-                          {w.programme ? ` — ${w.programme}` : ""}
+                          {w.categoryName}{w.department ? ` · ${w.department}` : ""}
                         </p>
                       </div>
                       <div className="flex gap-1 shrink-0">
@@ -3387,7 +3363,7 @@ function CategoryChip({
       onClick={onClick}
       className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition ${
         active
-          ? "border-primary bg-gold text-primary-foreground shadow-gold"
+          ? "border-primary bg-primary text-primary-foreground shadow-elegant"
           : "border-primary/20 bg-white text-muted-foreground hover:border-primary/50 hover:text-foreground"
       }`}
     >
@@ -3430,7 +3406,7 @@ function StatCard({
   return (
     <Card className={`p-5 ${accent}`}>
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className={`mt-1 font-serif text-3xl font-bold ${text || "text-foreground"}`}>{value}</p>
+      <p className={`mt-1 text-3xl font-bold ${text || "text-foreground"}`}>{value}</p>
     </Card>
   );
 }
@@ -3439,7 +3415,7 @@ function StatCard({
 function StatusBadge({ status }: { status: NominationStatus }) {
   if (status === "shortlisted")
     return (
-      <Badge className="bg-gold text-primary-foreground gap-1">
+      <Badge className="bg-primary text-primary-foreground gap-1">
         <CheckCircle2 className="h-3 w-3" />
         Shortlisted
       </Badge>
@@ -4084,16 +4060,16 @@ function NominationDetail({
                 {totalFiles} file{totalFiles !== 1 ? "s" : ""}
               </Badge>
             </div>
-            <SheetTitle className="font-serif text-2xl text-left">{nom.nomineeName}</SheetTitle>
+            <SheetTitle className="text-2xl text-left">{nom.nomineeName}</SheetTitle>
             <SheetDescription className="text-left text-sm text-muted-foreground">
-              {nom.nomineeEmail} · #{nom.studentNumber}
+              {nom.nomineeEmail} · #{nom.staffNumber}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Button
               type="button"
               size="sm"
-              className="bg-gold text-primary-foreground"
+              className="bg-primary text-primary-foreground"
               onClick={() => {
                 if (previewableFiles.length > 0) {
                   openPreview(previewableFiles[0].file.path);
@@ -4117,9 +4093,8 @@ function NominationDetail({
           {/* Key info grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
-              ["Faculty", nom.faculty],
-              ["Year", nom.yearOfStudy],
-              ["Student #", nom.studentNumber],
+              ["Department", nom.department],
+              ["Staff #", nom.staffNumber],
               ["Submitted", formatDate(nom.createdAt)],
             ].map(([k, v]) => (
               <div
@@ -4373,7 +4348,7 @@ function NominationDetail({
                 size="sm"
                 onClick={() => onUpdate(nom.id, "shortlisted")}
                 disabled={nom.status === "shortlisted"}
-                className="flex-1 bg-gold text-primary-foreground"
+                className="flex-1 bg-primary text-primary-foreground"
               >
                 <CheckCircle2 className="mr-1.5 h-4 w-4" /> Shortlist
               </Button>
@@ -4758,7 +4733,7 @@ function LeaderboardAdminPanel() {
           onClick={() => setSelectedCategory(null)}
           className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
             selectedCategory === null
-              ? "bg-gold text-primary-foreground"
+              ? "bg-primary text-primary-foreground"
               : "border border-primary/20 bg-white text-muted-foreground hover:border-primary/40"
           }`}
         >
@@ -4770,7 +4745,7 @@ function LeaderboardAdminPanel() {
             onClick={() => setSelectedCategory(cat)}
             className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
               selectedCategory === cat
-                ? "bg-gold text-primary-foreground"
+                ? "bg-primary text-primary-foreground"
                 : "border border-primary/20 bg-white text-muted-foreground hover:border-primary/40"
             }`}
           >

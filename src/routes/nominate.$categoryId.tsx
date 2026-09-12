@@ -1,4 +1,4 @@
-// /nominate/$categoryId — Dedicated nomination page, decoupled from homepage
+﻿// /nominate/$categoryId — Dedicated nomination page, decoupled from homepage
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,7 @@ import {
 import { addDoc, collection, serverTimestamp, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useNominationsOpen } from "@/lib/nomination-settings";
-import { AWARD_CATEGORIES, FACULTIES, type AwardCategory } from "@/data/awards";
+import { AWARD_CATEGORIES, ELIGIBILITY_QUESTIONS, type AwardCategory } from "@/data/awards";
 import { useDraftForm } from "@/hooks/useDraftForm";
 import { EvidenceUploader, type UploadedFile, type EvidenceUploads } from "@/components/EvidenceUploader";
 import { validateDocumentsForCategory, getMissingDocumentsSummary } from "@/lib/document-validation";
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/nominate/$categoryId")({
     const cat = AWARD_CATEGORIES.find((c) => c.id === params.categoryId);
     return {
       meta: [
-        { title: cat ? `Nominate · ${cat.name} · SALEA 2026` : "Nominate · SALEA 2026" },
+        { title: cat ? `Nominate · ${cat.name} · Registrar's Ambit Staff Awards` : "Nominate · Registrar's Ambit Staff Awards" },
       ],
     };
   },
@@ -53,22 +53,12 @@ export const Route = createFileRoute("/nominate/$categoryId")({
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const YEAR_OPTIONS = [
-  "1st Year",
-  "2nd Year",
-  "3rd Year",
-  "4th Year",
-  "Postgraduate / Honours",
-  "Masters / Doctoral",
-];
-
 const RELATIONSHIP_OPTIONS = [
   "Self-nomination",
-  "Peer / Fellow Student",
-  "Academic Staff Member",
-  "Student Governance / SRC",
-  "Residence Staff",
-  "Other University Staff",
+  "Colleague",
+  "Manager / Supervisor",
+  "HR",
+  "Other Staff Member",
 ];
 
 const STEP_LABELS = ["Nominee Details", "Your Details", "Nomination Questions"];
@@ -107,9 +97,11 @@ function NominatePage() {
 // ─── Form draft type ──────────────────────────────────────────────────────────
 
 type FormDraft = {
-  nominee: { name: string; studentNumber: string; email: string; faculty: string; year: string };
+  nominee: { name: string; staffNumber: string; email: string; department: string };
   nominator: { name: string; email: string; relationship: string };
   isSelfNomination: boolean;
+  /** Eligibility checkbox answers keyed by ELIGIBILITY_QUESTIONS id */
+  eligibility: Record<string, boolean>;
   answers: Record<string, string>;
   /** Uploaded evidence files: questionId → slotKey ("e0","e1",…) → files */
   uploads: Record<string, EvidenceUploads>;
@@ -122,9 +114,10 @@ type FormDraft = {
 // Using the same sessionId across submissions would cause Storage path collisions.
 function makeEmptyDraft(): FormDraft {
   return {
-    nominee: { name: "", studentNumber: "", email: "", faculty: "", year: "" },
+    nominee: { name: "", staffNumber: "", email: "", department: "" },
     nominator: { name: "", email: "", relationship: "" },
     isSelfNomination: false,
+    eligibility: {},
     answers: {},
     uploads: {},
     sessionId: crypto.randomUUID(),
@@ -156,9 +149,9 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
 
   // Autosave + versioning — scoped per category so drafts don't collide
   const { draft, setDraft, undo, clearDraft, canUndo, snapshotCount, status, lastSaved, hasDraft } =
-    useDraftForm<FormDraft>(`salea-draft-${category.id}`, initialDraft);
+    useDraftForm<FormDraft>(`raa-draft-${category.id}`, initialDraft);
 
-  const { nominee, nominator, isSelfNomination = false, answers, uploads = {} } = draft;
+  const { nominee, nominator, isSelfNomination = false, eligibility = {}, answers, uploads = {} } = draft;
   // Old drafts (saved before sessionId was added) won't have the field.
   // Fall back to this mount's fresh UUID so the storage path is never "undefined".
   const sessionId = draft.sessionId ?? initialDraft.sessionId;
@@ -198,10 +191,10 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
   function validateStep1() {
     return (
       nominee.name.trim() &&
-      nominee.studentNumber.trim() &&
+      nominee.staffNumber.trim() &&
       nominee.email.trim() &&
-      nominee.faculty &&
-      nominee.year
+      nominee.department.trim() &&
+      ELIGIBILITY_QUESTIONS.every((q) => eligibility[q.id])
     );
   }
 
@@ -316,13 +309,13 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       categoryName: category.name,
       nomineeName: nominee.name.trim(),
       nomineeEmail: nominee.email.trim(),
-      studentNumber: nominee.studentNumber.trim(),
-      faculty: nominee.faculty,
-      yearOfStudy: nominee.year,
+      staffNumber: nominee.staffNumber.trim(),
+      department: nominee.department.trim(),
       nominatorName: nominator.name.trim(),
       nominatorEmail: nominator.email.trim(),
       nominatorRelationship: nominator.relationship,
       isSelfNomination,
+      eligibility,
       answers,
       uploads,
       status: "pending",
@@ -356,9 +349,8 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
         categoryId: category.id,
         nomineeName: nominee.name.trim(),
         nomineeEmail: nominee.email.trim(),
-        studentNumber: nominee.studentNumber.trim(),
-        faculty: nominee.faculty,
-        yearOfStudy: nominee.year,
+        staffNumber: nominee.staffNumber.trim(),
+        department: nominee.department,
         nominatorName: nominator.name.trim(),
         nominatorEmail: nominator.email.trim(),
         nominatorRelationship: nominator.relationship,
@@ -485,7 +477,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
                 Nomination Period Has Closed
               </h2>
               <p className="text-red-800 mb-4">
-                Thank you for your interest! Nominations for SALEA 2026 are currently closed.
+                Thank you for your interest! Nominations for the Registrar's Ambit Staff Awards are currently closed.
                 No new nominations are being accepted at this time.
               </p>
               <p className="text-red-700 text-sm mt-4">
@@ -517,7 +509,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       {/* Page header — white card */}
       <div className="mb-6 rounded-2xl border border-gray-200 bg-white px-8 py-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">{category.short ?? category.id}</p>
-        <h1 className="mt-1 font-serif text-3xl font-bold text-black sm:text-4xl">{category.name}</h1>
+        <h1 className="mt-1 text-3xl font-bold text-foreground sm:text-4xl">{category.name}</h1>
         <p className="mt-2 text-gray-500">{category.tagline}</p>
       </div>
 
@@ -618,6 +610,8 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
               key="s1"
               nominee={nominee}
               onChange={(n) => setDraft((prev) => ({ ...prev, nominee: n }))}
+              eligibility={eligibility}
+              onEligibilityChange={(e) => setDraft((prev) => ({ ...prev, eligibility: e }))}
             />
           )}
           {step === 2 && (
@@ -720,14 +714,14 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
           )}
 
           {step < 3 ? (
-            <Button onClick={nextStep} className="bg-gold text-primary-foreground">
+            <Button onClick={nextStep} className="bg-primary text-primary-foreground">
               Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
             <Button 
               onClick={submit} 
               disabled={loading || !areAllDocumentsComplete()} 
-              className="bg-gold text-primary-foreground min-w-[180px]"
+              className="bg-primary text-primary-foreground min-w-[180px]"
               title={!areAllDocumentsComplete() ? "Please upload all required documents before submitting" : undefined}
             >
               {loading ? (
@@ -755,7 +749,7 @@ function NominationGuide({ isSelfNomination }: { isSelfNomination: boolean }) {
   const [open, setOpen] = useState(false);
 
   const nomSteps = [
-    { num: 1, title: "Nominee details (Step 1)", body: "Enter the student's full name, student number, DUT email address, faculty and year of study. All fields are required and will be verified by the admin team." },
+    { num: 1, title: "Nominee details (Step 1)", body: "Enter the staff member's full name, staff number, DUT email address, department/unit, and confirm the eligibility questions. All fields are required and will be verified by the admin team." },
     { num: 2, title: "Your details as nominator (Step 2)", body: "Tell us who you are and your relationship to the nominee (peer, lecturer, coach, etc.). If you are nominating yourself, tick the 'I am nominating myself' checkbox — your details will be filled in automatically." },
     { num: 3, title: "Answer the evaluation questions (Step 3)", body: "Each award category has specific questions. Answer them honestly and in detail. Where the question asks for evidence (transcripts, letters, photos), upload the files using the upload button next to that question." },
     { num: 4, title: "Upload supporting evidence", body: "You can upload PDFs, Word docs, images and more. Files are stored securely and are only visible to the admin team and shortlisting judges. Maximum 10 MB per file." },
@@ -763,7 +757,7 @@ function NominationGuide({ isSelfNomination }: { isSelfNomination: boolean }) {
   ];
 
   const selfSteps = [
-    { num: 1, title: "Tick 'I am nominating myself'", body: "On Step 2 (Your Details), tick the checkbox. Your name, student number, email and faculty from Step 1 will be copied across automatically — no double-entry needed." },
+    { num: 1, title: "Tick 'I am nominating myself'", body: "On Step 2 (Your Details), tick the checkbox. Your name and email from Step 1 will be copied across automatically — no double-entry needed." },
     { num: 2, title: "Your relationship is recorded as 'Self-nomination'", body: "This is perfectly allowed and encouraged when supported by a strong Portfolio of Evidence. Admin can see that the nomination is self-submitted." },
     { num: 3, title: "Answer honestly and with evidence", body: "Self-nominations are evaluated on the same criteria as other nominations. Strong evidence — transcripts, letters of support, event reports — significantly strengthens your submission." },
     { num: 4, title: "Get a supporting letter", body: "While not required, a letter from a lecturer, coach or community leader confirming your achievements can make your self-nomination much more competitive." },
@@ -814,9 +808,13 @@ function NominationGuide({ isSelfNomination }: { isSelfNomination: boolean }) {
 function StepNominee({
   nominee,
   onChange,
+  eligibility,
+  onEligibilityChange,
 }: {
-  nominee: { name: string; studentNumber: string; email: string; faculty: string; year: string };
+  nominee: { name: string; staffNumber: string; email: string; department: string };
   onChange: (v: typeof nominee) => void;
+  eligibility: Record<string, boolean>;
+  onEligibilityChange: (v: Record<string, boolean>) => void;
 }) {
   const set = (k: keyof typeof nominee, v: string) => onChange({ ...nominee, [k]: v });
   return (
@@ -828,9 +826,9 @@ function StepNominee({
       className="space-y-5"
     >
       <div>
-        <h2 className="font-serif text-xl font-bold">About the Nominee</h2>
+        <h2 className="text-xl font-bold">About the Nominee</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tell us about the student you're nominating.
+          Tell us about the staff member you're nominating.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -841,15 +839,15 @@ function StepNominee({
             placeholder="e.g. Thandeka Mhlongo"
           />
         </Field>
-        <Field label="Student Number *">
+        <Field label="Staff Number *">
           <Input
-            value={nominee.studentNumber}
-            onChange={(e) => set("studentNumber", e.target.value)}
+            value={nominee.staffNumber}
+            onChange={(e) => set("staffNumber", e.target.value)}
             placeholder="e.g. 21234567"
           />
         </Field>
       </div>
-      <Field label="Student Email Address *">
+      <Field label="Staff Email Address *">
         <Input
           type="email"
           value={nominee.email}
@@ -857,35 +855,31 @@ function StepNominee({
           placeholder="e.g. thandeka@dut.ac.za"
         />
       </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Faculty *">
-          <Select value={nominee.faculty} onValueChange={(v) => set("faculty", v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select faculty" />
-            </SelectTrigger>
-            <SelectContent>
-              {FACULTIES.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {f}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Year of Study *">
-          <Select value={nominee.year} onValueChange={(v) => set("year", v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select year" />
-            </SelectTrigger>
-            <SelectContent>
-              {YEAR_OPTIONS.map((y) => (
-                <SelectItem key={y} value={y}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+      <Field label="Department / Unit *">
+        <Input
+          value={nominee.department}
+          onChange={(e) => set("department", e.target.value)}
+          placeholder="e.g. Student Enrolment Management"
+        />
+      </Field>
+
+      <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <p className="text-sm font-semibold text-foreground">Eligibility *</p>
+        {ELIGIBILITY_QUESTIONS.map((q) => (
+          <div key={q.id} className="flex items-start gap-3">
+            <Checkbox
+              id={q.id}
+              checked={!!eligibility[q.id]}
+              onCheckedChange={(checked) =>
+                onEligibilityChange({ ...eligibility, [q.id]: !!checked })
+              }
+              className="mt-0.5 shrink-0"
+            />
+            <label htmlFor={q.id} className="cursor-pointer text-sm text-muted-foreground">
+              {q.label}
+            </label>
+          </div>
+        ))}
       </div>
     </motion.div>
   );
@@ -901,7 +895,7 @@ function StepNominator({
   onChange,
 }: {
   nominator: { name: string; email: string; relationship: string };
-  nominee: { name: string; email: string; studentNumber: string; faculty: string; year: string };
+  nominee: { name: string; email: string; staffNumber: string; department: string };
   isSelfNomination: boolean;
   onSelfNominationChange: (v: boolean) => void;
   onChange: (v: typeof nominator) => void;
@@ -916,7 +910,7 @@ function StepNominator({
       className="space-y-5"
     >
       <div>
-        <h2 className="font-serif text-xl font-bold">About You</h2>
+        <h2 className="text-xl font-bold">About You</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Tell us about yourself — the person submitting this nomination.
         </p>
@@ -1020,7 +1014,7 @@ function StepQuestions({
       className="space-y-10"
     >
       <div>
-        <h2 className="font-serif text-xl font-bold">Nomination Questions</h2>
+        <h2 className="text-xl font-bold">Nomination Questions</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Answer all questions below. Where a word limit applies, it is shown on the field.
         </p>
@@ -1091,10 +1085,10 @@ function SuccessScreen({ categoryName, onBack }: { categoryName: string; onBack:
       transition={{ duration: 0.3 }}
       className="flex flex-col items-center py-16 text-center"
     >
-      <div className="mb-6 grid h-20 w-20 place-items-center rounded-full bg-gold shadow-gold">
+      <div className="mb-6 grid h-20 w-20 place-items-center rounded-full bg-primary shadow-elegant">
         <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
       </div>
-      <h2 className="font-serif text-3xl font-bold">Nomination Submitted!</h2>
+      <h2 className="text-3xl font-bold">Nomination Submitted!</h2>
       <p className="mt-4 max-w-md text-muted-foreground leading-relaxed">
         Your nomination for the{" "}
         <strong className="text-foreground">{categoryName}</strong> has been received. The Awards
@@ -1103,7 +1097,7 @@ function SuccessScreen({ categoryName, onBack }: { categoryName: string; onBack:
       <p className="mt-3 text-sm text-muted-foreground">
         Thank you for recognising excellence at DUT.
       </p>
-      <Button onClick={onBack} className="mt-10 bg-gold text-primary-foreground gap-2">
+      <Button onClick={onBack} className="mt-10 bg-primary text-primary-foreground gap-2">
         <Home className="h-4 w-4" /> Back to Award Categories
       </Button>
     </motion.div>

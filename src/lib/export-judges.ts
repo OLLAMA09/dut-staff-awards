@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 
 interface JudgeReportData {
   participant: string;
-  faculty: string;
+  department: string;
   category: string;
   "Judge Breakdown"?: string;
   "Total Score"?: number;
@@ -87,7 +87,7 @@ export function exportJudgesToExcel(judgeScores: JudgeScore[], nominations: any[
 
         return {
           participant: item.nomineeName,
-          faculty: nom?.faculty || "N/A",
+          department: nom?.department || "N/A",
           category: item.categoryName.toUpperCase(),
           "Judge Breakdown": item.judges
             .map((j, i) => `${j} (${item.scores[i]})`)
@@ -156,7 +156,7 @@ export function exportByCategory(judgeScores: JudgeScore[], nominations: any[]) 
 
         return {
           Participant: score.nomineeName,
-          Faculty: nom?.faculty || "N/A",
+          Department: nom?.department || "N/A",
           Judge: score.judgeEmail,
           Score: score.score,
           Submitted: submitted,

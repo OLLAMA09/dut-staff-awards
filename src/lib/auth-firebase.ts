@@ -1,4 +1,4 @@
-// Firebase Auth service — SALEA 2026
+// Firebase Auth service — Registrar's Ambit Staff Awards
 // Email/password sign-in, sign-up and sign-out helpers
 
 import {

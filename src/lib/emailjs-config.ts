@@ -14,7 +14,8 @@ const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'YOUR_SERV
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID';
 
 // Production site URL for nomination links
-const SITE_URL = 'https://salea2026.netlify.app';
+// TODO: update once the Registrar's Ambit Staff Awards site is deployed.
+const SITE_URL = 'https://registrars-ambit-staff-awards.netlify.app';
 
 let initialized = false;
 

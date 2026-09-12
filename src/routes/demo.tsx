@@ -1,4 +1,4 @@
-// /demo — Interactive sandbox for practising judge scoring (no Firestore writes)
+﻿// /demo — Interactive sandbox for practising judge scoring (no Firestore writes)
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/demo")({
   component: DemoPage,
   head: () => ({
     meta: [
-      { title: "Demo Sandbox · SALEA 2026" },
+      { title: "Demo Sandbox · Registrar's Ambit Staff Awards" },
       { name: "description", content: "Practice the judge rating flow with dummy nominees." },
     ],
   }),
@@ -44,9 +44,9 @@ export const Route = createFileRoute("/demo")({
 type DemoNominee = {
   id: string;
   name: string;
-  studentNumber: string;
-  faculty: string;
-  year: string;
+  staffNumber: string;
+  department: string;
+  position: string;
   category: string;
   categoryId: string;
   nominatorName: string;
@@ -65,128 +65,133 @@ const DEMO_NOMINEES: DemoNominee[] = [
   {
     id: "demo-1",
     name: "Ayanda Khumalo",
-    studentNumber: "21001234",
-    faculty: "Faculty of Engineering & the Built Environment",
-    year: "3rd Year — BSc Civil Engineering",
-    category: "Dean of Students Prestigious Award",
-    categoryId: "dean",
+    staffNumber: "21001234",
+    department: "Student Enrolment Management",
+    position: "Senior Enrolment Officer",
+    category: "Living the Values Staff Award",
+    categoryId: "living-values",
     nominatorName: "Prof. S. Govender",
-    nominatorRelationship: "Lecturer & Academic Advisor",
+    nominatorRelationship: "Manager / Supervisor",
     answers: {
-      "dean-a1":
-        "Ayanda has maintained an academic average of 78% for three consecutive semesters and has appeared on the Dean's List in 2024 and 2025. She balances a demanding Engineering curriculum with extensive extracurricular commitments without any academic compromise. Her lecturers consistently note her proactive approach in tutorials and her willingness to assist peers who are struggling.",
-      "dean-b1":
-        "As President of the DUT Engineering Society (2024–2025), Ayanda led a committee of 14 students to deliver eight technical workshops attended by over 300 students. Her flagship initiative, the WomenInSTEM Conference, brought industry speakers from Arup, WSP and the SANRAL Graduate Programme to campus. 120 students attended and 18 women were connected with internship opportunities directly from the event. She also designed a peer-mentoring pilot in which third-year students are paired with first-years, resulting in a measured 12% improvement in first-year pass rates in Engineering Mathematics.",
-      "dean-b2":
-        "Ayanda created a WhatsApp study group network across five Engineering modules, reaching 180 students. She hosts weekly 'Tutoring Tuesday' sessions from 17:00–19:00 voluntarily, and three students who were at risk of academic exclusion last semester passed after regular engagement with her sessions. She leads by example — she never misses a session, prepares structured material, and follows up individually with students who fall behind.",
-      "dean-c1":
-        "Ayanda volunteers every Saturday morning from 08:00–11:00 at the Umlazi Youth Centre, where she runs a Coding & Problem-Solving club for Grade 10–12 learners. The aim is to demystify STEM careers for learners from previously disadvantaged communities and to bridge the gap between schooling and tertiary-level thinking. The club has grown from 9 to 34 learners over 8 months.",
-      "dean-c2":
-        "Through her Saturday coding sessions, Ayanda has introduced 34 secondary school learners to basic programming and engineering design thinking. Three of these learners have already applied to DUT for the 2027 cohort and cited Ayanda's sessions as their primary motivation. On campus, her peer-mentoring programme has raised first-year retention awareness and created a culture of 'senior students giving back' within the Engineering faculty.",
-      "dean-c3":
-        "Ayanda co-chairs the DUT SRC's Academic Transformation Portfolio, where she advocates for extended library hours during examination periods and the provision of data-free access to course materials for students in financial distress. She led a petition signed by 620 students that resulted in the Faculty of Engineering agreeing to host additional consultation sessions before major assessments.",
-      "dean-d1":
-        "Ayanda developed a mobile-friendly 'Engineering Buddy' app prototype (built in React Native) that matches first-year students with senior mentors based on their module choices and learning style preferences. The app was presented at the DUT Innovation Expo 2025 and awarded the Best Student Digital Solution prize by the judges panel. She is currently collaborating with the DUT IT department to explore formal adoption.",
-      "dean-f1":
-        "Ayanda embodies SALEA's values through consistent action rather than position. She refuses leadership that is performative — every initiative she has led has a measurable outcome and a handover plan so it continues after she graduates. She has never used her platform to self-promote but instead consistently redirects recognition to her teams and the students she serves.",
-      "dean-f2":
-        "Ayanda has actively promoted DUT's Living Values Framework through three documented initiatives: (1) her WomenInSTEM conference, which explicitly addressed Respect, Inclusivity and Excellence; (2) the peer-mentoring programme, grounded in Community and Ubuntu; and (3) a campus tree-planting drive in partnership with the Facilities Management department, reflecting Responsibility and Sustainability.",
-      "dean-g1":
-        "When Ayanda arrived at DUT she was the first in her family to attend university. She failed two modules in her first semester due to culture shock and financial pressure, and was placed on academic probation. Rather than withdrawing, she sought support from the Student Counselling Centre, restructured her study approach, and recovered fully. That experience is why she built the peer-mentoring programme — she knows first-hand that the right support at the right time changes trajectories. She has grown from a student in academic difficulty to the Dean's List, and from a silent observer to a campus leader who changes systems.",
+      "lv-1":
+        "Ayanda has consistently demonstrated Accountability, Respect, Integrity, Honesty and Transparency across three years in Enrolment Management. She takes ownership of every application in her queue, corrects errors proactively rather than waiting for escalation, and is known for giving students the same courteous, transparent explanation whether the news is good or bad.",
+      "lv-2":
+        "Ayanda redesigned the walk-in query process for prospective students, cutting average wait time from 45 to 12 minutes. The change has been adopted department-wide and continues to reduce complaint volumes eighteen months after implementation — a lasting, measurable improvement beyond her own desk.",
+      "lv-3":
+        "During the 2025 registration peak, Ayanda voluntarily covered two colleagues' queues during a staffing shortage without being asked, coordinating a fair workload split so no student was left waiting. Peer feedback consistently describes her as the person who keeps the team's shared goals on track.",
+      "lv-4":
+        "Ayanda mentors two junior enrolment officers informally, has volunteered to lead the unit's paperless-filing sustainability initiative, and was commended in her 2025 performance review for taking responsibility beyond her job description.",
     },
   },
   {
     id: "demo-2",
     name: "Sipho Ndlovu",
-    studentNumber: "22005678",
-    faculty: "Faculty of Accounting & Informatics",
-    year: "4th Year — BCom Sports Management",
-    category: "Sportsmanship Award",
-    categoryId: "sport",
+    staffNumber: "22005678",
+    department: "Facilities & Campus Operations",
+    position: "Operations Manager",
+    category: "Best Performing Unit Award",
+    categoryId: "best-performing-unit",
     nominatorName: "Coach T. Mthembu",
-    nominatorRelationship: "Head Basketball Coach — DUT Sport",
+    nominatorRelationship: "Colleague",
     answers: {
-      "sport-1":
-        "Sipho has captained the DUT Men's Basketball team since 2024. He is known campus-wide for his conduct on and off the court — he has never received a technical foul in two seasons of competitive play, which is notable in a contact sport. After the USSA semi-final loss in 2025, Sipho gathered both teams on court for a joint prayer and mutual acknowledgment, a gesture that was photographed and shared by the USSA communications team as an example of sportsmanship. His academic average of 68% exceeds the required 65% minimum.",
-      "sport-2":
-        "Sipho has served as team captain for two consecutive seasons. In addition to leading by example in training (he is consistently the first to arrive and last to leave), he introduced a structured weekly captain's meeting to align training goals with each player's academic schedule. He liaised with the Faculty of Accounting & Informatics to arrange supplemental tutoring for three players who were at risk of missing the academic eligibility threshold for USSA.",
-      "sport-3":
-        "Under Sipho's captaincy, the team's internal cohesion has measurably improved. Dropout from training sessions fell from 40% to 8% between 2024 and 2025. He initiated a 'Basketball for Basics' programme where team members visit three local primary schools each term to coach fundamentals. Over 200 learners have participated. His coach notes that he resolves locker-room conflict through structured conversation rather than hierarchy, and that the team culture reflects his values of fairness and accountability.",
-      "sport-4":
-        "Sipho's impact extends to the way DUT sport is perceived in the community. Parents of learners from his community coaching sessions have written to DUT management praising his conduct and the positive influence he has had on their children. Within the university, he has been invited to speak at two faculty orientation sessions about balancing sport with academic responsibility — a testament to the trust placed in him by both sport and academic staff.",
+      "bpu-1":
+        "Sipho's unit rebuilt its annual operating plan directly around ENVISION2030 priorities, aligning maintenance scheduling and space utilisation reporting to the DUT Way's efficiency and sustainability goals, with quarterly reviews tracked against those targets.",
+      "bpu-2":
+        "The unit's average work-order turnaround time improved from 6 days to 2.5 days over the past year, verified through the internal facilities ticketing system and confirmed in the Q3 2025 service audit.",
+      "bpu-3":
+        "A campus-wide satisfaction survey showed a 22-point improvement in staff and student satisfaction with facilities responsiveness, directly attributable to the unit's new triage and prioritisation system.",
+      "bpu-4":
+        "The unit introduced a digital work-order and asset-tracking system replacing a paper-based process, reducing lost requests to near zero and giving management real-time visibility into outstanding jobs.",
+      "bpu-5":
+        "Sipho's unit has an unbroken record of clean internal audits and is frequently cited by other departments as a model of professionalism and responsiveness, per testimonials collected for this nomination.",
     },
   },
   {
     id: "demo-3",
     name: "Naledi Dube",
-    studentNumber: "23009012",
-    faculty: "Faculty of Health Sciences",
-    year: "2nd Year — Nursing Science",
-    category: "Promotion of Healthy Lifestyle Award",
-    categoryId: "wellness",
+    staffNumber: "23009012",
+    department: "Human Resources",
+    position: "HR Business Partner",
+    category: "Leadership & Mentorship Award",
+    categoryId: "leadership-mentorship",
     nominatorName: "Ms. P. Pillay",
-    nominatorRelationship: "DUT Student Wellness Manager",
+    nominatorRelationship: "HR",
     answers: {
-      "well-1":
-        "Naledi conceptualised and delivered DUT's first student-led Mental Health Awareness Week in October 2025. Over five days she coordinated 12 sessions covering: depression and anxiety recognition, study-stress management, healthy sleep hygiene, nutrition on a student budget, and peer-support skills. She recruited 6 guest facilitators — 4 from the DUT Counselling Centre and 2 external clinical psychologists who volunteered their time. Total attendance across all sessions was 512 students. She also co-authored a 24-page 'DUT Student Wellness Handbook' that was formally adopted by the DUT Counselling Centre and distributed to all first-year students in 2026.",
-      "well-2":
-        "A post-event survey completed by 318 attendees showed: 87% reported feeling better equipped to manage academic stress after attending; 62% said they had spoken to a peer about mental health for the first time after the awareness week; 34 students self-referred to the DUT Counselling Centre directly following Naledi's sessions — a 280% increase compared to the same period in 2024. The Counselling Centre confirmed that referral volume sustained for 6 weeks after the event, indicating lasting awareness rather than a temporary spike.",
-      "well-3":
-        "Naledi partnered with the DUT Sports Department to integrate mental wellness messaging into pre-season athlete orientations. She collaborated with the Residence Life unit to train 18 residence advisors as Mental Health First Aiders using the SADAG youth toolkit. She also engaged the Faculty of Health Sciences to offer academic credit for students who completed the peer-support training module, demonstrating an ability to work across institutional structures to embed wellness sustainability.",
+      "lm-1":
+        "Naledi has led the HR Business Partner function for the Registrar's Ambit with consistent integrity, including flagging and correcting a payroll discrepancy that could have disadvantaged twelve junior staff members, even though doing so added significant work to her own quarter.",
+      "lm-2":
+        "She formally mentors three junior HR administrators through structured monthly one-on-ones with documented development goals; two of her mentees have since been promoted within the division.",
+      "lm-3":
+        "Colleagues across departments credit Naledi with improving the tone and clarity of HR communications, and several have adopted her plain-language template for policy updates in their own units.",
+      "lm-4":
+        "Naledi designed and now runs a quarterly 'HR Foundations' workshop series aimed at developing future people-managers across the Registrar's Ambit, with 40 staff having completed the programme to date.",
+      "lm-5":
+        "Her leadership style — transparent, consistent and development-focused — was cited by name in this year's staff engagement survey as a reason respondents felt supported in their career growth.",
     },
-    evidenceFiles: [
-      { name: "Mental-Health-Awareness-Week-Event-Poster.pdf", label: "Event Poster", type: "pdf" },
-      { name: "Mental-Health-Awareness-Week-Attendance-Register.pdf", label: "Attendance Register", type: "pdf" },
-      { name: "DUT-Student-Wellness-Handbook.pdf", label: "DUT Student Wellness Handbook", type: "pdf" },
-      { name: "Post-Event-Survey-Report.pdf", label: "Post-Event Survey Report", type: "pdf" },
-      { name: "Counselling-Centre-Referral-Data.pdf", label: "Counselling Centre Referral Data", type: "pdf" },
-      { name: "Collaboration-Plan-Sports-Department.pdf", label: "Collaboration Plan — Sports Department", type: "pdf" },
-      { name: "MHFirstAider-Training-Attendance-Register.pdf", label: "MH First Aider Training Register", type: "pdf" },
-    ],
   },
   {
     id: "demo-4",
     name: "Thandeka Mhlongo",
-    studentNumber: "21003456",
-    faculty: "Faculty of Arts & Design",
-    year: "Honours — Visual Communication",
-    category: "Exemplary Society/Club/Structure Award",
-    categoryId: "society",
+    staffNumber: "21003456",
+    department: "Student Records & Academic Administration",
+    position: "Records Officer",
+    category: "Rising Star Staff Award",
+    categoryId: "rising-star",
     nominatorName: "Dr. A. Nxumalo",
-    nominatorRelationship: "Head of Department — Arts & Design",
+    nominatorRelationship: "Manager / Supervisor",
     answers: {
-      "soc-1":
-        "The DUT Afro-Arts Society under Thandeka's leadership delivered three flagship leadership initiatives: (1) a 12-week 'Creative Leadership Accelerator' programme upskilling 45 student artists in business, branding and negotiation; (2) a campus-wide 'African Heritage Month' spanning 18 events across 3 weeks; and (3) 'ArtMentor', which pairs Visual Communication students with first-year students from disadvantaged schooling backgrounds. Each initiative had a documented plan, post-activity report and measurable attendance register.",
-      "soc-2":
-        "The Society hosted DUT's largest student-organised gallery exhibition to date — 'Izimbali 2025' — displaying work from 67 student artists. The exhibition drew 1 200 attendees over three days, was covered by two national design publications, and resulted in four students securing commissions from attendees. The Society also generated R50 000 in sponsorship from local design studios and a national print company, enabling four bursaries for financially distressed Arts students.",
-      "soc-3":
-        "Thandeka deliberately designed the Society's membership and programming to be cross-cultural and cross-campus. Membership spans all six faculties. The Society runs all communications in English and isiZulu and has begun Afrikaans translations. Its events programme includes explicit sessions on cultural exchange, and all exhibitions actively curate work representing a diversity of ethnicities, identities and lived experiences. 94% of member survey respondents in 2025 agreed that the Society 'makes them feel seen and valued'.",
-      "soc-4":
-        "Thandeka introduced a 'Design Hackathon' format — a 48-hour creative sprint in which mixed teams solve real community briefs submitted by Durban NGOs. Three NGOs submitted briefs; teams produced brand identities and social media packages that were actually adopted. This format is novel in the DUT student society space and has since been adopted by two other societies with Thandeka's mentorship.",
-      "soc-5":
-        "The Society has active memoranda of understanding with: DUT Marketing & Communications (for co-production of campus visual content); the Durban Design Week organising committee (joint programming for three years running); and the KwaZulu-Natal Department of Arts & Culture (for graduate showcase support). Thandeka led all three partnership negotiations personally.",
-      "soc-6":
-        "Documented outcomes for the 2025 academic year: membership grew from 40 to 120 (200%); revenue generated — R50 000 (sponsorship) + R12 000 (workshop fees); 4 student bursaries awarded; 67 artists exhibited publicly; 3 community briefs successfully delivered to NGOs; 4 members secured professional commissions; 2 other societies adopted the Hackathon format; Society shortlisted for SASCO National Cultural Excellence Award.",
+      "rs-1":
+        "In her first two years, Thandeka rebuilt the academic records verification checklist, closing a data-integrity gap that had caused repeated transcript-reissue errors, and was formally commended in a letter from the Deputy Registrar.",
+      "rs-2":
+        "She independently identified and resolved a recurring bug in the records export process that had gone unnoticed for over a year, saving the team an estimated four hours of manual correction per week.",
+      "rs-3":
+        "Her streamlined transcript-request process was adopted university-wide after a successful pilot in her own unit, directly improving turnaround time for both students and alumni.",
+      "rs-4":
+        "Thandeka has completed two CPD-accredited records-management courses since joining and is currently enrolled in a part-time diploma in information management, fully self-funded.",
+      "rs-5":
+        "Her supervisor's report highlights her consistent honesty in escalating errors immediately rather than concealing them, directly reflecting DUT's value of transparency.",
     },
   },
   {
     id: "demo-5",
     name: "Lwazi Sithole",
-    studentNumber: "22007890",
-    faculty: "Faculty of Management Sciences",
-    year: "1st Year — BCom Business Administration",
-    category: "Emerging Leader (First Year Student)",
-    categoryId: "emerging",
+    staffNumber: "22007890",
+    department: "Registrar's Office & International Office",
+    position: "Project Coordinator",
+    category: "Best Collaboration Award",
+    categoryId: "best-collaboration",
     nominatorName: "Ms. N. Zulu",
-    nominatorRelationship: "Peer & Class Representative Coordinator",
+    nominatorRelationship: "Colleague",
     answers: {
-      "em-0": "Proof of registration attached — DUT Student Registration Certificate 2026, issued 10 January 2026. Student number 22007890 confirmed enrolled in BCom Business Administration, Faculty of Management Sciences.",
-      "em-1":
-        "Within his first four weeks at DUT, Lwazi volunteered to be class representative for his BCom cohort of 180 students. He immediately established a structured communication system — a WhatsApp broadcast channel with daily reminders, a shared Google Calendar for assessment deadlines and a bi-weekly 'Class State of Affairs' meeting with the faculty administrator. He also founded the DUT Mathematics Peer Tutoring Network after identifying that 40% of his cohort had failed their first Business Mathematics test. Within one month, 60 students had registered and 3 senior volunteers had joined. First-year Mathematics pass rates in his module improved by 18% between Test 1 and Test 2.",
-      "em-2":
-        "Lwazi's most defining act of integrity occurred when he discovered that a group of students had obtained a previous year's test paper and were planning to use it in preparation for an assessment. Rather than ignoring the situation, he privately spoke with the group, explained the academic integrity implications and supported them in approaching the lecturer voluntarily to disclose what had happened. The lecturer confirmed that Lwazi's intervention prevented a potential misconduct proceeding. He was commended by the Head of Department for his moral courage. He has also been consistently transparent in his class representative communications — if he cannot answer a question or follow up on a request, he says so and provides a timeline for response.",
-      "em-3":
-        "Lwazi organised three consecutive weekend community clean-up campaigns in the Umlazi G Section area where many DUT commuter students live. He recruited 80 volunteers (a mix of DUT students and community members), secured refuse bags and gloves through the eThekwini Municipality's ward councillor, and arranged media coverage from a community radio station. The initiative was adopted by the ward as an ongoing monthly programme, with Lwazi training two community volunteers to continue the coordination independently. On campus, his tutoring network has directly helped 12 students avoid academic exclusion in their first semester.",
+      "bc-1":
+        "Lwazi coordinated a joint project between the Registrar's Office and the International Office to digitise the credential-verification process for incoming international students, aligning two previously siloed workflows into one system.",
+      "bc-2":
+        "The two teams held weekly joint stand-ups throughout the six-month project, with shared documentation and a single point of accountability, which both team leads credit for the project finishing on schedule.",
+      "bc-3":
+        "The project required reconciling different data standards used by the Registrar's Office and the International Office, and Lwazi personally negotiated the shared data schema that both departments now use.",
+      "bc-4":
+        "International student credential-verification time dropped from an average of 11 working days to 3, with the joint process now documented as the standard operating procedure for both departments.",
+    },
+  },
+  {
+    id: "demo-6",
+    name: "Zanele Mkhize",
+    staffNumber: "24001122",
+    department: "Registrar's Ambit — Central Administration",
+    position: "Deputy Registrar's Assistant",
+    category: "Outstanding Registrars Staff Award",
+    categoryId: "outstanding-registrars",
+    nominatorName: "Mr. K. Naidoo",
+    nominatorRelationship: "Manager / Supervisor",
+    answers: {
+      "or-1":
+        "Zanele routinely stays back after hours during peak registration periods to personally assist students who would otherwise miss enrolment deadlines, an effort documented in multiple unsolicited student thank-you emails.",
+      "or-2":
+        "She designed a simple visual queue-tracking board — since adopted by two other units — that gives students a clear, real-time sense of their place in the process, reducing anxiety and repeat queries.",
+      "or-3":
+        "A post-registration survey attributed a 15-point increase in student satisfaction with the registration experience directly to the queue-visibility initiative Zanele introduced.",
+      "or-4":
+        "Zanele coordinated directly with Student Finance and IT Services to resolve a cross-system data-sync issue that was blocking several hundred students from completing registration, resolving it within a single day through personal follow-up with both departments.",
     },
   },
 ];
@@ -320,7 +325,7 @@ function SubmissionViewer({ nominee }: { nominee: DemoNominee }) {
       <div className="sticky top-0 z-10 border-b border-primary/15 bg-white/95 backdrop-blur px-6 py-4">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary">
           <FileText className="h-3.5 w-3.5" />
-          Nomination Submission · SALEA 2026
+          Nomination Submission · Registrar's Ambit Staff Awards
           <span className="ml-auto rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700">Demo</span>
         </div>
       </div>
@@ -334,15 +339,15 @@ function SubmissionViewer({ nominee }: { nominee: DemoNominee }) {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nominee</p>
                 <p className="font-semibold text-foreground">{nominee.name}</p>
-                <p className="text-xs text-muted-foreground">#{nominee.studentNumber}</p>
+                <p className="text-xs text-muted-foreground">#{nominee.staffNumber}</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Programme</p>
-                <p className="font-semibold text-foreground">{nominee.year}</p>
-                <p className="text-xs text-muted-foreground">{nominee.faculty.replace("Faculty of ", "")}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Position</p>
+                <p className="font-semibold text-foreground">{nominee.position}</p>
+                <p className="text-xs text-muted-foreground">{nominee.department}</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
@@ -561,7 +566,7 @@ function DemoPage() {
                       <p className="flex items-center gap-2 font-bold text-foreground">
                         <MessageSquare className="h-4 w-4 text-primary" /> Your Evaluation
                       </p>
-                      <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${overallPreview > 0 ? "bg-gold/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${overallPreview > 0 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
                         <Star className={`h-3.5 w-3.5 ${overallPreview > 0 ? "fill-yellow-400 text-yellow-400" : ""}`} />
                         {overallPreview.toFixed(1)}/5
                       </div>
@@ -622,7 +627,7 @@ function DemoPage() {
                     <Button
                       onClick={submitScore}
                       disabled={saving || ratedCount === 0}
-                      className="w-full bg-gold text-primary-foreground disabled:opacity-50"
+                      className="w-full bg-primary text-primary-foreground disabled:opacity-50"
                       size="lg"
                     >
                       {saving ? (
@@ -675,10 +680,10 @@ function DemoPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <div className="mb-2 flex items-center gap-2">
               <Play className="h-4 w-4 text-primary" />
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">SALEA 2026 · Demo Sandbox</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards · Demo Sandbox</p>
             </div>
-            <h1 className="font-serif text-4xl font-bold sm:text-5xl">
-              Practice <span className="text-gradient-gold">Judge Scoring</span>
+            <h1 className="text-4xl font-bold sm:text-5xl">
+              Practice <span className="text-primary">Judge Scoring</span>
             </h1>
             <p className="mt-3 max-w-xl text-base text-muted-foreground">
               Test-drive the full judge panel with five realistic demo nominees. Read their complete nomination submissions, rate each criterion, and see your scores update live on the leaderboard. <strong className="text-foreground">All data stays in this sandbox — nothing is saved to Firestore.</strong>
@@ -722,7 +727,7 @@ function DemoPage() {
           <div className="mb-6 flex overflow-hidden rounded-xl border border-primary/20 bg-muted/30 w-fit">
             {(["nominees", "leaderboard"] as const).map((t) => (
               <button key={t} type="button" onClick={() => setTab(t)}
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition capitalize ${tab === t ? "bg-gold text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}>
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition capitalize ${tab === t ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}>
                 {t === "nominees" ? <><Star className="h-4 w-4" /> Rate Nominees</> : (
                   <><BarChart3 className="h-4 w-4" /> Leaderboard
                     {totalRated > 0 && <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold">{totalRated}</span>}
@@ -742,7 +747,7 @@ function DemoPage() {
                     return (
                       <motion.button key={n.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                         type="button" onClick={() => openNominee(n)}
-                        className="group text-left rounded-2xl border border-primary/20 bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+                        className="group text-left rounded-2xl border border-primary/20 bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                         <div className="mb-3 flex items-center justify-between gap-2">
                           {scored ? (
                             <span className="flex items-center gap-0.5 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-700">
@@ -753,9 +758,9 @@ function DemoPage() {
                           )}
                           <span className="text-[11px] text-muted-foreground">{cats.length} criteria</span>
                         </div>
-                        <h3 className="font-serif text-lg font-bold leading-snug group-hover:text-primary transition-colors">{n.name}</h3>
+                        <h3 className="text-lg font-bold leading-snug group-hover:text-primary transition-colors">{n.name}</h3>
                         <p className="mt-1 text-xs text-primary font-medium">{n.category}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{n.year} · {n.faculty.replace("Faculty of ", "")}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{n.position} · {n.department}</p>
                         <p className="mt-2 text-xs text-muted-foreground">Nominated by {n.nominatorName} ({n.nominatorRelationship})</p>
                         {scored ? (
                           <div className="mt-3 flex gap-0.5">
@@ -776,7 +781,7 @@ function DemoPage() {
               <motion.div key="leaderboard" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="max-w-2xl">
                 <div className="mb-4 flex items-center gap-3">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  <h2 className="font-serif text-xl font-bold">Demo Leaderboard</h2>
+                  <h2 className="text-xl font-bold">Demo Leaderboard</h2>
                   <Badge variant="outline" className="border-amber-300 text-amber-700 text-[11px]">Practice only</Badge>
                 </div>
                 <p className="mb-5 text-sm text-muted-foreground">Ranked by overall weighted score. In the real leaderboard, all judges' scores are summed.</p>
@@ -790,7 +795,7 @@ function DemoPage() {
                 {totalRated === DEMO_NOMINEES.length && (
                   <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5 text-center">
                     <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-500" />
-                    <p className="font-serif font-bold text-green-800">All nominees rated!</p>
+                    <p className="font-bold text-green-800">All nominees rated!</p>
                     <p className="mt-1 text-xs text-green-600">You're ready for the real panel. <Link to="/judge" className="font-semibold underline">Go to Judge Panel →</Link></p>
                   </div>
                 )}

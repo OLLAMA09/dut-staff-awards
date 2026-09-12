@@ -41,13 +41,13 @@ describe("getCriteriaForCategory", () => {
     expect(criteria.length).toBeGreaterThan(0);
   });
 
-  it("returns different criteria for dean vs sport (category-specific behaviour)", () => {
-    const dean = getCriteriaForCategory("dean");
-    const sport = getCriteriaForCategory("sport");
+  it("returns different criteria for living-values vs best-collaboration (category-specific behaviour)", () => {
+    const livingValues = getCriteriaForCategory("living-values");
+    const bestCollaboration = getCriteriaForCategory("best-collaboration");
     // They should have different ids at minimum
-    const deanIds = dean.map((c) => c.id).sort().join(",");
-    const sportIds = sport.map((c) => c.id).sort().join(",");
-    expect(deanIds).not.toBe(sportIds);
+    const livingValuesIds = livingValues.map((c) => c.id).sort().join(",");
+    const bestCollaborationIds = bestCollaboration.map((c) => c.id).sort().join(",");
+    expect(livingValuesIds).not.toBe(bestCollaborationIds);
   });
 
   it("each criterion satisfies the EvaluationCriterion interface (id + label required)", () => {

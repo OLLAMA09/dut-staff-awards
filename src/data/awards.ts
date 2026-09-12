@@ -35,82 +35,70 @@ export type EvaluationCriterion = {
 };
 
 // ─── Per-category criteria ────────────────────────────────────────────────────
+// Weights mirror the official Registrar's Ambit evaluation forms (weight % per
+// criterion, 1–5 rating scale).
 
-const CRITERIA_DEAN: EvaluationCriterion[] = [
-  { id: "dean-c1", label: "Academic Excellence", description: "Has the nominee demonstrated a strong academic record (75%+ aggregate)? Are their achievements well-evidenced?", max: 5, weight: 2 },
-  { id: "dean-c2", label: "Leadership & Mentorship", description: "Quality and breadth of leadership roles held and impact on peers through mentorship.", max: 5, weight: 2 },
-  { id: "dean-c3", label: "Community Service & Outreach", description: "Depth and sustained nature of community or campus outreach contributions.", max: 5, weight: 1 },
-  { id: "dean-c4", label: "Innovation & Creativity", description: "Has the nominee introduced original ideas or improved processes at DUT or in the community?", max: 5, weight: 1 },
-  { id: "dean-c5", label: "Integrity & Values", description: "Does the nominee embody SALEA values: excellence, integrity, leadership and DUT's Living Values Framework?", max: 5, weight: 1 },
-  { id: "dean-c6", label: "Personal Growth", description: "Evidence of deliberate personal development, resilience and overcoming challenges.", max: 5, weight: 1 },
+const CRITERIA_LIVING_VALUES: EvaluationCriterion[] = [
+  { id: "lv-c1", label: "Core Values", description: "Which University core value(s) (Accountability, Respect, Integrity, Honesty, Transparency) did the nominee consistently demonstrate?", max: 5, weight: 25 },
+  { id: "lv-c2", label: "Lasting Impact", description: "Did the nominee's actions make a positive and lasting impact in their unit or department, or beyond?", max: 5, weight: 25 },
+  { id: "lv-c3", label: "Teamwork & Fairness", description: "Evidence of teamwork, respect, fairness, and contribution to shared goals.", max: 5, weight: 25 },
+  { id: "lv-c4", label: "Leadership & Sustainability", description: "Examples of leadership, responsibility, and commitment to sustainability.", max: 5, weight: 25 },
 ];
 
-const CRITERIA_SPORT: EvaluationCriterion[] = [
-  { id: "sport-c1", label: "Sportsmanship & Integrity", description: "Demonstrated integrity, fairness, respect for opponents and positive attitude during competition.", max: 5, weight: 2 },
-  { id: "sport-c2", label: "Leadership in Sport", description: "Leadership roles held — captain, club officer, event organiser — and the impact of that leadership.", max: 5, weight: 2 },
-  { id: "sport-c3", label: "Team & Community Culture", description: "Has the nominee fostered unity, teamwork and a positive sport culture at DUT or in the community?", max: 5, weight: 1 },
-  { id: "sport-c4", label: "Academic Balance", description: "Has the nominee maintained the required academic standard (65%) alongside their sporting commitments?", max: 5, weight: 1 },
+const CRITERIA_BEST_UNIT: EvaluationCriterion[] = [
+  { id: "bpu-c1", label: "Strategic Alignment", description: "How does the unit align its strategies and activities with ENVISION2030 and the DUT Way?", max: 5, weight: 20 },
+  { id: "bpu-c2", label: "Service Standards", description: "Does the unit deliver consistently high standards of service and performance?", max: 5, weight: 20 },
+  { id: "bpu-c3", label: "Measurable Impact", description: "What measurable impact has the unit had on student/university well-being, engagement, or success?", max: 5, weight: 20 },
+  { id: "bpu-c4", label: "Innovation", description: "Innovative approaches introduced by the unit.", max: 5, weight: 20 },
+  { id: "bpu-c5", label: "Professionalism & Values", description: "Does the unit uphold professionalism, respect, integrity, and excellence?", max: 5, weight: 20 },
 ];
 
-const CRITERIA_WELLNESS: EvaluationCriterion[] = [
-  { id: "well-c1", label: "Quality of Wellness Initiative", description: "How impactful, innovative and well-organised were the wellness programmes or activities led by the nominee?", max: 5, weight: 2 },
-  { id: "well-c2", label: "Measurable Impact on Peers", description: "Evidence of positive change in physical, mental or emotional well-being of DUT students.", max: 5, weight: 2 },
-  { id: "well-c3", label: "Collaboration & Sustainability", description: "Did the nominee collaborate with other departments or organisations? Are the initiatives sustainable?", max: 5, weight: 1 },
+const CRITERIA_LEADERSHIP_MENTORSHIP: EvaluationCriterion[] = [
+  { id: "lm-c1", label: "Leadership & Integrity", description: "Did the nominee demonstrate outstanding leadership and integrity?", max: 5, weight: 20 },
+  { id: "lm-c2", label: "Mentorship", description: "Examples of mentorship that supported colleagues or students.", max: 5, weight: 20 },
+  { id: "lm-c3", label: "Influence on Development", description: "How did the nominee positively influence the development of others?", max: 5, weight: 20 },
+  { id: "lm-c4", label: "Developing Future Leaders", description: "Did they invest in developing future leaders?", max: 5, weight: 20 },
+  { id: "lm-c5", label: "Values-Reflected Leadership", description: "Does their leadership reflect DUT values?", max: 5, weight: 20 },
 ];
 
-const CRITERIA_SOCIETY: EvaluationCriterion[] = [
-  { id: "soc-c1", label: "Leadership Excellence", description: "Quality of academic excellence and leadership initiatives driven by the society/club.", max: 5, weight: 2 },
-  { id: "soc-c2", label: "Impactful Initiatives", description: "Evidence of initiatives that meaningfully enhanced DUT student life (outputs and outcomes documented).", max: 5, weight: 2 },
-  { id: "soc-c3", label: "Inclusivity & Vibrancy", description: "Commitment to a diverse, vibrant, inclusive campus community.", max: 5, weight: 1 },
-  { id: "soc-c4", label: "Creative & Innovative Approaches", description: "Did the society use unique, creative methods to achieve objectives?", max: 5, weight: 1 },
-  { id: "soc-c5", label: "Collaborations", description: "Quality and reach of partnerships with other organisations, departments or external bodies.", max: 5, weight: 1 },
-  { id: "soc-c6", label: "Documented Outcomes", description: "Are the outcomes clearly evidenced through reports, registers and testimonials?", max: 5, weight: 1 },
+const CRITERIA_RISING_STAR: EvaluationCriterion[] = [
+  { id: "rs-c1", label: "Early Contributions", description: "Significant contributions made within the nominee's first 5 years.", max: 5, weight: 20 },
+  { id: "rs-c2", label: "Initiative & Problem-Solving", description: "Examples of initiative and problem-solving that positively influenced their unit or the university.", max: 5, weight: 20 },
+  { id: "rs-c3", label: "Community Influence", description: "How have they positively influenced the university community?", max: 5, weight: 20 },
+  { id: "rs-c4", label: "Learning & Growth", description: "Commitment to learning and growth.", max: 5, weight: 20 },
+  { id: "rs-c5", label: "Upholding DUT Values", description: "Evidence of upholding DUT values.", max: 5, weight: 20 },
 ];
 
-const CRITERIA_RESIDENCE: EvaluationCriterion[] = [
-  { id: "res-c1", label: "Overall Residence Achievement", description: "How compelling is the residence's story of excellence — culture, engagement and student outcomes?", max: 5, weight: 2 },
-  { id: "res-c2", label: "Programme Quality & Attendance", description: "Quality, frequency and attendance rates of in-house and central programmes.", max: 5, weight: 2 },
-  { id: "res-c3", label: "Living Values in Practice", description: "How well are DUT Living Values embedded — consequence management, code of conduct and resident well-being?", max: 5, weight: 2 },
+const CRITERIA_BEST_COLLABORATION: EvaluationCriterion[] = [
+  { id: "bc-c1", label: "Collaborative Project", description: "Quality of the collaborative project or initiative described.", max: 5, weight: 25 },
+  { id: "bc-c2", label: "Trust & Communication", description: "Did the team demonstrate trust and effective communication?", max: 5, weight: 25 },
+  { id: "bc-c3", label: "Cross-Department Collaboration", description: "Did the collaboration bridge multiple roles or departments?", max: 5, weight: 25 },
+  { id: "bc-c4", label: "Measurable Outcomes", description: "Measurable outcomes or results achieved.", max: 5, weight: 25 },
 ];
 
-const CRITERIA_ENTREPRENEUR: EvaluationCriterion[] = [
-  { id: "ent-c1", label: "Originality & Value Proposition", description: "How original, unique and relevant is the entrepreneurial venture? Is the value proposition clearly articulated?", max: 5, weight: 2 },
-  { id: "ent-c2", label: "Vision & Strategic Leadership", description: "Clarity of long-term vision and evidence that the nominee is effectively leading the venture toward it.", max: 5, weight: 2 },
-  { id: "ent-c3", label: "Resilience & Personal Growth", description: "Depth of reflection on challenges faced and growth demonstrated on the entrepreneurial journey.", max: 5, weight: 1 },
-  { id: "ent-c4", label: "Team & Resource Management", description: "Effectiveness of managing people, finances and operations for productivity.", max: 5, weight: 1 },
-  { id: "ent-c5", label: "Social Responsibility & Community Impact", description: "Contribution of the venture to social responsibility or the DUT/broader community.", max: 5, weight: 1 },
-];
-
-const CRITERIA_EMERGING: EvaluationCriterion[] = [
-  { id: "em-c1", label: "Early Leadership Potential", description: "Strength and quality of leadership roles already taken as a first-year student.", max: 5, weight: 2 },
-  { id: "em-c2", label: "Character & Integrity", description: "Evidence of outstanding integrity, positive values and making a difference for others.", max: 5, weight: 2 },
-  { id: "em-c3", label: "Positive Difference Made", description: "Specific, documented moments where the nominee improved student life or the DUT community.", max: 5, weight: 2 },
-];
-
-const CRITERIA_DIVERSITY: EvaluationCriterion[] = [
-  { id: "div-c1", label: "Advocacy Effectiveness", description: "How effectively has the nominee championed minority or special-interest groups on campus?", max: 5, weight: 2 },
-  { id: "div-c2", label: "Measurable Impact", description: "Evidence of positive change in campus culture, belonging or inclusion (attendance, surveys, testimonials).", max: 5, weight: 2 },
-  { id: "div-c3", label: "Cross-department Collaboration", description: "Quality of partnerships formed with other units, departments or external organisations to advance inclusion.", max: 5, weight: 1 },
+const CRITERIA_OUTSTANDING_REGISTRARS: EvaluationCriterion[] = [
+  { id: "or-c1", label: "Above and Beyond", description: "Did the nominee go above and beyond to enhance the student/staff experience?", max: 5, weight: 25 },
+  { id: "or-c2", label: "Creativity & Innovation", description: "Examples of creativity or innovation in service delivery.", max: 5, weight: 25 },
+  { id: "or-c3", label: "Measurable Impact", description: "Measurable positive impact on students, staff or structures (performance, satisfaction, well-being).", max: 5, weight: 25 },
+  { id: "or-c4", label: "Collaboration", description: "Evidence of collaboration with other departments.", max: 5, weight: 25 },
 ];
 
 /** Criteria map keyed by category id */
 const CRITERIA_BY_CATEGORY: Record<string, EvaluationCriterion[]> = {
-  dean: CRITERIA_DEAN,
-  sport: CRITERIA_SPORT,
-  wellness: CRITERIA_WELLNESS,
-  society: CRITERIA_SOCIETY,
-  residence: CRITERIA_RESIDENCE,
-  entrepreneur: CRITERIA_ENTREPRENEUR,
-  emerging: CRITERIA_EMERGING,
-  diversity: CRITERIA_DIVERSITY,
+  "living-values": CRITERIA_LIVING_VALUES,
+  "best-performing-unit": CRITERIA_BEST_UNIT,
+  "leadership-mentorship": CRITERIA_LEADERSHIP_MENTORSHIP,
+  "rising-star": CRITERIA_RISING_STAR,
+  "best-collaboration": CRITERIA_BEST_COLLABORATION,
+  "outstanding-registrars": CRITERIA_OUTSTANDING_REGISTRARS,
 };
 
 /** Fallback for unknown/missing category ids */
-export const EVALUATION_CRITERIA: EvaluationCriterion[] = CRITERIA_DEAN;
+export const EVALUATION_CRITERIA: EvaluationCriterion[] = CRITERIA_LIVING_VALUES;
 
 /**
  * Returns the evaluation criteria for a given category id.
- * Falls back to Dean's Award criteria if the id is not recognised.
+ * Falls back to Living the Values criteria if the id is not recognised.
  */
 export function getCriteriaForCategory(categoryId?: string): EvaluationCriterion[] {
   if (!categoryId) return EVALUATION_CRITERIA;
@@ -138,228 +126,173 @@ export function computeWeightedAverage(
 }
 
 export const AWARD_THEME = {
-  title: "SALEA 2026",
-  subtitle: "Recognising Excellence · Celebrating Leadership · Inspiring Greatness",
-  eventName: "Student Academic & Leadership Excellence Awards",
-  recognitionPeriod: "1 July 2025 – 30 June 2026",
-  nominationWindow: "01 July 2026 – 31 July 2026",
-  closingDate: "31 July 2026",
-  /** ISO date strings for judge scoring window */
-  scoringOpenDate: "2026-08-01", // day after nominations close
-  scoringDeadline: "2026-08-15", // judges must submit by this date
-  venue: "76 Steve Biko Road, Fred Crookes Sports Centre",
+  title: "Registrar's Ambit Staff Awards",
+  subtitle: "Recognising Excellence · Celebrating Service · Honouring Our People",
+  eventName: "Registrar's Ambit Staff Awards",
+  recognitionPeriod: "1 July 2024 – 30 June 2025",
+  nominationWindow: "TBC",
+  closingDate: "TBC",
+  /** ISO date strings for judge scoring window — wide open until real dates are confirmed */
+  scoringOpenDate: "2025-01-01",
+  scoringDeadline: "2027-12-31",
+  venue: "TBC",
   openingAddressTitle: "Welcome & Opening Address",
-  openingAddressRemarks: "Dean's remarks",
-  yearsBadge: "Student Academic & Leadership Excellence Awards 2026",
-  /** Judge session times */
+  openingAddressRemarks: "Registrar's remarks",
+  yearsBadge: "Registrar's Ambit Staff Awards",
+  /** Judge session times — single session until the ceremony is scheduled */
   judgeSessions: [
-    { name: "Session 1", startTime: "10:00", endTime: "13:00" },
-    { name: "Session 2", startTime: "16:00", endTime: "22:00" },
+    { name: "Session 1", startTime: "TBC", endTime: "TBC" },
   ],
 };
 
 export const AWARD_CATEGORIES: AwardCategory[] = [
   {
-    id: "dean",
-    name: "Dean of Students Prestigious Award",
-    short: "Dean's Prestigious",
-    tagline: "All-round excellence in academics and leadership.",
+    id: "living-values",
+    name: "Living the Values Staff Award",
+    short: "Living the Values",
+    tagline: "Excellence, integrity and DUT's values in action.",
     description:
-      "Recognises students who have demonstrated outstanding achievements across academic excellence, leadership, community engagement, innovation and personal growth — embodying the spirit of excellence and inspiring greatness.",
+      "The Living the Values Award recognises a staff employee that best exemplifies excellence in one or more of the University's key values: Accountability, Respect, Integrity, Honesty and Transparency, and the key principles: Professionalism, Commitment, Compassion, Fairness and Excellence. Nominees must have shown extraordinary adoption of one or more of the key values in a work-related situation.",
     recognises: [
-      "Academic excellence with an aggregate of 75% or above",
-      "Leadership in student-led initiatives & mentorship of peers",
-      "Active community service and outreach contribution",
-      "Innovative, creative solutions for the university or community",
-      "Exceptional character and integrity",
-      "Demonstrated personal growth and self-improvement",
+      "Consistent demonstration of one or more of the University's core values: Accountability, Respect, Integrity, Honesty, and Transparency",
+      "The key principles of Professionalism, Commitment, Compassion, Fairness, and Excellence in daily work",
+      "Actions that made a positive and lasting impact within their department or beyond",
+      "Effective teamwork, demonstrating respect, fairness, and a commitment to shared goals",
+      "A proven track record of leadership and responsibility in advancing the University's values and principles",
+      "A commitment to both personal and institutional sustainability",
+      "Outstanding professional ethics and a commitment to transparency",
     ],
     questions: [
-      { id: "dean-a1", section: "Academic Excellence", prompt: "Upload your latest academic transcript / progress report (75%+ aggregate). Describe how the nominee pursues academic excellence.", evidence: ["2025 academic transcript (official, stamped)", "Certificate of merit / Dean's List", "Testimonials from lecturers and tutors"] },
-      { id: "dean-b1", section: "Leadership", prompt: "Describe your involvement in leadership roles in student-led initiatives. Share a project or initiative you started or led that positively impacted other students or the broader community.", wordLimit: 500, evidence: ["Recommendation letter", "Event poster", "Post-programme report", "Attendance registers, photos, testimonials"] },
-      { id: "dean-b2", section: "Leadership", prompt: "How have you used your influence to positively impact your peers? Provide specific examples.", wordLimit: 500 },
-      { id: "dean-c1", section: "Community Engagement", prompt: "Describe the community service / outreach programmes you have been involved in (aim and objectives).", wordLimit: 500, evidence: ["Signed testimonials", "Event schedule & topics", "Attendance registers", "Photos / videos", "Certificate of participation"] },
-      { id: "dean-c2", section: "Community Engagement", prompt: "How have your contributions improved the campus environment or the surrounding community?", wordLimit: 500 },
-      { id: "dean-c3", section: "Community Engagement", prompt: "In what ways have you demonstrated a commitment to civic engagement or social responsibility?", wordLimit: 500 },
-      { id: "dean-d1", section: "Innovation & Creativity", prompt: "Share an innovative plan/project you developed to enhance current processes at DUT or in your community.", wordLimit: 500, evidence: ["Signed testimonial", "Attendance registers", "Photos / video", "Prototype or project report"] },
-      { id: "dean-f1", section: "Commitment to Values", prompt: "Describe how your actions demonstrate excellence, integrity and leadership in the spirit of SALEA 2026.", wordLimit: 500 },
-      { id: "dean-f2", section: "Commitment to University Values", prompt: "In what ways have you promoted a positive campus culture? List at least three DUT initiatives that highlight the Living Values Framework." },
-      { id: "dean-g1", section: "Personal Growth", prompt: "Describe your journey of personal growth and self-improvement during your time at DUT, including challenges overcome.", wordLimit: 500, evidence: ["Reflection essay", "Certificates"] },
+      { id: "lv-1", section: "Core Values", prompt: "Which University core value(s) (Accountability, Respect, Integrity, Honesty, Transparency) did the nominee consistently demonstrate?", wordLimit: 300, evidence: ["Work records showing this", "Feedback or reports"] },
+      { id: "lv-2", section: "Lasting Impact", prompt: "Describe how the nominee's actions made a positive and lasting impact in their unit or department, or beyond.", wordLimit: 300, evidence: ["Measurable results", "Testimonials"] },
+      { id: "lv-3", section: "Teamwork & Fairness", prompt: "Provide evidence of teamwork, respect, fairness, and contribution to shared goals.", wordLimit: 300, evidence: ["Emails", "Project records", "Peer statements"] },
+      { id: "lv-4", section: "Leadership & Sustainability", prompt: "Provide examples of leadership, responsibility, and commitment to sustainability.", wordLimit: 300, evidence: ["Reports", "Initiatives", "Recognition received"] },
     ],
   },
   {
-    id: "sport",
-    name: "Sportsmanship Award",
-    short: "Sportsmanship",
-    tagline: "Performance, teamwork, exemplary character.",
+    id: "best-performing-unit",
+    name: "Best Performing Unit Award",
+    short: "Best Performing Unit",
+    tagline: "Units delivering excellence, aligned to ENVISION2030.",
     description:
-      "Honours a team or individual who demonstrated outstanding performance, teamwork and exemplary sportsmanship during the recognition period — exhibiting integrity, fairness and respect on and off the field.",
+      "Recognises a unit within the Registrar's Ambit that consistently delivers high-quality service, aligns its work with ENVISION2030 and the DUT Way, and demonstrates measurable impact, innovation and professionalism.",
     recognises: [
-      "Participation in competitions / leagues with strong progression",
-      "Academic aggregate of 65% individuals / 60% team average",
-      "Demonstrated DUT Living Values",
+      "Strategic alignment with ENVISION2030 and the DUT Way",
+      "Consistently high standards of service and performance",
+      "Measurable positive impact on students, staff and university structures",
+      "Innovative approaches introduced to improve service delivery",
+      "Professionalism, respect, integrity and excellence in daily operations",
     ],
     questions: [
-      { id: "sport-1", section: "Demonstrated Sportsmanship", prompt: "Describe specific incidents or consistent behaviours that demonstrate the nominee's integrity, fairness, respect for opponents and positive attitude. Outline track record and placements.", wordLimit: 300, evidence: ["Testimonial from coach / team manager", "Match reports", "Academic records"] },
-      { id: "sport-2", section: "Leadership in Sport", prompt: "Outline the nominee's / team's leadership roles in sports teams, clubs or sporting events.", wordLimit: 300, evidence: ["Testimonial from coach / league organiser", "Team captaincy records"] },
-      { id: "sport-3", section: "Impact on Team & Community Culture", prompt: "Describe how the nominee has fostered unity, teamwork and sports culture within DUT or the community.", wordLimit: 300, evidence: ["Testimonials from teammates", "Post programme reports", "Photos of team-building", "3 reflective essays (≤500 words each)"] },
-      { id: "sport-4", section: "Leadership & Impact", prompt: "Reflect on how the nominee has demonstrated exceptional leadership and positive impact on their sport and peers.", wordLimit: 300, evidence: ["Endorsement letter from Sport Officer / coach / SRC"] },
+      { id: "bpu-1", section: "Strategic Alignment", prompt: "How does the unit align its strategies and activities with ENVISION2030 and the DUT Way?", wordLimit: 300, evidence: ["Strategic plans", "Minutes", "Performance reports"] },
+      { id: "bpu-2", section: "Service Standards", prompt: "Describe how the unit delivers consistently high standards of service and performance.", wordLimit: 300, evidence: ["Performance metrics", "Quality audits"] },
+      { id: "bpu-3", section: "Measurable Impact", prompt: "What measurable impact has the unit had on student/university well-being, engagement, or success?", wordLimit: 300, evidence: ["Statistics", "Feedback", "Surveys"] },
+      { id: "bpu-4", section: "Innovation", prompt: "Describe any innovative approaches introduced by the unit.", wordLimit: 300, evidence: ["Project proposals", "Before-and-after evidence"] },
+      { id: "bpu-5", section: "Professionalism & Values", prompt: "How does the unit uphold professionalism, respect, integrity, and excellence?", wordLimit: 300, evidence: ["Evaluations", "Recognition letters"] },
     ],
   },
   {
-    id: "wellness",
-    name: "Promotion of Healthy Lifestyle Award",
-    short: "Healthy Lifestyle",
-    tagline: "Wellness initiatives that change lives.",
+    id: "leadership-mentorship",
+    name: "Leadership & Mentorship Award",
+    short: "Leadership & Mentorship",
+    tagline: "Leading with integrity, investing in others.",
     description:
-      "Recognises individuals, groups or societies who have contributed to promoting health and wellness within DUT — initiatives that impact physical, mental and emotional well-being.",
+      "Recognises a staff member who demonstrates outstanding leadership and integrity, and who actively invests in mentoring and developing colleagues and future leaders.",
     recognises: [
-      "Organising wellness activities, workshops or campus programmes",
-      "Academic aggregate of 65% in the recognition period",
-      "Positive impact on peers' health & wellbeing",
-      "Innovative, creative wellness approaches",
-      "Active collaboration with departments / organisations",
-      "Sustainable wellness practices",
+      "Outstanding leadership and integrity in daily work",
+      "Active mentorship that supports colleagues' growth",
+      "Positive influence on the development of others",
+      "Investment in developing future leaders",
+      "Leadership that reflects DUT's values",
     ],
     questions: [
-      { id: "well-1", section: "Wellness Initiative", prompt: "Describe a wellness activity, initiative or programme the nominee organised, led or promoted on campus (physical, mental or emotional well-being).", wordLimit: 300, evidence: ["Event poster", "Proposal of activities"] },
-      { id: "well-2", section: "Impact Report", prompt: "Report on the positive impact the nominee's wellness activities have had on the DUT community.", wordLimit: 300, evidence: ["Photos", "Feedback reports", "Attendance registers", "Testimonials"] },
-      { id: "well-3", section: "Collaboration", prompt: "Describe a project the nominee has collaborated on with other units / departments within the university.", wordLimit: 300, evidence: ["Implementation plan", "Attendance registers & feedback reports", "Post-survey report"] },
+      { id: "lm-1", section: "Leadership & Integrity", prompt: "Describe how the nominee demonstrated outstanding leadership and integrity.", wordLimit: 300, evidence: ["Performance reviews", "Peer endorsements"] },
+      { id: "lm-2", section: "Mentorship", prompt: "Provide examples of mentorship that supported colleagues or students.", wordLimit: 300, evidence: ["Mentoring logs", "Testimonials", "Mentee achievements"] },
+      { id: "lm-3", section: "Influence on Development", prompt: "How did the nominee positively influence the development of others?", wordLimit: 300, evidence: ["Training sessions", "Coaching records", "Outcomes"] },
+      { id: "lm-4", section: "Developing Future Leaders", prompt: "Describe how they invested in developing future leaders.", wordLimit: 300, evidence: ["Evidence of programmes", "Feedback forms", "Growth plans"] },
+      { id: "lm-5", section: "Values-Reflected Leadership", prompt: "Provide examples of how their leadership reflects DUT values.", wordLimit: 300, evidence: ["Written endorsements", "Case studies"] },
     ],
   },
   {
-    id: "society",
-    name: "Exemplary Society/Club/Structure Award",
-    short: "Exemplary Society",
-    tagline: "Organizations that lead with excellence.",
+    id: "rising-star",
+    name: "Rising Star Staff Award",
+    short: "Rising Star",
+    tagline: "Early-career impact, already shining.",
     description:
-      "Recognises student clubs, societies or student-led structures that have demonstrated extraordinary dedication and influence — celebrating their contributions to academic excellence and leadership on campus.",
+      "Honours a staff member within their first five years at DUT who has made a significant contribution, shown initiative and problem-solving, and demonstrated a strong commitment to learning, growth and the University's values.",
     recognises: [
-      "Initiatives promoting academic excellence and leadership",
-      "Initiatives enhancing student life and community involvement",
-      "Cultivating an inclusive and vibrant community",
-      "Creative, innovative approaches",
-      "Collaboration with other organisations and academic departments",
-      "Aggregate of 65% individuals / 60% group",
+      "Significant contributions made within the first 5 years of service",
+      "Initiative and problem-solving that positively influenced their unit or the university",
+      "Positive influence on the university community",
+      "Demonstrated commitment to learning and growth",
+      "Evidence of upholding DUT values",
     ],
     questions: [
-      { id: "soc-1", section: "Excellence in Leadership", prompt: "Describe how the nominee/group has driven activities demonstrating academic excellence and leadership. List at least three key initiatives led, outlining impact.", wordLimit: 500, evidence: ["Narrative report", "Photos, posters or programme draft"] },
-      { id: "soc-2", section: "Impactful Initiatives", prompt: "Provide evidence of impactful initiatives that have enhanced DUT student life. Specify outputs and outcomes.", wordLimit: 500, evidence: ["Testimonials", "Attendance registers & evaluations", "Event outcome reports", "Photos & videos"] },
-      { id: "soc-3", section: "Inclusivity & Vibrancy", prompt: "Explain how the nominee has demonstrated commitment to cultivating an inclusive, vibrant DUT community.", wordLimit: 500, evidence: ["Narrative with proof of vibrancy", "Photos / videos from inclusive events"] },
-      { id: "soc-4", section: "Creative Approaches", prompt: "Outline specific instances where the nominee used creative and unique approaches to achieve their objectives.", wordLimit: 500, evidence: ["Narrative", "Multimedia (graphics, videos)", "Reports"] },
-      { id: "soc-5", section: "Collaborations", prompt: "Detail any collaborations with other student organisations, services, academic departments or external organisations.", wordLimit: 500, evidence: ["Collaboration agreements", "Joint event reports", "Photos / flyers", "Letters of endorsement"] },
-      { id: "soc-6", section: "Outcomes", prompt: "List the success and outcomes achieved from the activities / programmes.", wordLimit: 500, evidence: ["Final project report", "Reports highlighting outputs & outcomes"] },
+      { id: "rs-1", section: "Early Contributions", prompt: "What significant contributions have the nominee made within their first 5 years?", wordLimit: 300, evidence: ["Project records", "Awards", "Letters"] },
+      { id: "rs-2", section: "Initiative & Problem-Solving", prompt: "Provide examples of initiative and problem-solving that positively influenced their unit or the university.", wordLimit: 300, evidence: ["Evidence of successful solutions"] },
+      { id: "rs-3", section: "Community Influence", prompt: "How have they positively influenced the university community?", wordLimit: 300, evidence: ["Feedback from colleagues/students"] },
+      { id: "rs-4", section: "Learning & Growth", prompt: "Show their commitment to learning and growth.", wordLimit: 300, evidence: ["Certificates", "Training records", "CPD logs"] },
+      { id: "rs-5", section: "Upholding DUT Values", prompt: "Provide evidence of upholding DUT values.", wordLimit: 300, evidence: ["Supervisor reports", "Testimonials"] },
     ],
   },
   {
-    id: "residence",
-    name: "Outstanding Residence Life Award",
-    short: "Residence Life",
-    tagline: "Where home becomes a community of excellence.",
+    id: "best-collaboration",
+    name: "Best Collaboration Award",
+    short: "Best Collaboration",
+    tagline: "Trust, teamwork, results across boundaries.",
     description:
-      "Recognises a residence with the most impactful residence-life initiatives — high attendance, discipline, peer-to-peer support and a nurturing environment.",
+      "Recognises a team or partnership that achieved outstanding results through effective collaboration — bridging roles, departments or units with trust, clear communication and measurable outcomes.",
     recognises: [
-      "High attendance in In-House and central programmes",
-      "DUT Living Values with strong consequence management",
-      "Cohesive, inclusive residence with collective culture of care",
+      "A clearly described collaborative project or initiative",
+      "Trust and effective communication within the team",
+      "Collaboration that bridged multiple roles or departments",
+      "Measurable outcomes or results achieved",
     ],
     questions: [
-      { id: "res-1", section: "Residence Story", prompt: "Why does this residence deserve the Outstanding Residence Life Award? Include key achievements, what makes the residence stand out, the overall residence culture, and impact on student well-being and success.", evidence: ["Document highlighting achievements, engagement and inclusivity"] },
-      { id: "res-2", section: "Programme Detail", prompt: "Outline the programmes held, detailing progress and impact.", wordLimit: 500, evidence: ["Residence programme reports (objectives, outcomes, themes)", "Plan of Action / Programme proposal", "Attendance registers", "Testimonials / feedback"] },
-      { id: "res-3", section: "Living Values in Practice", prompt: "Detail how the DUT Living Values are sensitised within the residence. Use case examples and resolution strategies. How was the handbook and residence code of conduct workshopped?", evidence: ["1-page summary of intervention strategies / best practices", "Evidence of referrals where applicable"] },
+      { id: "bc-1", section: "Collaborative Project", prompt: "Describe the collaborative project or initiative.", wordLimit: 300, evidence: ["Project plan", "Meeting minutes"] },
+      { id: "bc-2", section: "Trust & Communication", prompt: "Show how the team demonstrated trust and effective communication.", wordLimit: 300, evidence: ["Team feedback", "Process documents"] },
+      { id: "bc-3", section: "Cross-Department Collaboration", prompt: "Describe how collaboration bridged multiple roles or departments.", wordLimit: 300, evidence: ["Organogram", "Partnership documents"] },
+      { id: "bc-4", section: "Measurable Outcomes", prompt: "Provide measurable outcomes or results achieved.", wordLimit: 300, evidence: ["Data", "Reports", "Evidence of success"] },
     ],
   },
   {
-    id: "entrepreneur",
-    name: "Student Entrepreneurship Award",
-    short: "Entrepreneurship",
-    tagline: "Risk-takers with a clear vision.",
+    id: "outstanding-registrars",
+    name: "Outstanding Registrars Staff Award",
+    short: "Outstanding Registrars Staff",
+    tagline: "The flagship award for exceptional service.",
     description:
-      "Recognises students who have demonstrated skills in creating and running a successful entrepreneurial project (including social or close-corporation ventures) — risk takers with original ideas and a clear vision.",
+      "The flagship Registrar's Ambit award, recognising a staff member who consistently goes above and beyond to enhance the experience of students and colleagues, bringing creativity, measurable impact and cross-departmental collaboration to their service.",
     recognises: [
-      "Innovative, original ideas & unique value propositions",
-      "Strong leadership and clear strategic vision",
-      "Personal growth — overcoming challenges, continuous learning",
-      "Effective management of team and resources",
-      "Contribution to social responsibility / DUT community",
-      "Aggregate of 65% individuals / 60% group",
+      "Going above and beyond to enhance the student/staff experience",
+      "Creativity and innovation in service delivery",
+      "Measurable positive impact on students, staff or structures",
+      "Evidence of collaboration with other departments",
     ],
     questions: [
-      { id: "ent-1", section: "Originality & Value", prompt: "Describe how the entrepreneurial endeavour is original, unique and relevant. What makes the product or service unique and how does it add value?", wordLimit: 300, evidence: ["Product / service brochures", "Photos / videos of product in use", "Customer testimonials", "Patents / trademarks if any"] },
-      { id: "ent-2", section: "Vision & Leadership", prompt: "What is your long-term vision and how have you demonstrated leadership in turning it into reality?", wordLimit: 300, evidence: ["Viability & sustainability report", "Team testimonials", "Incubation report", "Records of goals & achievements"] },
-      { id: "ent-3", section: "Personal Journey", prompt: "Reflect on your entrepreneurial journey — challenges faced and personal growth.", wordLimit: 500, evidence: ["Reflective essay"] },
-      { id: "ent-4", section: "Team & Resource Management", prompt: "How do you manage your team or resources to ensure productivity and smooth operations?", wordLimit: 300, evidence: ["Job descriptions / task allocation", "Meeting minutes", "Workflow / resource tracking", "Project plans"] },
-      { id: "ent-5", section: "Social Responsibility", prompt: "How does your project contribute to social responsibility or the DUT community?", wordLimit: 300, evidence: ["Narrative reports (with photos & registers)", "Beneficiary testimonials", "Letters of collaboration"] },
-    ],
-  },
-  {
-    id: "emerging",
-    name: "Emerging Leader (First Year Student)",
-    short: "Emerging Leader",
-    tagline: "Future leaders, already shining.",
-    description:
-      "Honours a remarkable first-year student who exemplifies transformational leadership and academic excellence — proactive, resilient, people-centred and committed to celebrating greatness in others.",
-    recognises: [
-      "Aggregate of 65% in recent progress report",
-      "Early evidence of leadership potential and character",
-      "Continuous learning and development mindset",
-      "Currently in first year of study",
-    ],
-    questions: [
-      { id: "em-0", section: "Registration", prompt: "Upload proof of registration.", evidence: ["Proof of registration"] },
-      { id: "em-1", section: "Leadership Roles", prompt: "Describe leadership roles taken in any student organisations, co/extra-curricular activities or community service. Responsibilities and impact.", wordLimit: 300, evidence: ["Certificates of participation / leadership", "Photos / videos", "Testimonial from lecturer / peer / project leader"] },
-      { id: "em-2", section: "Character & Values", prompt: "How have you demonstrated integrity and outstanding character? Provide examples of incidents, experiences or opportunities where you've made a positive difference.", wordLimit: 500, evidence: ["Reflective essay", "Reference letter from lecturer / mentor / peer"] },
-      { id: "em-3", section: "Positive Difference", prompt: "How have you made a positive difference in the lives of other students or within the DUT community? Share specific moments or initiatives.", wordLimit: 300, evidence: ["Testimonials from peers / staff", "Photos or reports from outreach", "Letters of collaboration"] },
-    ],
-  },
-  {
-    id: "diversity",
-    name: "Diversity & Inclusion Award",
-    short: "Diversity & Inclusion",
-    tagline: "Belonging, advocacy, an enabling DUT.",
-    description:
-      "Recognises activities and practices that foster an institution where everyone feels valued, respected and included — creating a safe and enabling environment for both students and staff.",
-    recognises: [
-      "Sustained commitment & advocacy for minority / special-interest groups",
-      "Initiatives promoting cohesive, inclusive campus culture",
-      "Track record of collaborations with departments / units",
-      "Aggregate of 65% individuals / 60% team",
-    ],
-    questions: [
-      { id: "div-1", section: "Advocacy", prompt: "Describe how the nominee has excelled in advocating for minority or special-interest groups.", evidence: ["Project reports with registers"] },
-      { id: "div-2", section: "Impact", prompt: "Report on the positive impact the nominee has had to university students and the community. Provide evidence.", wordLimit: 300, evidence: ["Attendance registers & feedback reports", "Meeting minutes", "Testimonials"] },
-      { id: "div-3", section: "Collaboration", prompt: "Describe a project the nominee has collaborated on with other units and academic departments to advance diversity & inclusion.", wordLimit: 300, evidence: ["Implementation plan", "Attendance registers & feedback reports", "Post-survey report", "Participation certificate"] },
+      { id: "or-1", section: "Above and Beyond", prompt: "Describe how the nominee went above and beyond to enhance the student/staff experience.", wordLimit: 300, evidence: ["Specific examples", "Feedback"] },
+      { id: "or-2", section: "Creativity & Innovation", prompt: "Provide examples of creativity or innovation in service delivery.", wordLimit: 300, evidence: ["Implementation evidence"] },
+      { id: "or-3", section: "Measurable Impact", prompt: "Show measurable positive impact on students, staff or structures (performance, satisfaction, well-being).", wordLimit: 300, evidence: ["Data or survey results"] },
+      { id: "or-4", section: "Collaboration", prompt: "Provide evidence of collaboration with other departments.", wordLimit: 300, evidence: ["Joint project documents", "Feedback"] },
     ],
   },
 ];
 
 export type CategoryId = (typeof AWARD_CATEGORIES)[number]["id"];
 
-export const FACULTIES = [
-  "Accounting & Informatics",
-  "Applied Sciences",
-  "Arts & Design",
-  "Engineering & Built Environment",
-  "Health Sciences",
-  "Management Sciences",
-];
+/**
+ * Eligibility checks from the official evaluation form. Gating questions
+ * shown on nomination Step 1 — not judged/scored criteria.
+ */
+export const ELIGIBILITY_QUESTIONS = [
+  { id: "workPeriod", label: "Is the submission based on evidence of work that occurred between 1 July 2024 and 30 June 2025?" },
+  { id: "notResubmitted", label: "Confirm this nominee has not been submitted for the same project/contribution in the last three years." },
+  { id: "notMultiNominated", label: "Confirm this project/contribution has not already been nominated for more than one award in this Awards Framework." },
+] as const;
 
-export const PAST_WINNERS = [
-  { year: 2024, category: "Dean of Students Prestigious Award", name: "Thandeka Mhlongo", faculty: "Management Sciences", quote: "Leadership is the courage to listen first." },
-  { year: 2024, category: "Sportsmanship Award", name: "Lwazi Khumalo", faculty: "Applied Sciences", quote: "Discipline carries you when motivation cannot." },
-  { year: 2024, category: "Promotion of Healthy Lifestyle Award", name: "Aisha Patel", faculty: "Health Sciences", quote: "Service is love made visible." },
-  { year: 2024, category: "Exemplary Society / Club / Structure Award", name: "DUT Activate Society", faculty: "Steve Biko Campus", quote: "Together is a verb." },
-  { year: 2024, category: "Outstanding Residence Life Award", name: "Steve Biko Residence", faculty: "Steve Biko Campus", quote: "Home is where character is built." },
-  { year: 2024, category: "Diversity & Inclusion Award", name: "Nomvula Zulu", faculty: "Arts & Design", quote: "Belonging is the first freedom." },
-
-  { year: 2023, category: "Dean of Students Prestigious Award", name: "Mandla Cele", faculty: "Management Sciences", quote: "We rise by lifting others." },
-  { year: 2023, category: "Student Entrepreneurship Award", name: "Junior Ndlovu", faculty: "Management Sciences", quote: "Build small, build now, build true." },
-  { year: 2023, category: "Emerging Leader (First Year Student)", name: "Priya Naidoo", faculty: "Accounting & Informatics", quote: "Excellence is a habit, not an accident." },
-  { year: 2023, category: "Sportsmanship Award", name: "Andile Zungu", faculty: "Applied Sciences", quote: "Every champion was once a beginner who refused to quit." },
-  { year: 2023, category: "Outstanding Residence Life Award", name: "L Section Residence", faculty: "ML Sultan Campus", quote: "Care is the curriculum." },
-
-  { year: 2022, category: "Dean of Students Prestigious Award", name: "Zinhle Buthelezi", faculty: "Engineering & Built Environment", quote: "Lead with the door open." },
-  { year: 2022, category: "Diversity & Inclusion Award", name: "Lerato Mokoena", faculty: "Arts & Design", quote: "Difference is our greatest design." },
-  { year: 2022, category: "Student Entrepreneurship Award", name: "Kuda Moyo", faculty: "Applied Sciences", quote: "Knowledge is the only crown that doesn't tarnish." },
-  { year: 2022, category: "Sportsmanship Award", name: "Bongi Mthembu", faculty: "Health Sciences", quote: "Strength is the smile after the struggle." },
-];
+export const PAST_WINNERS: {
+  year: number;
+  category: string;
+  name: string;
+  department: string;
+  quote: string;
+}[] = [];

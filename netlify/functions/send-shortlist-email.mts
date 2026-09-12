@@ -65,7 +65,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
         nominee_name: nomineeName,
         nominator_name: nominatorName,
         category_name: categoryName,
-        submission_url: `https://salea2026.netlify.app/winners`,
+        // TODO: update once the Registrar's Ambit Staff Awards site is deployed.
+        submission_url: `https://registrars-ambit-staff-awards.netlify.app/winners`,
         current_year: new Date().getFullYear(),
       };
 

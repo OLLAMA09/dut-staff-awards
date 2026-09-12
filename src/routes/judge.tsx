@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import {
@@ -75,9 +75,8 @@ type Nomination = {
   categoryName: string;
   nomineeName: string;
   nomineeEmail: string;
-  studentNumber: string;
-  faculty: string;
-  yearOfStudy: string;
+  staffNumber: string;
+  department: string;
   nominatorName: string;
   nominatorEmail: string;
   nominatorRelationship: string;
@@ -216,7 +215,7 @@ function StarPicker({
 export const Route = createFileRoute("/judge")({
   component: JudgePage,
   head: () => ({
-    meta: [{ title: "Judge Panel · SALEA 2026" }],
+    meta: [{ title: "Judge Panel · Registrar's Ambit Staff Awards" }],
   }),
 });
 
@@ -340,10 +339,10 @@ function JudgePage() {
       <main className="relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-28">
         {!authed || (usedTempPassword && !passwordChanged) ? (
           <div className="mx-auto mt-20 max-w-md rounded-3xl border border-primary/30 bg-card/60 p-10 backdrop-blur">
-            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-gold shadow-gold">
+            <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-primary shadow-elegant">
               <Star className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-center font-serif text-3xl font-bold">Judge Panel</h1>
+            <h1 className="text-center text-3xl font-bold">Judge Panel</h1>
             <p className="mt-2 text-center text-xs text-muted-foreground">
               Sign in with your judge account to review shortlisted nominations.
             </p>
@@ -381,7 +380,7 @@ function JudgePage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gold text-primary-foreground"
+                className="w-full bg-primary text-primary-foreground"
               >
                 {loading ? "Signing in…" : "Sign in"}
               </Button>
@@ -414,7 +413,7 @@ const JUDGE_STEPS = [
   {
     num: 1,
     title: "Sign in",
-    body: "You're already here! Sign in with the credentials provided by the SALEA admin team. Only judge-role accounts can access this panel.",
+    body: "You're already here! Sign in with the credentials provided by the Registrar's Ambit admin team. Only judge-role accounts can access this panel.",
   },
   {
     num: 2,
@@ -495,7 +494,7 @@ function JudgeQuickGuide() {
           <Link
             to="/demo"
             onClick={(e) => e.stopPropagation()}
-            className="hidden sm:inline-flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-gold/25 transition"
+            className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25 transition"
           >
             <Play className="h-3 w-3" /> Practice in Demo
           </Link>
@@ -521,7 +520,7 @@ function JudgeQuickGuide() {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-primary/10 pt-4">
-            <Link to="/demo" className="inline-flex items-center gap-1.5 rounded-lg bg-gold text-primary-foreground px-4 py-2 text-xs font-bold hover:opacity-90 transition">
+            <Link to="/demo" className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-xs font-bold hover:opacity-90 transition">
               <Play className="h-3.5 w-3.5" /> Practice with dummy nominees
             </Link>
             <Link to="/guide" className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-muted/30 transition">
@@ -678,7 +677,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
       if (search.trim()) {
         const s = search.toLowerCase();
         return (
-          n.nomineeName?.toLowerCase().includes(s) || n.studentNumber?.toLowerCase().includes(s)
+          n.nomineeName?.toLowerCase().includes(s) || n.staffNumber?.toLowerCase().includes(s)
         );
       }
       return true;
@@ -743,8 +742,8 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary">SALEA 2026</p>
-          <h1 className="font-serif text-3xl font-bold sm:text-4xl">Judge Dashboard</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards</p>
+          <h1 className="text-3xl font-bold sm:text-4xl">Judge Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Signed in as <span className="font-medium text-foreground">{judgeEmail}</span>
           </p>
@@ -849,7 +848,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
           { label: "Still to review", value: stats.pending, cls: "text-amber-500" },
         ].map((s) => (
           <Card key={s.label} className="p-5 text-center">
-            <p className={`font-serif text-3xl font-bold ${s.cls}`}>{s.value}</p>
+            <p className={`text-3xl font-bold ${s.cls}`}>{s.value}</p>
             <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
           </Card>
         ))}
@@ -907,7 +906,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
                 <div>
                   <p className="font-medium">{nom.nomineeName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {nom.categoryName} · {nom.faculty} · Year {nom.yearOfStudy}
+                    {nom.categoryName} · {nom.department}
                   </p>
                 </div>
               </div>
@@ -1432,9 +1431,9 @@ function JudgeNominationDetail({
                 </Badge>
               )}
             </div>
-            <SheetTitle className="font-serif text-2xl text-left">{nom.nomineeName}</SheetTitle>
+            <SheetTitle className="text-2xl text-left">{nom.nomineeName}</SheetTitle>
             <SheetDescription className="text-left text-sm text-muted-foreground">
-              {nom.nomineeEmail} · #{nom.studentNumber}
+              {nom.nomineeEmail} · #{nom.staffNumber}
             </SheetDescription>
           </SheetHeader>
           {evidenceFiles.length > 0 && (
@@ -1442,7 +1441,7 @@ function JudgeNominationDetail({
               <Button
                 type="button"
                 size="sm"
-                className="bg-gold text-primary-foreground"
+                className="bg-primary text-primary-foreground"
                 onClick={() => openPreview(evidenceFiles[0].file.path)}
                 aria-label="Preview first available document"
               >
@@ -1461,9 +1460,8 @@ function JudgeNominationDetail({
           {/* Key info */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
-              ["Faculty", nom.faculty],
-              ["Year", nom.yearOfStudy],
-              ["Student #", nom.studentNumber],
+              ["Department", nom.department],
+              ["Staff #", nom.staffNumber],
               ["Submitted", formatDate(nom.createdAt)],
             ].map(([k, v]) => (
               <div key={k} className="rounded-xl border border-primary/15 bg-gray-50 p-3">
@@ -1683,7 +1681,7 @@ function JudgeNominationDetail({
                 <div
                   className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
                     overallPreview > 0
-                      ? "bg-gold/20 text-primary"
+                      ? "bg-primary/20 text-primary"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
@@ -1773,7 +1771,7 @@ function JudgeNominationDetail({
             <Button
               onClick={onSave}
               disabled={saving || ratedCount === 0 || !realJudgingActive}
-              className="w-full bg-gold text-primary-foreground disabled:opacity-50"
+              className="w-full bg-primary text-primary-foreground disabled:opacity-50"
               size="lg"
             >
               {saving ? (

@@ -1,7 +1,7 @@
 /**
  * submission-e2e.test.ts — End-to-end form submission tests via Playwright
  *
- * Tests real form submissions on the SALEA website covering:
+ * Tests real form submissions on the Registrar's Ambit Staff Awards website covering:
  * 1. Links-only evidence submission
  * 2. PDF-only evidence submission
  * 3. Mixed links + PDFs evidence submission
@@ -20,31 +20,31 @@
 import { test, expect, Page } from "@playwright/test";
 
 // Test configuration
-const BASE_URL = "https://salea2026.netlify.app";
-const TEST_CATEGORY = "sport"; // Sportsmanship Award
+// TODO: update BASE_URL once the Registrar's Ambit Staff Awards site is deployed.
+const BASE_URL = "https://registrars-ambit-staff-awards.netlify.app";
+const TEST_CATEGORY = "living-values"; // Living the Values Staff Award
 const TEST_TIMEOUT = 60000; // 60 seconds for uploads
 
 // Mock data for submissions
 const mockNominee = {
   fullName: `Test Nominee ${Date.now()}`,
-  studentNumber: "21234567",
+  staffNumber: "21234567",
   email: `test-nominee-${Date.now()}@example.com`,
-  faculty: "Engineering",
-  year: "3rd Year",
+  department: "Student Enrolment Management",
 };
 
 const mockNominator = {
   fullName: "Test Nominator",
   email: "test-nominator@example.com",
-  relationship: "Teammate",
+  relationship: "Colleague",
 };
 
 const mockAnswers = {
   q1:
-    "This nominee has demonstrated exceptional sportsmanship through consistent fair play and respect for opponents. They have shown outstanding integrity both on and off the field, maintaining academic excellence while balancing sporting commitments.",
-  q2: "As team captain, they have provided exemplary leadership by organizing regular team meetings, mentoring junior players, and creating an inclusive environment where all team members feel valued and supported.",
-  q3: "Through their leadership, they have fostered a strong sense of unity and teamwork. The team has shown improved cohesion and performance, with members reporting enhanced camaraderie and mutual support.",
-  q4: "Reflecting on their journey, the nominee has grown significantly as a leader and athlete. They have overcome challenges through resilience and dedication, inspiring peers to pursue excellence in both academics and sport.",
+    "This nominee has consistently demonstrated accountability, respect, integrity, honesty and transparency in their daily work, going above and beyond documented job requirements.",
+  q2: "Their actions have made a positive and lasting impact within their department, improving processes and outcomes for colleagues and students alike.",
+  q3: "They work effectively as part of the team, demonstrating respect, fairness and a strong commitment to shared goals.",
+  q4: "They have shown a proven track record of leadership, responsibility and a commitment to sustainability in advancing the University's values.",
 };
 
 // Helper: Wait for page stability (no loading spinners, modals hidden)
@@ -59,21 +59,16 @@ async function waitForPageStability(page: Page) {
 // Helper: Fill out nominee details (Step 1)
 async function fillNomineeDetails(page: Page) {
   await page.fill('input[placeholder*="Thandeka Mhlongo"]', mockNominee.fullName);
-  await page.fill('input[placeholder*="21234567"]', mockNominee.studentNumber);
+  await page.fill('input[placeholder*="21234567"]', mockNominee.staffNumber);
   await page.fill('input[placeholder*="thandeka@dut.ac.za"]', mockNominee.email);
+  await page.fill('input[placeholder*="Student Enrolment Management"]', mockNominee.department);
 
-  // Select faculty
-  const facultyCombobox = page.locator('text=Faculty').locator("..").locator("button");
-  await facultyCombobox.click();
-  await page.locator(`text=${mockNominee.faculty}`).first().click();
-
-  // Select year
-  const yearCombobox = page
-    .locator('text=Year of Study')
-    .locator("..")
-    .locator("button");
-  await yearCombobox.click();
-  await page.locator(`text=${mockNominee.year}`).first().click();
+  // Tick all eligibility checkboxes
+  const eligibilityCheckboxes = page.locator('div:has-text("Eligibility") input[type="checkbox"]');
+  const count = await eligibilityCheckboxes.count();
+  for (let i = 0; i < count; i++) {
+    await eligibilityCheckboxes.nth(i).check();
+  }
 
   await waitForPageStability(page);
 }
@@ -184,7 +179,7 @@ test("Scenario 1: Submit nomination with links-only evidence", async ({
   // Step 3: Fill answers and add links
   await fillAnswers(page);
 
-  // Add links for each question (4 questions for sportsmanship)
+  // Add links for each question (4 questions for Living the Values)
   for (let i = 0; i < 4; i++) {
     await addLinkEvidence(
       page,
@@ -236,21 +231,16 @@ test("Scenario 2: Submit nomination with PDF-only evidence", async ({
   };
 
   await page.fill('input[placeholder*="Thandeka Mhlongo"]', pdfNominee.fullName);
-  await page.fill('input[placeholder*="21234567"]', pdfNominee.studentNumber);
+  await page.fill('input[placeholder*="21234567"]', pdfNominee.staffNumber);
   await page.fill('input[placeholder*="thandeka@dut.ac.za"]', pdfNominee.email);
+  await page.fill('input[placeholder*="Student Enrolment Management"]', pdfNominee.department);
 
-  // Select faculty
-  const facultyCombobox = page.locator('text=Faculty').locator("..").locator("button");
-  await facultyCombobox.click();
-  await page.locator(`text=${mockNominee.faculty}`).first().click();
-
-  // Select year
-  const yearCombobox = page
-    .locator('text=Year of Study')
-    .locator("..")
-    .locator("button");
-  await yearCombobox.click();
-  await page.locator(`text=${mockNominee.year}`).first().click();
+  // Tick all eligibility checkboxes
+  const pdfEligibilityCheckboxes = page.locator('div:has-text("Eligibility") input[type="checkbox"]');
+  const pdfEligibilityCount = await pdfEligibilityCheckboxes.count();
+  for (let i = 0; i < pdfEligibilityCount; i++) {
+    await pdfEligibilityCheckboxes.nth(i).check();
+  }
 
   await page.click('button:has-text("Continue")');
   await page.waitForTimeout(1000);
@@ -309,21 +299,16 @@ test("Scenario 3: Submit nomination with mixed evidence (links + PDFs)", async (
   };
 
   await page.fill('input[placeholder*="Thandeka Mhlongo"]', mixedNominee.fullName);
-  await page.fill('input[placeholder*="21234567"]', mixedNominee.studentNumber);
+  await page.fill('input[placeholder*="21234567"]', mixedNominee.staffNumber);
   await page.fill('input[placeholder*="thandeka@dut.ac.za"]', mixedNominee.email);
+  await page.fill('input[placeholder*="Student Enrolment Management"]', mixedNominee.department);
 
-  // Select faculty
-  const facultyCombobox = page.locator('text=Faculty').locator("..").locator("button");
-  await facultyCombobox.click();
-  await page.locator(`text=${mockNominee.faculty}`).first().click();
-
-  // Select year
-  const yearCombobox = page
-    .locator('text=Year of Study')
-    .locator("..")
-    .locator("button");
-  await yearCombobox.click();
-  await page.locator(`text=${mockNominee.year}`).first().click();
+  // Tick all eligibility checkboxes
+  const mixedEligibilityCheckboxes = page.locator('div:has-text("Eligibility") input[type="checkbox"]');
+  const mixedEligibilityCount = await mixedEligibilityCheckboxes.count();
+  for (let i = 0; i < mixedEligibilityCount; i++) {
+    await mixedEligibilityCheckboxes.nth(i).check();
+  }
 
   await page.click('button:has-text("Continue")');
   await page.waitForTimeout(1000);
