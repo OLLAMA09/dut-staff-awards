@@ -1,13 +1,22 @@
 ﻿import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Menu, Trophy, Calendar, Award, Sparkles, Users, ChevronRight, BookOpen, Play, Download, CheckCircle2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-} from "@/components/ui/sheet";
+  Menu,
+  X,
+  Trophy,
+  Calendar,
+  Award,
+  Sparkles,
+  Users,
+  ChevronRight,
+  BookOpen,
+  Play,
+  Download,
+  CheckCircle2,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader } from "@/components/ui/sheet";
 import { subscribeToAuthState } from "@/lib/auth-firebase";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -59,7 +68,10 @@ export default function SiteNav() {
 
   useEffect(() => {
     const unsub = subscribeToAuthState(async (user) => {
-      if (!user) { setUserRole("none"); return; }
+      if (!user) {
+        setUserRole("none");
+        return;
+      }
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         const role = snap.data()?.role;
@@ -72,6 +84,15 @@ export default function SiteNav() {
   }, []);
 
   const isPrivileged = userRole === "admin" || userRole === "judge";
+
+  // Scroll-aware chrome: the header tightens and gains a soft shadow as the page scrolls.
+  const { scrollY } = useScroll();
+  const navPaddingY = useTransform(scrollY, [0, 120], [16, 10]);
+  const navShadowOpacity = useTransform(scrollY, [0, 120], [0, 0.16]);
+  const navShadow = useTransform(
+    navShadowOpacity,
+    (v) => `0 12px 30px -16px oklch(0.24 0.09 258 / ${v})`,
+  );
 
   async function handleInstall(onFallback?: () => void) {
     if (installPromptRef.current) {
@@ -91,43 +112,91 @@ export default function SiteNav() {
 
   const NavLinks = () => (
     <>
-      <Link to="/" hash="categories" className="transition hover:text-primary" onClick={() => setIsOpen(false)}>
+      <Link
+        to="/"
+        hash="categories"
+        className="transition hover:text-primary"
+        onClick={() => setIsOpen(false)}
+      >
         Awards
       </Link>
-      <Link to="/" hash="event" className="transition hover:text-primary" onClick={() => setIsOpen(false)}>
+      <Link
+        to="/"
+        hash="event"
+        className="transition hover:text-primary"
+        onClick={() => setIsOpen(false)}
+      >
         Event
       </Link>
-      <Link to="/" hash="categories" className="transition hover:text-primary" onClick={() => setIsOpen(false)}>
+      <Link
+        to="/"
+        hash="categories"
+        className="transition hover:text-primary"
+        onClick={() => setIsOpen(false)}
+      >
         Nominate
       </Link>
-      <Link to="/winners" className="transition hover:text-primary" activeProps={{ className: "text-primary" }} onClick={() => setIsOpen(false)}>
+      <Link
+        to="/winners"
+        className="transition hover:text-primary"
+        activeProps={{ className: "text-primary" }}
+        onClick={() => setIsOpen(false)}
+      >
         Winners
       </Link>
       {isPrivileged && (
-        <Link to="/guide" className="flex items-center gap-1 transition hover:text-primary" activeProps={{ className: "text-primary" }} onClick={() => setIsOpen(false)}>
+        <Link
+          to="/guide"
+          className="flex items-center gap-1 transition hover:text-primary"
+          activeProps={{ className: "text-primary" }}
+          onClick={() => setIsOpen(false)}
+        >
           <BookOpen className="h-3.5 w-3.5" /> Guide
         </Link>
       )}
       {isPrivileged && (
-        <Link to="/demo" className="flex items-center gap-1 transition hover:text-primary" activeProps={{ className: "text-primary" }} onClick={() => setIsOpen(false)}>
+        <Link
+          to="/demo"
+          className="flex items-center gap-1 transition hover:text-primary"
+          activeProps={{ className: "text-primary" }}
+          onClick={() => setIsOpen(false)}
+        >
           <Play className="h-3.5 w-3.5" /> Demo
         </Link>
       )}
-      <Link to="/admin" className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/15 hover:border-primary/50" activeProps={{ className: "bg-primary/15 border-primary/50" }} onClick={() => setIsOpen(false)}>
+      <Link
+        to="/admin"
+        className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/15 hover:border-primary/50"
+        activeProps={{ className: "bg-primary/15 border-primary/50" }}
+        onClick={() => setIsOpen(false)}
+      >
         Admin
       </Link>
     </>
   );
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-primary/10 backdrop-blur-md bg-background/80">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <motion.header
+      className="fixed top-0 left-0 right-0 z-50 border-b border-primary/10 backdrop-blur-md bg-background/80"
+      style={{ boxShadow: navShadow }}
+    >
+      <motion.div
+        style={{ paddingTop: navPaddingY, paddingBottom: navPaddingY }}
+        className="mx-auto flex max-w-7xl items-center justify-between px-6"
+      >
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-12 w-auto items-center justify-center overflow-hidden">
+          <motion.div
+            whileHover={{ scale: 1.06, rotate: -3 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            className="flex h-12 w-auto items-center justify-center overflow-hidden"
+          >
             <img src={logo} alt="DUT Logo" className="h-full w-auto object-contain" />
-          </div>
+          </motion.div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold tracking-wider text-primary leading-tight">Registrar's Ambit Staff Awards</p>
+            <p className="text-sm font-semibold tracking-wider text-primary leading-tight">
+              Registrar's Ambit Staff Awards
+            </p>
             <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
               Durban University of Technology
             </p>
@@ -152,24 +221,34 @@ export default function SiteNav() {
               <Button
                 className="bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-2"
                 title={`Registrar's Ambit Staff Awards v${APP_VERSION}`}
-                onClick={() => handleInstall(() =>
-                  document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })
-                )}
+                onClick={() =>
+                  handleInstall(() =>
+                    document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }),
+                  )
+                }
               >
                 {installState === "installed" ? (
-                  <><CheckCircle2 className="h-4 w-4" /> Installed!</>
+                  <>
+                    <CheckCircle2 className="h-4 w-4" /> Installed!
+                  </>
                 ) : (
-                  <><Download className="h-4 w-4" /> Install App
+                  <>
+                    <Download className="h-4 w-4" /> Install App
                     <span className="text-[10px] opacity-70 font-normal ml-1">v{APP_VERSION}</span>
                   </>
                 )}
               </Button>
               {installState === "unavailable" && (
                 <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-primary/20 bg-white shadow-lg p-4 text-xs text-muted-foreground z-50 space-y-2">
-                  <p className="font-semibold text-foreground text-sm">Install Registrar's Ambit Staff Awards</p>
+                  <p className="font-semibold text-foreground text-sm">
+                    Install Registrar's Ambit Staff Awards
+                  </p>
                   <div>
                     <p className="font-medium text-foreground">💻 Desktop (Chrome / Edge)</p>
-                    <p>Look for the <strong>install icon ⊕</strong> in the address bar and click it, or open the browser menu → "Install Registrar's Ambit Staff Awards".</p>
+                    <p>
+                      Look for the <strong>install icon ⊕</strong> in the address bar and click it,
+                      or open the browser menu → "Install Registrar's Ambit Staff Awards".
+                    </p>
                   </div>
                   <div>
                     <p className="font-medium text-foreground">🍎 iPhone / iPad</p>
@@ -179,7 +258,9 @@ export default function SiteNav() {
                     <p className="font-medium text-foreground">🤖 Android</p>
                     <p>Tap ⋮ browser menu → "Add to Home Screen" or "Install app".</p>
                   </div>
-                  <p className="text-muted-foreground/60 pt-1 border-t border-primary/10">The app may already be installed — check your Start Menu or home screen.</p>
+                  <p className="text-muted-foreground/60 pt-1 border-t border-primary/10">
+                    The app may already be installed — check your Start Menu or home screen.
+                  </p>
                 </div>
               )}
             </div>
@@ -190,23 +271,33 @@ export default function SiteNav() {
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden text-primary">
-                  <Menu className="h-6 w-6" />
+                  <motion.div
+                    animate={{ rotate: isOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  </motion.div>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[85%] sm:w-[400px] border-l border-primary/20 backdrop-blur-xl bg-background/95 flex flex-col overflow-hidden">
+              <SheetContent
+                side="right"
+                className="w-[85%] sm:w-[400px] border-l border-primary/20 backdrop-blur-xl bg-background/95 flex flex-col overflow-hidden"
+              >
                 <SheetHeader className="flex flex-row items-center justify-between mb-6 pb-6 border-b border-primary/10 shrink-0">
                   <div className="flex items-center gap-3">
                     <img src={logo} alt="Logo" className="h-10 w-auto" />
                     <div>
                       <p className="font-bold text-sm tracking-tight">DUT AWARDS</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Registrar's Ambit</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                        Registrar's Ambit
+                      </p>
                     </div>
                   </div>
                 </SheetHeader>
                 <nav className="flex flex-col gap-2 flex-1 overflow-y-auto overscroll-contain pb-4">
-                  <Link 
-                    to="/" 
-                    hash="categories" 
+                  <Link
+                    to="/"
+                    hash="categories"
                     className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                     onClick={() => setIsOpen(false)}
                   >
@@ -216,9 +307,9 @@ export default function SiteNav() {
                     <span className="text-lg font-semibold">Awards</span>
                   </Link>
 
-                  <Link 
-                    to="/" 
-                    hash="event" 
+                  <Link
+                    to="/"
+                    hash="event"
                     className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                     onClick={() => setIsOpen(false)}
                   >
@@ -228,9 +319,9 @@ export default function SiteNav() {
                     <span className="text-lg font-semibold">Event</span>
                   </Link>
 
-                  <Link 
-                    to="/" 
-                    hash="categories" 
+                  <Link
+                    to="/"
+                    hash="categories"
                     className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                     onClick={() => setIsOpen(false)}
                   >
@@ -240,8 +331,8 @@ export default function SiteNav() {
                     <span className="text-lg font-semibold">Nominate</span>
                   </Link>
 
-                  <Link 
-                    to="/winners" 
+                  <Link
+                    to="/winners"
                     className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                     activeProps={{ className: "bg-primary/10 text-primary" }}
                     onClick={() => setIsOpen(false)}
@@ -253,8 +344,8 @@ export default function SiteNav() {
                   </Link>
 
                   {isPrivileged && (
-                    <Link 
-                      to="/guide" 
+                    <Link
+                      to="/guide"
                       className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                       activeProps={{ className: "bg-primary/10 text-primary" }}
                       onClick={() => setIsOpen(false)}
@@ -267,8 +358,8 @@ export default function SiteNav() {
                   )}
 
                   {isPrivileged && (
-                    <Link 
-                      to="/demo" 
+                    <Link
+                      to="/demo"
                       className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                       activeProps={{ className: "bg-primary/10 text-primary" }}
                       onClick={() => setIsOpen(false)}
@@ -280,8 +371,8 @@ export default function SiteNav() {
                     </Link>
                   )}
 
-                  <Link 
-                    to="/admin" 
+                  <Link
+                    to="/admin"
                     className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
                     activeProps={{ className: "bg-primary/10 text-primary" }}
                     onClick={() => setIsOpen(false)}
@@ -309,19 +400,31 @@ export default function SiteNav() {
                           }}
                         >
                           {installState === "installed" ? (
-                            <><CheckCircle2 className="h-5 w-5" /> Installed!</>
+                            <>
+                              <CheckCircle2 className="h-5 w-5" /> Installed!
+                            </>
                           ) : (
-                            <><Download className="h-5 w-5" /> Install App
+                            <>
+                              <Download className="h-5 w-5" /> Install App
                               <span className="text-xs opacity-70 font-normal">v{APP_VERSION}</span>
                             </>
                           )}
                         </button>
                         {installState === "unavailable" && (
                           <div className="rounded-lg border border-primary/15 bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                            <p className="font-semibold text-foreground">Install Registrar's Ambit Staff Awards</p>
-                            <p><strong>💻 Desktop:</strong> look for ⊕ in the address bar, or browser menu → "Install Registrar's Ambit Staff Awards".</p>
-                            <p><strong>🍎 iOS:</strong> Share → "Add to Home Screen".</p>
-                            <p><strong>🤖 Android:</strong> ⋮ menu → "Install app".</p>
+                            <p className="font-semibold text-foreground">
+                              Install Registrar's Ambit Staff Awards
+                            </p>
+                            <p>
+                              <strong>💻 Desktop:</strong> look for ⊕ in the address bar, or browser
+                              menu → "Install Registrar's Ambit Staff Awards".
+                            </p>
+                            <p>
+                              <strong>🍎 iOS:</strong> Share → "Add to Home Screen".
+                            </p>
+                            <p>
+                              <strong>🤖 Android:</strong> ⋮ menu → "Install app".
+                            </p>
                           </div>
                         )}
                       </>
@@ -332,7 +435,7 @@ export default function SiteNav() {
             </Sheet>
           </div>
         </div>
-      </div>
-    </header>
+      </motion.div>
+    </motion.header>
   );
 }

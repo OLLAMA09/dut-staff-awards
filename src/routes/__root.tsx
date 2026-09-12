@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { SmoothScroll } from "@/components/SmoothScroll";
 
 function NotFoundComponent() {
   return (
@@ -73,10 +74,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Registrar's Ambit Staff Awards" },
-      { name: "description", content: "Registrar's Ambit Staff Awards: Recognising Excellence, Celebrating Service, Honouring Our People. Nominate outstanding DUT staff." },
+      {
+        name: "description",
+        content:
+          "Registrar's Ambit Staff Awards: Recognising Excellence, Celebrating Service, Honouring Our People. Nominate outstanding DUT staff.",
+      },
       { name: "author", content: "DUT Registrar's Division" },
       { property: "og:title", content: "Registrar's Ambit Staff Awards" },
-      { property: "og:description", content: "Recognising Excellence · Celebrating Service · Honouring Our People." },
+      {
+        property: "og:description",
+        content: "Recognising Excellence · Celebrating Service · Honouring Our People.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       // PWA
@@ -90,7 +98,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/x-icon", href: "/winners/favicon.ico" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/winners/favicon-32x32.png" },
@@ -129,6 +140,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SmoothScroll />
       <Outlet />
     </QueryClientProvider>
   );
