@@ -3,10 +3,14 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Star, Quote, School, X, ChevronLeft, ChevronRight } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
+import { WinnerGridSkeleton } from "@/components/SkeletonLoaders";
 import { subscribePastWinners, type PastWinner, type WinnerTier } from "@/lib/firestore";
 
 export const Route = createFileRoute("/winners")({
   component: WinnersPage,
+  validateSearch: (search: Record<string, unknown>): { winner?: string } =>
+    typeof search.winner === "string" ? { winner: search.winner } : {},
   head: () => ({
     meta: [
       { title: "Past Winners — Registrar's Ambit Staff Awards" },
@@ -208,6 +212,7 @@ function MobileWinnerCarousel({ winners, onSelect }: { winners: PastWinner[]; on
 }
 
 function WinnersPage() {
+  const { winner: highlightId } = Route.useSearch();
   const [winners, setWinners] = useState<PastWinner[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PastWinner | null>(null);
@@ -219,6 +224,13 @@ function WinnersPage() {
     });
     return unsub;
   }, []);
+
+  // Deep link from global search (?winner=<id>) — open that winner's card automatically.
+  useEffect(() => {
+    if (!highlightId || winners.length === 0) return;
+    const match = winners.find((w) => w.id === highlightId);
+    if (match) setSelected(match);
+  }, [highlightId, winners]);
 
   const years = Array.from(new Set(winners.map((w) => w.year))).filter((y) => y >= 2024).sort((a, b) => b - a);
 
@@ -245,9 +257,7 @@ function WinnersPage() {
         </header>
 
         {loading ? (
-          <div className="flex justify-center py-32">
-            <p className="animate-pulse text-sm text-muted-foreground">Loading winners…</p>
-          </div>
+          <WinnerGridSkeleton />
         ) : winners.length === 0 ? (
           <div className="flex justify-center py-32">
             <p className="text-sm text-muted-foreground">No winners recorded yet.</p>
@@ -283,15 +293,7 @@ function WinnersPage() {
 
       {selected && <WinnerModal winner={selected} onClose={() => setSelected(null)} />}
 
-      <footer className="relative z-10 border-t border-primary/10 bg-background/60 py-12 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-muted-foreground sm:flex-row">
-          <p>© 2026 Registrar's Ambit Staff Awards</p>
-          <div className="flex gap-6">
-            <span className="text-primary">#RegistrarsAmbit</span>
-            <span className="text-primary">#DUTExcellence</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -160,6 +160,12 @@
     border: 1px solid oklch(1 0 0 / 0.62);
     box-shadow: 0 1px 1px oklch(1 0 0 / 0.55) inset, 0 8px 20px -8px oklch(0.24 0.09 258 / 0.18);
   }
+  .sticker-photo {
+    overflow: hidden;
+    border-radius: 0.25rem 1rem 0.45rem 0.9rem;
+    background: var(--background);
+    border: 1px solid oklch(0.82 0.016 82 / 0.92);
+  }
   .press-scale { transition: transform 0.15s ease, opacity 0.15s ease; }
   .press-scale:active { transform: scale(0.96); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -186,6 +192,19 @@
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 .animate-float { animation: float-slow 6s ease-in-out infinite; }
 .animate-float-slower { animation: float-slower 10s ease-in-out infinite; }
 .animate-fade-up { animation: fade-up 0.8s ease-out both; }
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: cursor-blink 0.85s step-end infinite;
+}

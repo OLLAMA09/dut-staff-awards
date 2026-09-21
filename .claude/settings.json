@@ -6,7 +6,26 @@
       "PowerShell(node --version 2>&1)",
       "PowerShell(npm --version 2>&1)",
       "PowerShell(Get-Command bun -ErrorAction SilentlyContinue)",
-      "PowerShell(bun --version 2>&1)"
+      "PowerShell(bun --version 2>&1)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).devDependencies\\)\")",
+      "Bash(sleep 4; cat /tmp/devserver.log | tail -20)",
+      "Read(//tmp/**)",
+      "Bash(node \"C:\\\\Users\\\\Ndumi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Ndumi-dut-staff-awards-dut-staff-awards\\\\6f77c0e1-6f4c-41c0-96a6-e9971ad4539c\\\\scratchpad\\\\shot.mjs\")",
+      "Bash(cp \"C:\\\\Users\\\\Ndumi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Ndumi-dut-staff-awards-dut-staff-awards\\\\6f77c0e1-6f4c-41c0-96a6-e9971ad4539c\\\\scratchpad\\\\shot.mjs\" \"C:\\\\Users\\\\Ndumi\\\\dut-staff-awards\\\\dut-staff-awards\\\\shot-tmp.mjs\")",
+      "Bash(node shot-tmp.mjs)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(cp \"C:\\\\Users\\\\Ndumi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Ndumi-dut-staff-awards-dut-staff-awards\\\\6f77c0e1-6f4c-41c0-96a6-e9971ad4539c\\\\scratchpad\\\\shot2.mjs\" \"C:\\\\Users\\\\Ndumi\\\\dut-staff-awards\\\\dut-staff-awards\\\\shot-tmp2.mjs\")",
+      "Bash(node shot-tmp2.mjs)",
+      "Bash(cp \"C:\\\\Users\\\\Ndumi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Ndumi-dut-staff-awards-dut-staff-awards\\\\6f77c0e1-6f4c-41c0-96a6-e9971ad4539c\\\\scratchpad\\\\shot3.mjs\" \"C:\\\\Users\\\\Ndumi\\\\dut-staff-awards\\\\dut-staff-awards\\\\shot-tmp3.mjs\")",
+      "Bash(node shot-tmp3.mjs)",
+      "Bash(node shot-tmp4.mjs)",
+      "PowerShell(npx tsc --noEmit -p tsconfig.json)",
+      "PowerShell(npx tsc --noEmit -p tsconfig.json; echo EXIT:$LASTEXITCODE)",
+      "Bash(grep -n \"questions.map\\(\\(q\\)\" \"src/routes/nominate.\\\\$categoryId.tsx\")",
+      "Read(//c/Users/Ndumi/dut-staff-awards/dut-staff-awards/src/routes/**)",
+      "Bash(node --env-file=.env scripts/seed-fake-data.mjs)",
+      "Bash(node --env-file=.env -e ' *)",
+      "PowerShell(npx vite build --mode development 2>&1)"
     ]
   }
 }

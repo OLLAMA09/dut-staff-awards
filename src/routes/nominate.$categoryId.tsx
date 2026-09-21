@@ -1,6 +1,6 @@
 ﻿// /nominate/$categoryId — Dedicated nomination page, decoupled from homepage
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -14,6 +14,8 @@ import {
   Info,
   BookOpen,
   ChevronDown,
+  Check,
+  Search,
 } from "lucide-react";
 import { addDoc, collection, serverTimestamp, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -31,10 +33,13 @@ import { AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import SiteNav from "@/components/SiteNav";
 
 // ─── Route definition ────────────────────────────────────────────────────────
@@ -62,6 +67,269 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const STEP_LABELS = ["Nominee Details", "Your Details", "Nomination Questions"];
+
+const DEPARTMENT_GROUPS: { group: string; options: string[] }[] = [
+  {
+    group: "Executive Offices",
+    options: [
+      "Office of the Vice-Chancellor and Principal",
+      "DVC: Teaching and Learning",
+      "DVC: Research, Innovation and Engagement",
+      "DVC: People and Operations",
+      "Registrar's Division",
+      "Office of the Chief Financial Officer (Finance Division)",
+    ],
+  },
+  {
+    group: "Registrar's Ambit",
+    options: [
+      "Academic Data and Student Records",
+      "Committees Administration (Governance/Secretariat)",
+      "Examinations",
+      "Student Admissions",
+      "Student Administration (Registration, Graduation Audits, Timetabling)",
+    ],
+  },
+  {
+    group: "Support & Professional Services",
+    options: [
+      "Human Capital Services (Human Resources)",
+      "Finance Division (incl. Student Fees, Procurement/Supply Chain, Payroll)",
+      "Information Technology and Support Services (ITSS)",
+      "Corporate Affairs (Marketing, Communications, PR, Design Studio, Fundraising, Student Recruitment)",
+      "Library and Information Services",
+      "Centre for Excellence in Learning and Teaching (CELT)",
+      "Centre for Quality Promotion and Assurance (CQPA)",
+      "Institutional Planning, Monitoring and Evaluation",
+      "Cooperative Education",
+      "Research and Postgraduate Support",
+      "International Education and Partnerships (IEP)",
+      "Technology Transfer and Innovation",
+      "Enterprise Development Unit",
+      "Real Estate Management",
+      "Physical Planning",
+      "Logistics",
+      "Printing",
+      "Protection Services",
+      "Midlands Campus Administration",
+      "Writing Centre",
+      "Online Distance Learning Office (ODL)",
+      "Advancement and Alumni Relations",
+      "Internal Audit",
+      "Risk Management",
+      "DUT Business School",
+    ],
+  },
+  {
+    group: "Student Services",
+    options: [
+      "Dean of Students Office",
+      "Student Counselling and Health",
+      "Student Financial Aid (Financial Aid Unit)",
+      "Sports Administration",
+      "Student Housing and Residence Life",
+      "Student Governance and Development",
+      "Disability Rights Unit",
+    ],
+  },
+  {
+    group: "Faculty of Accounting and Informatics",
+    options: [
+      "Faculty of Accounting and Informatics (Dean's Office)",
+      "Auditing and Taxation",
+      "Financial Accounting",
+      "Management Accounting",
+      "Information and Corporate Management",
+      "Information Systems",
+      "Information Technology",
+      "Finance and Information Management (Midlands)",
+    ],
+  },
+  {
+    group: "Faculty of Applied Sciences",
+    options: [
+      "Faculty of Applied Sciences (Dean's Office)",
+      "Biotechnology and Food Technology",
+      "Chemistry",
+      "Consumer Sciences (Food and Nutrition)",
+      "Horticulture",
+      "Maritime Studies",
+      "Mathematics",
+      "Physics",
+      "Statistics",
+      "Sport Studies",
+    ],
+  },
+  {
+    group: "Faculty of Arts and Design",
+    options: [
+      "Faculty of Arts and Design (Dean's Office)",
+      "Drama and Production Studies",
+      "Fashion and Textiles",
+      "Fine Art and Jewellery Design",
+      "Media, Language and Communication",
+      "Visual Communication Design",
+      "Video Technology",
+      "Education and Humanities",
+    ],
+  },
+  {
+    group: "Faculty of Engineering and the Built Environment",
+    options: [
+      "Faculty of Engineering and the Built Environment (Dean's Office)",
+      "Architecture",
+      "Chemical Engineering",
+      "Civil Engineering and Geomatics (Durban)",
+      "Civil Engineering (Midlands)",
+      "Construction Management and Quantity Surveying",
+      "Electrical Power Engineering",
+      "Electronic and Computer Engineering",
+      "Industrial Engineering",
+      "Mechanical Engineering",
+      "Town and Regional Planning",
+    ],
+  },
+  {
+    group: "Faculty of Health Sciences",
+    options: [
+      "Faculty of Health Sciences (Dean's Office)",
+      "Basic Medical Sciences",
+      "Biomedical and Clinical Technology",
+      "Chiropractic",
+      "Community Health Studies",
+      "Dental Sciences",
+      "Emergency Medical Care and Rescue",
+      "Homoeopathy",
+      "Medical Orthotics and Prosthetics",
+      "Nursing",
+      "Radiography",
+      "Somatology",
+    ],
+  },
+  {
+    group: "Faculty of Management Sciences",
+    options: [
+      "Faculty of Management Sciences (Dean's Office)",
+      "Applied Law",
+      "Ecotourism",
+      "Entrepreneurial Studies and Management",
+      "Hospitality and Tourism",
+      "Human Resources Management",
+      "Marketing and Retail",
+      "Operations and Quality Management",
+      "Public Management and Economics",
+      "Public Relations Management",
+    ],
+  },
+  {
+    group: "Research Centres & Institutes",
+    options: [
+      "Institute for Water and Wastewater Technology (IWWT)",
+      "Institute for Systems Science (ISS)",
+      "Space Science Centre for Research and Postgraduate Studies",
+      "Urban Futures Centre (UFC)",
+      "International Centre of Nonviolence (ICON)",
+      "Gender Justice, Health and Human Development",
+      "Technology Stations (Food/Energy/Plastics)",
+      "Confucius Institute",
+    ],
+  },
+  {
+    group: "Other",
+    options: ["Other"],
+  },
+];
+
+// ─── Department / Unit searchable combobox ────────────────────────────────────
+// The search box lives directly on the field itself (not tucked inside a popup),
+// so on mobile it's usable without opening a menu and scrolling to find it first.
+
+function DepartmentCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onOutsideClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, []);
+
+  const q = searchText.trim().toLowerCase();
+  const filteredGroups = q
+    ? DEPARTMENT_GROUPS.map(({ group, options }) => ({
+        group,
+        options: options.filter((d) => d.toLowerCase().includes(q)),
+      })).filter(({ options }) => options.length > 0)
+    : DEPARTMENT_GROUPS;
+
+  function select(d: string) {
+    onChange(d);
+    setSearchText("");
+    setOpen(false);
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={open ? searchText : value}
+          onFocus={() => {
+            setOpen(true);
+            setSearchText("");
+          }}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          placeholder="Search department / unit…"
+          className="pl-9"
+        />
+      </div>
+
+      {open && (
+        <div className="absolute z-50 mt-1 max-h-[280px] w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+          {filteredGroups.length === 0 && (
+            <p className="px-3 py-4 text-center text-sm text-muted-foreground">No department found.</p>
+          )}
+          {filteredGroups.map(({ group, options }) => (
+            <div key={group}>
+              <p className="px-3 pt-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {group}
+              </p>
+              {options.map((d) => (
+                <button
+                  type="button"
+                  key={d}
+                  onMouseDown={(e) => {
+                    // Fire before the input's onBlur/outside-click handler closes the menu.
+                    e.preventDefault();
+                    select(d);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-primary/5"
+                >
+                  <Check className={cn("h-4 w-4 shrink-0", value === d ? "opacity-100 text-primary" : "opacity-0")} />
+                  <span className="truncate">{d}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Step = 1 | 2 | 3;
 
@@ -660,25 +928,57 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="mt-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+                className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-4"
               >
-                <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-semibold text-amber-900">
-                    📎 Required Documents Missing
-                  </p>
-                  <p className="mt-1 text-sm text-amber-800">
-                    You cannot submit until all supporting documents have been uploaded. Please scroll down and upload the required files for each question.
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-amber-700 list-disc list-inside">
-                    {validateDocuments().missingDocuments.slice(0, 5).map((doc, idx) => (
-                      <li key={idx}>{doc}</li>
-                    ))}
-                    {validateDocuments().missingDocuments.length > 5 && (
-                      <li>... and {validateDocuments().missingDocuments.length - 5} more</li>
-                    )}
-                  </ul>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-900">
+                      Supporting documents still needed
+                    </p>
+                    <p className="mt-1 text-sm text-amber-800">
+                      {(() => {
+                        const count = validateDocuments().missingItems.length;
+                        return `${count} question${count !== 1 ? "s" : ""} below ${count !== 1 ? "are" : "is"} missing evidence. Upload the files listed, then this checklist will clear on its own.`;
+                      })()}
+                    </p>
+                  </div>
                 </div>
+
+                <ul className="mt-3 space-y-2">
+                  {validateDocuments().missingItems.map((item) => (
+                    <li
+                      key={item.questionId}
+                      className="rounded-md border border-amber-200 bg-white/60 px-3 py-2.5"
+                    >
+                      <p className="text-xs font-medium leading-snug text-amber-900">
+                        {item.questionPrompt}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {item.missingEvidence.map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                        <a
+                          href={`#question-${item.questionId}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            document
+                              .getElementById(`question-${item.questionId}`)
+                              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
+                          className="ml-auto text-[11px] font-semibold text-primary hover:underline"
+                        >
+                          Upload now →
+                        </a>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             )}
             {areAllDocumentsComplete() && (
@@ -856,11 +1156,7 @@ function StepNominee({
         />
       </Field>
       <Field label="Department / Unit *">
-        <Input
-          value={nominee.department}
-          onChange={(e) => set("department", e.target.value)}
-          placeholder="e.g. Student Enrolment Management"
-        />
+        <DepartmentCombobox value={nominee.department} onChange={(v) => set("department", v)} />
       </Field>
 
       <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
@@ -1036,7 +1332,7 @@ function StepQuestions({
               const words = countWords(answers[q.id] ?? "");
               const overLimit = q.wordLimit ? words > q.wordLimit : false;
               return (
-                <div key={q.id} className="space-y-2">
+                <div key={q.id} id={`question-${q.id}`} className="space-y-2 scroll-mt-24">
                   <Label className="text-sm font-medium leading-snug">{q.prompt}</Label>
                   {q.wordLimit && (
                     <p className="text-xs text-muted-foreground">Word limit: {q.wordLimit} words</p>

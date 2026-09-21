@@ -20,6 +20,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader } from "@/components/ui/
 import { subscribeToAuthState } from "@/lib/auth-firebase";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const logo = "/logo.png";
 const APP_VERSION = "1.0.0";
@@ -166,8 +167,8 @@ export default function SiteNav() {
       )}
       <Link
         to="/admin"
-        className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/15 hover:border-primary/50"
-        activeProps={{ className: "bg-primary/15 border-primary/50" }}
+        className="transition hover:text-primary"
+        activeProps={{ className: "text-primary" }}
         onClick={() => setIsOpen(false)}
       >
         Admin
@@ -177,12 +178,12 @@ export default function SiteNav() {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50 border-b border-primary/10 backdrop-blur-md bg-background/80"
+      className="pointer-events-auto fixed top-0 left-0 right-0 z-50 border-b border-primary/10 bg-background/70 backdrop-blur-2xl"
       style={{ boxShadow: navShadow }}
     >
       <motion.div
         style={{ paddingTop: navPaddingY, paddingBottom: navPaddingY }}
-        className="mx-auto flex max-w-7xl items-center justify-between px-6"
+        className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6"
       >
         <Link to="/" className="flex items-center gap-3">
           <motion.div
@@ -204,11 +205,13 @@ export default function SiteNav() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-10 text-sm font-medium text-muted-foreground md:flex">
+        <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <NavLinks />
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <GlobalSearch isPrivileged={isPrivileged} />
+
           {/* Desktop CTA: "Download App" on browser, "Learn More" inside PWA */}
           {isPWA ? (
             <Link to="/" hash="about" className="hidden sm:flex items-center gap-2">

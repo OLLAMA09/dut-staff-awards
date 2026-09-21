@@ -1,5 +1,6 @@
 ﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
+import { toast } from "sonner";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import { motion } from "framer-motion";
 import {
@@ -181,11 +182,9 @@ function DeclareWinnerButton({
   const [tier, setTier] = useState<WinnerTier>(autoTier);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const [err, setErr] = useState("");
 
   async function handleConfirm() {
     setSaving(true);
-    setErr("");
     try {
       await promoteToWinner({
         nominationId: nominee.nominationId,
@@ -198,7 +197,7 @@ function DeclareWinnerButton({
       setDone(true);
       setTimeout(() => { setOpen(false); setDone(false); }, 1500);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to promote winner.");
+      toast.error(e instanceof Error ? e.message : "Failed to promote winner.");
     } finally {
       setSaving(false);
     }
@@ -208,7 +207,7 @@ function DeclareWinnerButton({
     <>
       <button
         type="button"
-        onClick={() => { setOpen(true); setTier(autoTier); setDone(false); setErr(""); }}
+        onClick={() => { setOpen(true); setTier(autoTier); setDone(false); }}
         className="mt-2 inline-flex items-center gap-1 rounded-full border border-yellow-400/60 bg-yellow-50 px-3 py-1 text-[11px] font-semibold text-yellow-800 hover:bg-yellow-100 transition"
       >
         <Award className="h-3 w-3" /> Declare Winner
@@ -251,7 +250,6 @@ function DeclareWinnerButton({
                     ))}
                   </div>
                 </div>
-                {err && <p className="text-xs text-destructive">{err}</p>}
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
@@ -312,7 +310,6 @@ function LeaderboardPage() {
   const [role, setRole] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -330,7 +327,7 @@ function LeaderboardPage() {
           await firebaseSignOut();
           setAuthed(false);
           setRole(null);
-          setErr("Your account does not have access to the leaderboard.");
+          toast.error("Your account does not have access to the leaderboard.");
         }
       } else {
         setAuthed(false);
@@ -343,7 +340,6 @@ function LeaderboardPage() {
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
-    setErr("");
     setLoading(true);
     try {
       await signIn(email, password);
@@ -354,11 +350,11 @@ function LeaderboardPage() {
         code === "auth/wrong-password" ||
         code === "auth/user-not-found"
       ) {
-        setErr("Incorrect email or password.");
+        toast.error("Incorrect email or password.");
       } else if (code === "auth/too-many-requests") {
-        setErr("Too many attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later.");
       } else {
-        setErr("Sign-in failed. Please try again.");
+        toast.error("Sign-in failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -417,7 +413,6 @@ function LeaderboardPage() {
                   required
                 />
               </div>
-              {err && <p className="text-sm text-destructive">{err}</p>}
               <Button
                 type="submit"
                 disabled={loading}

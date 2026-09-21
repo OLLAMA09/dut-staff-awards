@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
 import {
   updatePassword,
@@ -19,7 +20,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Mail, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Lock, Mail, Loader2 } from 'lucide-react';
 import { useTrackInteraction } from '@/hooks/useTrackInteraction';
 
 export function ChangePassword() {
@@ -35,8 +36,6 @@ export function ChangePassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showPasswords, setShowPasswords] = useState(false);
 
   const validatePassword = (password: string): string | null => {
@@ -50,27 +49,25 @@ export function ChangePassword() {
 
   const handleDirectPasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setError('All fields are required');
+      toast.error('All fields are required');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      toast.error('New passwords do not match');
       return;
     }
 
     const validationError = validatePassword(newPassword);
     if (validationError) {
-      setError(validationError);
+      toast.error(validationError);
       return;
     }
 
     if (oldPassword === newPassword) {
-      setError('New password must be different from old password');
+      toast.error('New password must be different from old password');
       return;
     }
 
@@ -89,7 +86,7 @@ export function ChangePassword() {
       // Update password
       await updatePassword(user, newPassword);
 
-      setSuccess('Password changed successfully! You may need to log in again.');
+      toast.success('Password changed successfully! You may need to log in again.');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -115,7 +112,7 @@ export function ChangePassword() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -123,8 +120,6 @@ export function ChangePassword() {
 
   const handlePasswordResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
     setLoading(true);
 
     try {
@@ -134,7 +129,7 @@ export function ChangePassword() {
       }
 
       await sendPasswordResetEmail(auth, user.email);
-      setSuccess(`Password reset link sent to ${user.email}. Check your email and click the link to reset your password.`);
+      toast.success(`Password reset link sent to ${user.email}. Check your email and click the link to reset your password.`);
 
       useTrackInteraction({
         module: 'settings',
@@ -149,7 +144,7 @@ export function ChangePassword() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -163,20 +158,6 @@ export function ChangePassword() {
         </h2>
         <p className="text-gray-600 text-sm mt-1">Update your account password</p>
       </div>
-
-      {error && (
-        <div className="flex gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="flex gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-800">{success}</p>
-        </div>
-      )}
 
       {/* Method Selector */}
       <div className="flex gap-2">

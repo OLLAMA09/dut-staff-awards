@@ -1,5 +1,6 @@
 ﻿import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
+import { toast } from "sonner";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import {
   Lock,
@@ -227,7 +228,6 @@ function JudgePage() {
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -274,7 +274,7 @@ function JudgePage() {
         }
         
         await firebaseSignOut();
-        setErr("Your account does not have judge access.");
+        toast.error("Your account does not have judge access.");
         setAuthed(false);
       } else {
         setAuthed(false);
@@ -287,7 +287,6 @@ function JudgePage() {
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
-    setErr("");
     setLoading(true);
     try {
       // Track if they're using the temporary password
@@ -302,11 +301,11 @@ function JudgePage() {
         code === "auth/wrong-password" ||
         code === "auth/user-not-found"
       ) {
-        setErr("Incorrect email or password.");
+        toast.error("Incorrect email or password.");
       } else if (code === "auth/too-many-requests") {
-        setErr("Too many attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later.");
       } else {
-        setErr("Sign-in failed. Please try again.");
+        toast.error("Sign-in failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -376,7 +375,6 @@ function JudgePage() {
                   required
                 />
               </div>
-              {err && <p className="text-sm text-destructive">{err}</p>}
               <Button
                 type="submit"
                 disabled={loading}
@@ -460,47 +458,54 @@ function JudgeQuickGuide() {
 
   if (dismissed) {
     return (
-      <div className="mt-6 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => { setDismissed(false); try { localStorage.removeItem("judgeGuideDismissed"); } catch { /* ignore */ } setOpen(true); }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
-        >
-          <BookOpen className="h-3.5 w-3.5" /> Show quick guide
-        </button>
-        <Link to="/guide" className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition">
-          <Play className="h-3.5 w-3.5" /> Full guide & demo
-        </Link>
-      </div>
+      <button
+        type="button"
+        onClick={() => { setDismissed(false); try { localStorage.removeItem("judgeGuideDismissed"); } catch { /* ignore */ } setOpen(true); }}
+        className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
+      >
+        <BookOpen className="h-3.5 w-3.5" /> Show quick guide
+      </button>
     );
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-primary/20 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-primary/20 bg-white shadow-sm overflow-hidden">
       {/* Header — always visible */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/20 transition"
-      >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <BookOpen className="h-4 w-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground">How to use this panel — Quick Guide</p>
-          <p className="text-xs text-muted-foreground mt-0.5">7 steps · takes about 2 minutes to read</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            to="/demo"
-            onClick={(e) => e.stopPropagation()}
-            className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/25 transition"
-          >
-            <Play className="h-3 w-3" /> Practice in Demo
-          </Link>
-          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-        </div>
-      </button>
+      <div className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-muted/20 transition">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 min-w-0 items-center gap-2.5 text-left"
+        >
+          <BookOpen className="h-4 w-4 shrink-0 text-primary" />
+          <p className="flex-1 min-w-0 truncate text-xs font-semibold text-foreground">
+            How to use this panel
+            <span className="ml-1.5 font-normal text-muted-foreground">· 7 steps</span>
+          </p>
+        </button>
+        <Link
+          to="/demo"
+          className="hidden shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/25 transition sm:inline-flex"
+        >
+          <Play className="h-3 w-3" /> Practice in Demo
+        </Link>
+        <Link
+          to="/guide"
+          className="shrink-0 text-xs font-medium text-primary hover:underline"
+        >
+          Full guide
+        </Link>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition"
+        >
+          Dismiss
+        </button>
+        <button type="button" onClick={() => setOpen((o) => !o)} className="shrink-0" aria-label={open ? "Collapse guide" : "Expand guide"}>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
 
       {/* Expandable steps */}
       {open && (
@@ -523,30 +528,7 @@ function JudgeQuickGuide() {
             <Link to="/demo" className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-xs font-bold hover:opacity-90 transition">
               <Play className="h-3.5 w-3.5" /> Practice with dummy nominees
             </Link>
-            <Link to="/guide" className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-muted/30 transition">
-              <BookOpen className="h-3.5 w-3.5" /> Full guide
-            </Link>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="ml-auto text-xs text-muted-foreground hover:text-foreground transition underline-offset-2 hover:underline"
-            >
-              Don't show again
-            </button>
           </div>
-        </div>
-      )}
-
-      {/* Collapsed footer hint */}
-      {!open && (
-        <div className="border-t border-primary/10 bg-muted/20 px-5 py-2.5 flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            New here? Click above to expand the step-by-step guide, or{" "}
-            <Link to="/demo" className="font-semibold text-primary hover:underline">practice in the demo sandbox</Link>.
-          </p>
-          <button type="button" onClick={dismiss} className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition">
-            Dismiss
-          </button>
         </div>
       )}
     </div>
@@ -738,7 +720,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
   );
 
   return (
-    <div>
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -769,7 +751,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
 
       {/* Scoring status banner - only show when real judging is NOT active */}
       {!realJudgingActive && (
-        <div className="mt-6 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <span>Real judging has not been activated yet. Contact the admin to enable scoring.</span>
         </div>
@@ -777,7 +759,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
 
       {/* Incomplete criteria notification */}
       {incompleteNotification?.incompleteCount > 0 && (
-        <div className="mt-6 rounded-xl border border-red-300 bg-red-50 px-4 py-4">
+        <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
             <div className="flex-1">
@@ -807,7 +789,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
 
       {/* Judge Activity Section */}
       {judgeActivityLogs.length > 0 && (
-        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
           <button
             onClick={() => setShowActivity(!showActivity)}
             className="flex w-full items-center justify-between text-sm font-semibold hover:text-foreground"
@@ -840,22 +822,23 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
         </div>
       )}
 
-      {/* Stats */}
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      {/* Stats — compact pill strip */}
+      <div className="flex flex-wrap gap-2">
         {[
-          { label: "Shortlisted", value: stats.total, cls: "text-blue-600" },
-          { label: "Scored by me", value: stats.scored, cls: "text-green-600" },
-          { label: "Still to review", value: stats.pending, cls: "text-amber-500" },
+          { label: "Shortlisted", value: stats.total, dot: "bg-blue-500" },
+          { label: "Scored by me", value: stats.scored, dot: "bg-green-500" },
+          { label: "Still to review", value: stats.pending, dot: "bg-amber-500" },
         ].map((s) => (
-          <Card key={s.label} className="p-5 text-center">
-            <p className={`text-3xl font-bold ${s.cls}`}>{s.value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
-          </Card>
+          <div key={s.label} className="flex shrink-0 items-center gap-2 rounded-full border border-primary/15 bg-white px-3.5 py-2">
+            <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+            <span className="text-sm font-bold text-foreground">{s.value}</span>
+            <span className="text-xs text-muted-foreground">{s.label}</span>
+          </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3">
         <div className="relative min-w-52 flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

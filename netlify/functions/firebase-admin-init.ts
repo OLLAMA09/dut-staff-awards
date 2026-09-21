@@ -1,7 +1,9 @@
 /**
- * Firebase Admin SDK initialization helper for Netlify Functions
- * Loads credentials from local JSON file instead of environment variables
- * This avoids the AWS Lambda 4KB environment variable limit
+ * Firebase Admin SDK initialization helper for Netlify Functions.
+ * Prefers FIREBASE_ADMIN_SDK_B64 (base64-encoded service account JSON) so the
+ * credential never has to be committed to the repo. Falls back to a local
+ * JSON file for deploys that hit AWS Lambda's ~4KB total env var limit and
+ * bundle the credential file into the function instead (see .env.example).
  */
 
 import { initializeApp, getApps } from 'firebase-admin/app';
@@ -9,14 +11,31 @@ import { cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
-let _adminApp: ReturnType<typeof initializeApp> | null = null;
+function loadServiceAccount(): Record<string, unknown> {
+  const b64 = process.env.FIREBASE_ADMIN_SDK_B64;
+  if (b64) {
+    return JSON.parse(Buffer.from(b64, 'base64').toString('utf-8'));
+  }
+
+  // Fallback: a *-firebase-adminsdk-*.json file bundled alongside this function.
+  const localFile = readdirSync(__dirname).find((f) => f.includes('firebase-adminsdk') && f.endsWith('.json'));
+  if (localFile) {
+    const credPath = resolve(__dirname, localFile);
+    if (existsSync(credPath)) {
+      return JSON.parse(readFileSync(credPath, 'utf-8'));
+    }
+  }
+
+  throw new Error(
+    'No Firebase Admin credentials found. Set FIREBASE_ADMIN_SDK_B64 (see .env.example) or place a *-firebase-adminsdk-*.json file in netlify/functions/.',
+  );
+}
 
 /**
- * Get or create the Firebase Admin app instance
- * Loads service account credentials from local JSON file
+ * Get or create the Firebase Admin app instance.
  */
 export function getAdminApp() {
   if (getApps().length > 0) {
@@ -24,17 +43,14 @@ export function getAdminApp() {
   }
 
   try {
-    // Read service account from local JSON file
-    const credPath = resolve(__dirname, 'student-services-745d5-firebase-adminsdk-fbsvc-81b1cc07be.json');
-    const serviceAccount = JSON.parse(readFileSync(credPath, 'utf-8'));
-    
-    // Initialize Firebase Admin SDK
-    const app = initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: 'student-services-745d5.appspot.com',
-    });
+    const serviceAccount = loadServiceAccount();
+    const projectId = serviceAccount.project_id as string;
+    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`;
 
-    return app;
+    return initializeApp({
+      credential: cert(serviceAccount as never),
+      storageBucket,
+    });
   } catch (error) {
     console.error('Failed to initialize Firebase Admin SDK:', error);
     throw new Error(`Firebase Admin SDK initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -44,9 +60,9 @@ export function getAdminApp() {
 /**
  * Get Firebase Storage bucket
  */
-export function getStorageBucket(bucketName = 'student-services-745d5.appspot.com') {
+export function getStorageBucket(bucketName = process.env.FIREBASE_STORAGE_BUCKET) {
   const app = getAdminApp();
-  return getStorage(app).bucket(bucketName);
+  return bucketName ? getStorage(app).bucket(bucketName) : getStorage(app).bucket();
 }
 
 /**

@@ -1,5 +1,6 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import {
   Lock,
@@ -36,6 +37,7 @@ import {
   Shield,
   AlertCircle,
   MoreVertical,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -107,6 +109,7 @@ import { setNominationsOpen } from "@/lib/nomination-settings";
 import SiteNav from "@/components/SiteNav";
 import { AdminSettings } from "@/components/AdminSettings";
 import { ForcePasswordChangeModal } from "@/components/ForcePasswordChangeModal";
+import { WinnerRowSkeleton } from "@/components/SkeletonLoaders";
 import { User } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,12 +117,44 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuBadge,
+} from "@/components/animate-ui/components/radix/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/animate-ui/components/radix/dropdown-menu";
 // Tabs components removed — sidebar navigation used instead
 import { AWARD_CATEGORIES, getCriteriaForCategory } from "@/data/awards";
 import {
@@ -282,39 +317,47 @@ function AdminQuickGuide({ canManage }: { canManage: boolean }) {
 
   if (dismissed) {
     return (
-      <div className="mt-6 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => { setDismissed(false); try { localStorage.removeItem(storageKey); } catch { /* ignore */ } setOpen(true); }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
-        >
-          <BookOpen className="h-3.5 w-3.5" /> Show quick guide
-        </button>
-        <Link to="/guide" className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition">
-          <Info className="h-3.5 w-3.5" /> Full guide
-        </Link>
-      </div>
+      <button
+        type="button"
+        onClick={() => { setDismissed(false); try { localStorage.removeItem(storageKey); } catch { /* ignore */ } setOpen(true); }}
+        className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
+      >
+        <BookOpen className="h-3.5 w-3.5" /> Show quick guide
+      </button>
     );
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-primary/20 bg-white shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/20 transition"
-      >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <BookOpen className="h-4 w-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground">
-            {canManage ? "Admin Quick Guide — How to manage nominations" : "Judge Access Guide — What you can do here"}
+    <div className="rounded-xl border border-primary/20 bg-white shadow-sm overflow-hidden">
+      <div className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-muted/20 transition">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 min-w-0 items-center gap-2.5 text-left"
+        >
+          <BookOpen className="h-4 w-4 shrink-0 text-primary" />
+          <p className="flex-1 min-w-0 truncate text-xs font-semibold text-foreground">
+            {canManage ? "Admin Quick Guide" : "Judge Access Guide"}
+            <span className="ml-1.5 font-normal text-muted-foreground">· {steps.length} steps</span>
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">{steps.length} steps · expand to read</p>
-        </div>
-        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
+        </button>
+        <Link
+          to="/guide"
+          className="shrink-0 text-xs font-medium text-primary hover:underline"
+        >
+          Full guide
+        </Link>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition"
+        >
+          Dismiss
+        </button>
+        <button type="button" onClick={() => setOpen((o) => !o)} className="shrink-0" aria-label={open ? "Collapse guide" : "Expand guide"}>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
 
       {open && (
         <div className="border-t border-primary/10 px-5 py-4">
@@ -329,21 +372,6 @@ function AdminQuickGuide({ canManage }: { canManage: boolean }) {
               </div>
             ))}
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-primary/10 pt-4">
-            <Link to="/guide" className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-4 py-2 text-xs font-semibold text-primary hover:bg-muted/30 transition">
-              <BookOpen className="h-3.5 w-3.5" /> Full guide
-            </Link>
-            <button type="button" onClick={dismiss} className="ml-auto text-xs text-muted-foreground hover:text-foreground transition underline-offset-2 hover:underline">
-              Don't show again
-            </button>
-          </div>
-        </div>
-      )}
-
-      {!open && (
-        <div className="border-t border-primary/10 bg-muted/20 px-5 py-2.5 flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">Click above to expand the step-by-step guide. <Link to="/guide" className="font-semibold text-primary hover:underline">View full guide →</Link></p>
-          <button type="button" onClick={dismiss} className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition">Dismiss</button>
         </div>
       )}
     </div>
@@ -361,9 +389,7 @@ function AdminPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [role, setRole] = useState<"admin" | "judge">("admin");
-  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -405,7 +431,7 @@ function AdminPage() {
         }
         
         await firebaseSignOut();
-        setErr("Your account does not have admin panel access.");
+        toast.error("Your account does not have admin panel access.");
       }
       setUserRole(null);
       setAuthed(!!user);
@@ -416,8 +442,6 @@ function AdminPage() {
 
   function switchMode(m: "signin" | "register") {
     setMode(m);
-    setErr("");
-    setResetSent(false);
     setPassword("");
     setConfirm("");
     setRole("admin");
@@ -425,14 +449,13 @@ function AdminPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErr("");
     if (mode === "register") {
       if (password.length < 8) {
-        setErr("Password must be at least 8 characters.");
+        toast.error("Password must be at least 8 characters.");
         return;
       }
       if (password !== confirm) {
-        setErr("Passwords do not match.");
+        toast.error("Passwords do not match.");
         return;
       }
     }
@@ -459,15 +482,15 @@ function AdminPage() {
         code === "auth/wrong-password" ||
         code === "auth/user-not-found"
       ) {
-        setErr("Incorrect email or password.");
+        toast.error("Incorrect email or password.");
       } else if (code === "auth/email-already-in-use") {
-        setErr("An account with this email already exists. Sign in instead.");
+        toast.error("An account with this email already exists. Sign in instead.");
       } else if (code === "auth/weak-password") {
-        setErr("Password is too weak. Use at least 8 characters.");
+        toast.error("Password is too weak. Use at least 8 characters.");
       } else if (code === "auth/too-many-requests") {
-        setErr("Too many attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later.");
       } else {
-        setErr(
+        toast.error(
           mode === "signin"
             ? "Sign-in failed. Please try again."
             : "Registration failed. Please try again.",
@@ -480,15 +503,14 @@ function AdminPage() {
 
   async function handleReset() {
     if (!email) {
-      setErr("Enter your email address first.");
+      toast.error("Enter your email address first.");
       return;
     }
     try {
       await resetPassword(email);
-      setResetSent(true);
-      setErr("");
+      toast.success("Password reset email sent — check your inbox.");
     } catch {
-      setErr("Could not send reset email. Check the address and try again.");
+      toast.error("Could not send reset email. Check the address and try again.");
     }
   }
 
@@ -655,12 +677,6 @@ function AdminPage() {
                   </div>
                 </>
               )}
-              {err && <p className="text-sm text-destructive">{err}</p>}
-              {resetSent && (
-                <p className="text-sm text-green-600">
-                  Password reset email sent — check your inbox.
-                </p>
-              )}
               <Button
                 type="submit"
                 disabled={loading}
@@ -680,14 +696,29 @@ function AdminPage() {
             </form>
           </div>
         ) : (
-          <Dashboard onLogout={logout} role={userRole ?? "admin"} loggingOut={loggingOut} />
+          <Dashboard
+            onLogout={logout}
+            role={userRole ?? "admin"}
+            loggingOut={loggingOut}
+            userEmail={currentUser?.email ?? ""}
+          />
         )}
       </main>
     </div>
   );
 }
 
-function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role: "admin" | "judge"; loggingOut: boolean }) {
+function Dashboard({
+  onLogout,
+  role,
+  loggingOut,
+  userEmail,
+}: {
+  onLogout: () => void;
+  role: "admin" | "judge";
+  loggingOut: boolean;
+  userEmail: string;
+}) {
   const canManage = role === "admin";
   const [nominations, setNominations] = useState<Nomination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
@@ -700,7 +731,6 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
   >([]);
   const [newCat, setNewCat] = useState({ name: "", tagline: "" });
   const [activeSection, setActiveSection] = useState<"nominations" | "categories" | "winners" | "judges" | "leaderboard" | "accounts" | "audit-logs" | "settings">("nominations");
-  const [showMobileNav, setShowMobileNav] = useState(false);
   const [
     judgeScores, setJudgeScores] = useState<
     Array<{
@@ -727,8 +757,6 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
   const [newAccountConfirm, setNewAccountConfirm] = useState("");
   const [newAccountRole, setNewAccountRole] = useState<"admin" | "judge">("judge");
   const [creatingAccount, setCreatingAccount] = useState(false);
-  const [accountError, setAccountError] = useState("");
-  const [accountSuccess, setAccountSuccess] = useState("");
   const [showNewAccountPassword, setShowNewAccountPassword] = useState(false);
   const [showNewAccountConfirm, setShowNewAccountConfirm] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -759,6 +787,70 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     ],
     [extraCategories],
   );
+
+  // Single source of truth for the admin sidebar/mobile-nav/breadcrumb — avoids
+  // three copies of the same section list drifting out of sync.
+  const sections = useMemo(
+    () => [
+      {
+        key: "nominations" as const,
+        label: "Nominations",
+        description: "Review, shortlist, and manage submitted nominations.",
+        icon: <FileText className="h-4 w-4" />,
+      },
+      ...(canManage
+        ? [
+            {
+              key: "categories" as const,
+              label: "Categories",
+              description: "Add or remove award categories.",
+              icon: <Filter className="h-4 w-4" />,
+            },
+            {
+              key: "winners" as const,
+              label: "Winners",
+              description: "Manage the public Hall of Fame.",
+              icon: <Trophy className="h-4 w-4" />,
+            },
+            {
+              key: "judges" as const,
+              label: "Judge Activity",
+              description: "Monitor judge scoring progress.",
+              icon: <Users2 className="h-4 w-4" />,
+              badge: judgeScores.length > 0 ? judgeScores.length : undefined,
+            },
+            {
+              key: "leaderboard" as const,
+              label: "Leaderboard",
+              description: "Live scoring standings by category.",
+              icon: <Trophy className="h-4 w-4" />,
+            },
+            {
+              key: "accounts" as const,
+              label: "Create Account",
+              description: "Provision new admin or judge accounts.",
+              icon: <Users2 className="h-4 w-4" />,
+            },
+            {
+              key: "audit-logs" as const,
+              label: "Audit Logs",
+              description: "Track who changed what, and when.",
+              icon: <Shield className="h-4 w-4" />,
+              badge: auditLogs.length > 0 ? auditLogs.length : undefined,
+            },
+            {
+              key: "settings" as const,
+              label: "Settings",
+              description: "Configure account and system preferences.",
+              icon: <Shield className="h-4 w-4" />,
+            },
+          ]
+        : []),
+    ],
+    [canManage, judgeScores.length, auditLogs.length],
+  );
+
+  const activeSectionInfo = sections.find((s) => s.key === activeSection);
 
   // Real-time Firestore listener — nominations
   // NOTE: We limit to 100 results to prevent exceeding Firebase's 6MB response size limit
@@ -951,22 +1043,20 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
   async function handleCreateAccount(e: React.FormEvent) {
     e.preventDefault();
-    setAccountError("");
-    setAccountSuccess("");
-    
+
     if (!newAccountEmail.trim()) {
-      setAccountError("Email is required.");
+      toast.error("Email is required.");
       return;
     }
     if (newAccountPassword.length < 8) {
-      setAccountError("Password must be at least 8 characters.");
+      toast.error("Password must be at least 8 characters.");
       return;
     }
     if (newAccountPassword !== newAccountConfirm) {
-      setAccountError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
-    
+
     setCreatingAccount(true);
     try {
       const cred = await registerUser(newAccountEmail, newAccountPassword);
@@ -975,26 +1065,26 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         role: newAccountRole,
         createdAt: serverTimestamp(),
       });
-      setAccountSuccess(`✓ Account created successfully for ${newAccountRole === "admin" ? "Administrator" : "Judge"} (${newAccountEmail})`);
+      toast.success(`Account created successfully for ${newAccountRole === "admin" ? "Administrator" : "Judge"} (${newAccountEmail})`);
       setNewAccountEmail("");
       setNewAccountPassword("");
       setNewAccountConfirm("");
       setNewAccountRole("judge");
-      
+
       // Log audit action
       await logCreateAccount(newAccountEmail, newAccountRole);
     } catch (ex: unknown) {
       const code = (ex as { code?: string }).code ?? "";
       if (code === "auth/email-already-in-use") {
-        setAccountError("An account with this email already exists.");
+        toast.error("An account with this email already exists.");
       } else if (code === "auth/weak-password") {
-        setAccountError("Password is too weak. Use at least 8 characters.");
+        toast.error("Password is too weak. Use at least 8 characters.");
       } else if (code === "auth/invalid-email") {
-        setAccountError("Invalid email address.");
+        toast.error("Invalid email address.");
       } else if (code === "auth/too-many-requests") {
-        setAccountError("Too many attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later.");
       } else {
-        setAccountError("Failed to create account. Please try again.");
+        toast.error("Failed to create account. Please try again.");
         if (ex instanceof Error) {
           await logAuditActionError('CREATE_ACCOUNT', `Failed to create account: ${newAccountEmail}`, ex);
         }
@@ -1016,6 +1106,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       await logToggleJudging(newActive);
     } catch (err) {
       console.error("Error toggling judging:", err);
+      toast.error("Failed to update judging status. Please try again.");
       if (err instanceof Error) {
         await logAuditActionError('TOGGLE_JUDGING', 'Failed to toggle judging', err);
       }
@@ -1029,6 +1120,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       await logToggleNominations(newOpen);
     } catch (err) {
       console.error("Error toggling nominations:", err);
+      toast.error("Failed to update nominations status. Please try again.");
       if (err instanceof Error) {
         await logAuditActionError('TOGGLE_NOMINATIONS', 'Failed to toggle nominations', err);
       }
@@ -1051,12 +1143,14 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       await Promise.all(deletePromises);
       const deletedCount = snapshot.docs.length;
       console.log("All judge votes cleared successfully");
-      
+      toast.success(`Cleared ${deletedCount} judge score(s).`);
+
       // Log audit action - use both for comprehensive tracking
       await logResetVotes(deletedCount);
       await logClearJudgeScores(deletedCount);
     } catch (err) {
       console.error("Error resetting votes:", err);
+      toast.error("Failed to clear judge votes. Please try again.");
       if (err instanceof Error) {
         await logAuditActionError('CLEAR_JUDGE_SCORES', 'Failed to clear judge scores', err);
       }
@@ -1090,11 +1184,13 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       await Promise.all(scorePromises);
       
       console.log("All nominations and associated scores cleared successfully");
-      
+      toast.success(`Cleared ${deletedNominations} nomination(s) and ${deletedScores} judge score(s).`);
+
       // Log audit action
       await logResetNominations(deletedNominations, deletedScores);
     } catch (err) {
       console.error("Error resetting nominations:", err);
+      toast.error("Failed to reset nominations. Please try again.");
       if (err instanceof Error) {
         await logAuditActionError('RESET_NOMINATIONS', 'Failed to reset nominations', err);
       }
@@ -1106,7 +1202,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
   function exportResults() {
     const rows = judgeScores;
     if (rows.length === 0) {
-      alert("No scores to export yet.");
+      toast.info("No scores to export yet.");
       return;
     }
 
@@ -1150,7 +1246,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     a.download = `salea-judge-results-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    
+    toast.success(`Exported ${rows.length} judge score(s).`);
+
     // Log audit action
     logExportResults(rows.length).catch((err) => console.error("Failed to log export:", err));
   }
@@ -1168,10 +1265,12 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       
       // Log the category addition
       await logAddCategory(newCat.name.trim());
-      
+
+      toast.success(`Category "${newCat.name.trim()}" added.`);
       setNewCat({ name: "", tagline: "" });
     } catch (err) {
       console.error("Failed to add category:", err);
+      toast.error("Failed to add category. Please try again.");
       await logAuditActionError('ADD_CATEGORY', `Failed to add category: ${newCat.name}`, err as Error);
     }
   }
@@ -1180,15 +1279,17 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     if (!confirm("Remove this category? This cannot be undone.")) return;
     try {
       const cat = extraCategories.find(c => c.id === id);
-      
+
       await deleteDoc(doc(db, "admin_categories", id));
-      
+
       // Log the category deletion
       if (cat) {
         await logDeleteCategory(cat.name);
+        toast.success(`Category "${cat.name}" removed.`);
       }
     } catch (err) {
       console.error("Failed to remove category:", err);
+      toast.error("Failed to remove category. Please try again.");
       await logAuditActionError('DELETE_CATEGORY', `Failed to delete category ${id}`, err as Error);
     }
   }
@@ -1285,6 +1386,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       setDetailNom((prev) => (prev?.id === id ? { ...prev, status } : prev));
     } catch (err) {
       console.error("Failed to update nomination:", err);
+      toast.error("Failed to update nomination status. Please try again.");
       await logAuditActionError('UPDATE_NOMINATION_STATUS', `Failed to update nomination ${id}`, err as Error);
     }
   }
@@ -1294,17 +1396,19 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     if (!confirm("Delete this nomination? This cannot be undone.")) return;
     try {
       const nom = nominations.find(n => n.id === id);
-      
+
       await deleteDoc(doc(db, "nominations", id));
-      
+
       // Log the deletion
       if (nom) {
         await logDeleteNomination(nom.nomineeName, nom.categoryName);
+        toast.success(`Nomination for ${nom.nomineeName} deleted.`);
       }
-      
+
       setDetailNom((prev) => (prev?.id === id ? null : prev));
     } catch (err) {
       console.error("Failed to delete nomination:", err);
+      toast.error("Failed to delete nomination. Please try again.");
       await logAuditActionError('DELETE_NOMINATION', `Failed to delete nomination ${id}`, err as Error);
     }
   }
@@ -1333,7 +1437,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
   async function sendReminders() {
     if (incompleteNominations.length === 0) {
-      alert("No incomplete nominations found.");
+      toast.info("No incomplete nominations found.");
       return;
     }
 
@@ -1366,14 +1470,19 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
       if (response.ok) {
         setReminderResults(result.results || []);
-        alert(`✓ Reminders sent! ${result.successCount || 0} successful, ${result.failureCount || 0} failed.`);
+        const failureCount = result.failureCount || 0;
+        if (failureCount > 0) {
+          toast.warning(`Reminders sent: ${result.successCount || 0} successful, ${failureCount} failed.`);
+        } else {
+          toast.success(`Reminders sent to ${result.successCount || 0} nominator(s).`);
+        }
       } else {
-        alert(`Error: ${result.error || 'Failed to send reminders'}`);
+        toast.error(`Error: ${result.error || 'Failed to send reminders'}`);
         console.error('Reminder send error:', result);
       }
     } catch (err) {
       console.error("Failed to send reminders:", err);
-      alert("Failed to send reminders. Please check the console for details.");
+      toast.error("Failed to send reminders. Please check the console for details.");
     } finally {
       setSendingReminders(false);
     }
@@ -1430,7 +1539,7 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     const shortlistedNoms = nominations.filter(n => n.status === "shortlisted");
     
     if (shortlistedNoms.length === 0) {
-      alert("No shortlisted nominations to email.");
+      toast.info("No shortlisted nominations to email.");
       return;
     }
 
@@ -1481,11 +1590,15 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
       setShortlistEmailResults(results);
       const successCount = results.filter(r => r.success).length;
-      alert(`Shortlist emails sent: ${successCount}/${results.length} successful`);
-      
+      if (successCount === results.length) {
+        toast.success(`Shortlist emails sent to all ${results.length} nominee(s).`);
+      } else {
+        toast.warning(`Shortlist emails sent: ${successCount}/${results.length} successful.`);
+      }
+
     } catch (err) {
       console.error("Error sending shortlist emails:", err);
-      alert("Failed to send shortlist emails");
+      toast.error("Failed to send shortlist emails");
     } finally {
       setSendingShortlistEmails(false);
     }
@@ -1493,7 +1606,10 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
 
   function exportCsv() {
     const rows = nominations.filter((n) => n.status === "shortlisted");
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      toast.info("No shortlisted nominations to export yet.");
+      return;
+    }
 
     // Build a master ordered list of all question IDs + prompts across all exported rows
     const questionMap = new Map<string, string>(); // id → prompt
@@ -1563,7 +1679,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
     a.download = `salea-shortlist-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    
+    toast.success(`Exported ${rows.length} shortlisted nomination(s).`);
+
     // Log audit action
     logExportShortlisted(rows.length).catch((err) => console.error("Failed to log export:", err));
   }
@@ -1641,7 +1758,106 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
   ];
 
   return (
-    <div className="space-y-8">
+    <SidebarProvider>
+      <Sidebar collapsible="icon" className="top-24 h-[calc(100svh-6rem)]">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" className="cursor-default hover:bg-transparent">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Trophy className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Registrar's Ambit</span>
+                  <span className="truncate text-xs capitalize text-muted-foreground">{role} Panel</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+            <SidebarMenu>
+              {sections.map((item) => (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    isActive={activeSection === item.key}
+                    tooltip={item.label}
+                    onClick={() => setActiveSection(item.key)}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.badge !== undefined && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton size="lg">
+                    <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-semibold uppercase text-primary">
+                      {userEmail ? userEmail[0] : role === "admin" ? "A" : "J"}
+                    </div>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold capitalize">{role}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {userEmail || "Signed in"}
+                      </span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto size-4" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                  side="top"
+                  align="start"
+                >
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    {userEmail || "Signed in"}
+                  </DropdownMenuLabel>
+                  {canManage && (
+                    <DropdownMenuItem onClick={() => setActiveSection("settings")}>
+                      <Shield /> Settings
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onLogout} disabled={loggingOut}>
+                    <LogOut /> {loggingOut ? "Signing out..." : "Sign out"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+
+      <SidebarInset>
+        <div className="flex items-center gap-2 border-b border-primary/10 px-4 py-3 sm:px-6">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>Admin</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-semibold text-foreground">
+                  {activeSectionInfo?.label ?? "Nominations"}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
+    <div className="space-y-5 p-4 sm:p-6">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -1689,57 +1905,47 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
           </div>
         )}
 
-        {/* Admin Actions Grid - Organized by category */}
+        {/* Admin toolbar — compact pill toggles + actions menu, all in one row */}
         {canManage && (
-          <div className="space-y-3">
-            {/* Primary Action: Open/Close Nominations */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={toggleNominationsOpen}
-              className={`w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                 nominationsOpen
                   ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200"
                   : "bg-red-100 text-red-700 border border-red-300 hover:bg-red-200"
               }`}
             >
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${nominationsOpen ? "bg-green-600" : "bg-red-600"}`} />
-                <span>{nominationsOpen ? "Nominations Open" : "Nominations Closed"}</span>
-              </div>
-              {nominationsOpen && <CheckCircle2 className="h-5 w-5" />}
+              <div className={`h-2 w-2 rounded-full ${nominationsOpen ? "bg-green-600" : "bg-red-600"}`} />
+              {nominationsOpen ? "Nominations Open" : "Nominations Closed"}
             </button>
 
-            {/* Primary Action: Activate Real Judging */}
             <button
               onClick={toggleRealJudging}
-              className={`w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                 realJudgingActive
                   ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200"
                   : "bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-200"
               }`}
             >
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${realJudgingActive ? "bg-green-600" : "bg-amber-600"}`} />
-                <span>{realJudgingActive ? "Real Judging Active" : "Activate Real Judging"}</span>
-              </div>
-              {realJudgingActive && <CheckCircle2 className="h-5 w-5" />}
+              <div className={`h-2 w-2 rounded-full ${realJudgingActive ? "bg-green-600" : "bg-amber-600"}`} />
+              {realJudgingActive ? "Real Judging Active" : "Activate Real Judging"}
             </button>
 
             {/* Secondary Actions: Reminders & Exports - Dropdown Menu */}
             <div className="relative">
               <button
                 onClick={() => setShowAdminMenu(!showAdminMenu)}
-                className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition border border-primary/20 bg-primary/5 hover:bg-primary/10"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold transition hover:bg-primary/10"
               >
-                <div className="flex items-center gap-2">
-                  <MoreVertical className="h-4 w-4" />
-                  <span>Admin Actions</span>
-                </div>
-                <ChevronDown className={`h-4 w-4 transition ${showAdminMenu ? "rotate-180" : ""}`} />
+                <MoreVertical className="h-3.5 w-3.5" />
+                Actions
+                <ChevronDown className={`h-3.5 w-3.5 transition ${showAdminMenu ? "rotate-180" : ""}`} />
               </button>
-              
+
               {/* Dropdown menu */}
               {showAdminMenu && (
-                <div className="absolute top-full mt-2 left-0 right-0 z-50 rounded-lg border border-primary/20 bg-white shadow-lg">
+                <div className="absolute top-full mt-2 left-0 z-50 w-72 rounded-lg border border-primary/20 bg-white shadow-lg">
                   <div className="p-2 space-y-1">
                     <button
                       onClick={() => {
@@ -1860,8 +2066,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
       {/* Quick-start guide */}
       <AdminQuickGuide canManage={canManage} />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      {/* Stats — compact pill strip instead of a card grid */}
+      <div className="flex flex-wrap gap-2">
         <StatCard label="Total" value={stats.total} />
         <StatCard label="Pending" value={stats.pending} color="amber" />
         <StatCard label="Shortlisted" value={stats.shortlisted} color="gold" />
@@ -1869,115 +2075,20 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         <StatCard label="Rejected" value={stats.rejected} color="red" />
         <button
           onClick={() => setSelfNomFilter((v) => !v)}
-          className={`rounded-2xl border p-4 text-center transition ${selfNomFilter ? "border-blue-400/60 bg-blue-50 shadow" : "border-primary/15 bg-white hover:border-primary/30"}`}
+          className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 transition ${selfNomFilter ? "border-blue-400 bg-blue-50" : "border-primary/15 bg-white hover:border-primary/30"}`}
         >
-          <p className={`text-3xl font-bold ${selfNomFilter ? "text-blue-600" : "text-blue-500"}`}>{stats.selfNominated}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Self-nominated</p>
-          {selfNomFilter && (
-            <p className="mt-1 text-[10px] font-semibold text-blue-600">● Filtered</p>
-          )}
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+          <span className="text-sm font-bold text-foreground">{stats.selfNominated}</span>
+          <span className="text-xs text-muted-foreground">Self-nominated{selfNomFilter ? " · filtered" : ""}</span>
         </button>
       </div>
 
-      {/* Sidebar + Content layout */}
-      {/* Mobile navigation sheet — replaced tab strip for better UX */}
-      <Sheet open={showMobileNav} onOpenChange={setShowMobileNav}>
-        <div className="md:hidden mb-4">
-          <button
-            onClick={() => setShowMobileNav(true)}
-            className="w-full flex items-center justify-between gap-2 rounded-lg border border-primary/20 bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/5 transition"
-          >
-            <span className="flex-1 text-left">
-              {([
-                { key: "nominations" as const, label: "Nominations" },
-                ...(canManage ? [
-                  { key: "categories" as const, label: "Categories" },
-                  { key: "winners" as const, label: "Winners" },
-                  { key: "judges" as const, label: "Judge Activity" },
-                  { key: "leaderboard" as const, label: "Leaderboard" },
-                  { key: "accounts" as const, label: "Create Account" },
-                  { key: "audit-logs" as const, label: "Audit Logs" },
-                  { key: "settings" as const, label: "Settings" },
-                ] : [])
-              ]).find(item => item.key === activeSection)?.label || "Select section"}
-            </span>
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
-        <SheetContent side="top" className="md:hidden">
-          <SheetHeader>
-            <SheetTitle>Select a section</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6 space-y-2">
-            {([
-              { key: "nominations" as const, label: "Nominations" },
-              ...(canManage ? [
-                { key: "categories" as const, label: "Categories" },
-                { key: "winners" as const, label: "Winners" },
-                { key: "judges" as const, label: "Judge Activity" },
-                { key: "leaderboard" as const, label: "Leaderboard" },
-                { key: "accounts" as const, label: "Create Account" },
-                { key: "audit-logs" as const, label: "Audit Logs" },
-                { key: "settings" as const, label: "Settings" },
-              ] : [])
-            ]).map((item) => (
-              <button
-                key={item.key}
-                onClick={() => {
-                  setActiveSection(item.key);
-                  setShowMobileNav(false);
-                }}
-                className={`block w-full text-left px-4 py-3 rounded-lg font-medium transition ${
-                  activeSection === item.key
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Section description — the breadcrumb itself now lives in the sidebar header bar */}
+      {activeSectionInfo?.description && (
+        <p className="text-sm text-muted-foreground">{activeSectionInfo.description}</p>
+      )}
 
-      <div className="flex gap-6">
-        {/* Sidebar — desktop only */}
-        <aside className="hidden md:flex flex-col gap-1 w-52 shrink-0 sticky top-28 self-start">
-          {([
-            { key: "nominations" as const, label: "Nominations", icon: <FileText className="h-4 w-4" /> },
-            ...(canManage ? [
-              { key: "categories" as const, label: "Categories", icon: <Filter className="h-4 w-4" /> },
-              { key: "winners" as const, label: "Winners", icon: <Trophy className="h-4 w-4" /> },
-              { key: "judges" as const, label: "Judge Activity", icon: <Users2 className="h-4 w-4" />, badge: judgeScores.length > 0 ? judgeScores.length : undefined },
-              { key: "leaderboard" as const, label: "Leaderboard", icon: <Trophy className="h-4 w-4" /> },
-              { key: "accounts" as const, label: "Create Account", icon: <Users2 className="h-4 w-4" /> },
-              { key: "audit-logs" as const, label: "Audit Logs", icon: <Shield className="h-4 w-4" />, badge: auditLogs.length > 0 ? auditLogs.length : undefined },
-              { key: "settings" as const, label: "Settings", icon: <Shield className="h-4 w-4" /> },
-            ] : [])
-          ]).map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setActiveSection(item.key)}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all text-left ${
-                activeSection === item.key
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-              }`}
-            >
-              {item.icon}
-              <span className="flex-1">{item.label}</span>
-              {item.badge !== undefined && (
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  activeSection === item.key ? "bg-white/20 text-white" : "bg-primary text-primary-foreground"
-                }`}>{item.badge}</span>
-              )}
-            </button>
-          ))}
-        </aside>
-
-        {/* Content area */}
-        <div className="flex-1 min-w-0">
-
+      <div className="flex-1 min-w-0">
         {activeSection === "nominations" && <div className="space-y-6">
           {/* Category tiles */}
           <div>
@@ -2430,20 +2541,6 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
                 Create new judge or admin accounts here. All accounts must use a strong password of at least 8 characters.
               </p>
 
-              {accountSuccess && (
-                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900 flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{accountSuccess}</span>
-                </div>
-              )}
-
-              {accountError && (
-                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 flex items-start gap-2">
-                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>{accountError}</span>
-                </div>
-              )}
-
               <form onSubmit={handleCreateAccount} className="space-y-4">
                 <div>
                   <Label className="mb-1.5 block text-xs uppercase tracking-wider text-muted-foreground">
@@ -2672,7 +2769,6 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         )}
 
         </div>{/* end content area */}
-      </div>{/* end sidebar layout */}
 
       {/* Reminder Modal */}
       <Sheet open={showReminderModal} onOpenChange={setShowReminderModal}>
@@ -2897,6 +2993,8 @@ function Dashboard({ onLogout, role, loggingOut }: { onLogout: () => void; role:
         </div>
       )}
     </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
@@ -2960,7 +3058,6 @@ function WinnersTab() {
   const [winners, setWinners] = useState<PastWinner[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
-  const [seedMsg, setSeedMsg] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<WinnerFormState>(emptyForm());
@@ -3048,10 +3145,15 @@ function WinnersTab() {
       };
       if (editingId) {
         await updatePastWinner(editingId, payload);
+        toast.success(`Updated winner "${payload.name}".`);
       } else {
         await addPastWinner(payload);
+        toast.success(`Added winner "${payload.name}".`);
       }
       setShowForm(false);
+    } catch (err) {
+      console.error("Failed to save winner:", err);
+      toast.error("Failed to save winner. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -3061,11 +3163,13 @@ function WinnersTab() {
     if (!confirm(`Delete winner "${name}"? This cannot be undone.`)) return;
     try {
       await deletePastWinner(id);
-      
+
       // Log the winner deletion
       await logDeleteWinner(name);
+      toast.success(`Winner "${name}" deleted.`);
     } catch (err) {
       console.error("Failed to delete winner:", err);
+      toast.error("Failed to delete winner. Please try again.");
       await logAuditActionError('DELETE_WINNER', `Failed to delete winner ${name}`, err as Error);
     }
   }
@@ -3073,12 +3177,11 @@ function WinnersTab() {
   async function handleSeed() {
     if (!confirm("Seed all historical winners (2022–2025) into Firestore? Existing records will be skipped.")) return;
     setSeeding(true);
-    setSeedMsg("");
     try {
       const { added, skipped } = await seedPastWinners();
-      setSeedMsg(`✓ Seeded ${added} new winners, ${skipped} already existed.`);
+      toast.success(`Seeded ${added} new winner(s), ${skipped} already existed.`);
     } catch (err) {
-      setSeedMsg(`Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+      toast.error(err instanceof Error ? err.message : "Failed to seed historical winners.");
     } finally {
       setSeeding(false);
     }
@@ -3104,10 +3207,6 @@ function WinnersTab() {
           + Add Winner
         </Button>
       </div>
-
-      {seedMsg && (
-        <p className={`text-sm ${seedMsg.startsWith("Error") ? "text-destructive" : "text-green-700"}`}>{seedMsg}</p>
-      )}
 
       {/* Add / Edit form */}
       {showForm && (
@@ -3241,7 +3340,11 @@ function WinnersTab() {
 
       {/* Winners list */}
       {loading ? (
-        <p className="animate-pulse text-sm text-muted-foreground">Loading…</p>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <WinnerRowSkeleton key={i} />
+          ))}
+        </div>
       ) : winners.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground">
           No winners yet. Click "Seed Historical Winners" to import 2022–2025 data, or add winners manually.
@@ -3387,27 +3490,20 @@ function StatCard({
   value: number;
   color?: "gold" | "amber" | "red";
 }) {
-  const accent =
+  const dot =
     color === "gold"
-      ? "border-yellow-400/60 bg-yellow-50"
+      ? "bg-yellow-500"
       : color === "amber"
-        ? "border-orange-300/60 bg-orange-50"
+        ? "bg-orange-500"
         : color === "red"
-          ? "border-red-300/60 bg-red-50"
-          : "";
-  const text =
-    color === "gold"
-      ? "text-yellow-600"
-      : color === "amber"
-        ? "text-orange-500"
-        : color === "red"
-          ? "text-red-500"
-          : "";
+          ? "bg-red-500"
+          : "bg-primary";
   return (
-    <Card className={`p-5 ${accent}`}>
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-3xl font-bold ${text || "text-foreground"}`}>{value}</p>
-    </Card>
+    <div className="flex shrink-0 items-center gap-2 rounded-full border border-primary/15 bg-white px-3.5 py-2">
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      <span className="text-sm font-bold text-foreground">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
   );
 }
 

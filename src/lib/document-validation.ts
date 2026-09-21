@@ -15,9 +15,17 @@ export interface DocumentRequirement {
   isRequired: boolean;
 }
 
+export interface MissingDocumentItem {
+  questionId: string;
+  questionPrompt: string;
+  missingEvidence: string[];
+}
+
 export interface DocumentValidationResult {
   isValid: boolean;
   missingDocuments: string[];
+  /** Structured version of missingDocuments — full prompt + missing evidence labels, no truncation. */
+  missingItems: MissingDocumentItem[];
   requirements: DocumentRequirement[];
   uploadedCount: number;
   requiredCount: number;
@@ -78,6 +86,7 @@ export function validateDocumentsForCategory(
 ): DocumentValidationResult {
   const requirements = getDocumentRequirements(categoryId);
   const missingDocuments: string[] = [];
+  const missingItems: MissingDocumentItem[] = [];
   let uploadedCount = 0;
   let requiredCount = requirements.length;
 
@@ -147,15 +156,17 @@ export function validateDocumentsForCategory(
     // Each evidence label must have at least one document
     let allSlotsHaveEvidence = true;
     const missingSlots: string[] = [];
-    
+    const missingLabels: string[] = [];
+
     for (let i = 0; i < req.evidenceLabels.length; i++) {
       const slotKey = `e${i}`;
       const slotFiles = flatUploadsBySlot[slotKey];
-      
+
       // Check if this slot has at least one file
       if (!Array.isArray(slotFiles) || slotFiles.length === 0) {
         allSlotsHaveEvidence = false;
         missingSlots.push(`"${req.evidenceLabels[i]}"`);
+        missingLabels.push(req.evidenceLabels[i]);
       }
     }
 
@@ -183,6 +194,11 @@ export function validateDocumentsForCategory(
       } else {
         missingDocuments.push(`${questionLabel}...`);
       }
+      missingItems.push({
+        questionId: req.questionId,
+        questionPrompt: req.questionPrompt,
+        missingEvidence: missingLabels,
+      });
     }
   }
 
@@ -199,6 +215,7 @@ export function validateDocumentsForCategory(
   return {
     isValid: missingDocuments.length === 0,
     missingDocuments,
+    missingItems,
     requirements,
     uploadedCount,
     requiredCount,

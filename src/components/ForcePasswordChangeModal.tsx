@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Mail,
@@ -41,8 +42,6 @@ export function ForcePasswordChangeModal({
   const [resetLink, setResetLink] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -60,7 +59,6 @@ export function ForcePasswordChangeModal({
 
   // Step 1: Send password reset email
   async function handleSendResetEmail() {
-    setError("");
     setLoading(true);
     try {
       // Get the reset link (Firebase doesn't return the link directly,
@@ -68,14 +66,14 @@ export function ForcePasswordChangeModal({
       await sendPasswordResetEmail(auth, user.email || "");
       setResetEmail(user.email || "");
       setResetLinkSent(true);
-      setSuccess("Password reset email sent! Check your inbox.");
-      
+      toast.success("Password reset email sent! Check your inbox.");
+
       // Determine user role and log the action
       const idTokenResult = await user.getIdTokenResult();
       const role = (idTokenResult.claims?.role as 'admin' | 'judge') || 'judge';
       await logPasswordReset(role, 'email');
     } catch (err: any) {
-      setError(err.message || "Failed to send reset email");
+      toast.error(err.message || "Failed to send reset email");
     } finally {
       setLoading(false);
     }
@@ -83,30 +81,28 @@ export function ForcePasswordChangeModal({
 
   // Step 2: Handle direct password change (without email)
   async function handleDirectPasswordChange() {
-    setError("");
-
     // Validate
     if (!currentPassword) {
-      setError("Enter your current password");
+      toast.error("Enter your current password");
       return;
     }
     if (!newPassword) {
-      setError("Enter a new password");
+      toast.error("Enter a new password");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     const pwdError = validatePassword(newPassword);
     if (pwdError) {
-      setError(pwdError);
+      toast.error(pwdError);
       return;
     }
 
     if (newPassword === currentPassword) {
-      setError("New password must be different from current password");
+      toast.error("New password must be different from current password");
       return;
     }
 
@@ -121,18 +117,18 @@ export function ForcePasswordChangeModal({
 
       // Update password
       await updatePassword(user, newPassword);
-      setSuccess("Password changed successfully!");
-      
+      toast.success("Password changed successfully!");
+
       // Determine user role and log the action
       const idTokenResult = await user.getIdTokenResult();
       const role = (idTokenResult.claims?.role as 'admin' | 'judge') || 'judge';
       await logPasswordReset(role, 'direct');
-      
+
       setTimeout(() => {
         onPasswordChanged();
       }, 1500);
     } catch (err: any) {
-      setError(
+      toast.error(
         err.code === "auth/wrong-password"
           ? "Current password is incorrect"
           : err.message || "Failed to change password"
@@ -169,11 +165,7 @@ export function ForcePasswordChangeModal({
           {/* Method Selection */}
           <div className="flex gap-3 mb-6">
             <button
-              onClick={() => {
-                setMethod("reset-email");
-                setError("");
-                setSuccess("");
-              }}
+              onClick={() => setMethod("reset-email")}
               className={`flex-1 py-2 px-3 rounded-lg border-2 transition font-medium text-sm ${
                 method === "reset-email"
                   ? "border-primary bg-primary/5 text-primary"
@@ -184,11 +176,7 @@ export function ForcePasswordChangeModal({
               Reset via Email
             </button>
             <button
-              onClick={() => {
-                setMethod("direct-change");
-                setError("");
-                setSuccess("");
-              }}
+              onClick={() => setMethod("direct-change")}
               className={`flex-1 py-2 px-3 rounded-lg border-2 transition font-medium text-sm ${
                 method === "direct-change"
                   ? "border-primary bg-primary/5 text-primary"
@@ -385,24 +373,6 @@ export function ForcePasswordChangeModal({
             </div>
           )}
 
-          {/* Error & Success Messages */}
-          {error && (
-            <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-              <p className="text-sm font-medium text-destructive flex gap-2 items-center">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                {error}
-              </p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mt-4 p-3 rounded-lg bg-green-50 border border-green-200">
-              <p className="text-sm font-medium text-green-900 flex gap-2 items-center">
-                <Check className="h-4 w-4 flex-shrink-0" />
-                {success}
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="p-6 border-t bg-muted/20 text-xs text-muted-foreground">

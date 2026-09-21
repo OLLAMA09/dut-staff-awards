@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, Clock, Accessibility, Car, Shirt } from "lucide-react";
 import { AWARD_CATEGORIES } from "@/data/awards";
+import ShatterText from "@/components/ShatterText";
 
 const ceremonySchedule = [
   { time: "TBC", title: "Welcome & Opening Address", desc: "Registrar's remarks and programme introduction" },
@@ -21,9 +23,26 @@ const venueFacts = [
 ];
 
 export default function EventProgram() {
+  const sectionRef = useRef<HTMLElement>(null);
+  // Tracks how far this section has scrolled through the viewport, so the DUT
+  // mark can travel from a small top-right label into a big background watermark.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "start start"] });
+  const markScale = useTransform(scrollYProgress, [0, 1], [1, 5.5]);
+  const markX = useTransform(scrollYProgress, [0, 1], [0, -220]);
+  const markY = useTransform(scrollYProgress, [0, 1], [0, 190]);
+  const markOpacity = useTransform(scrollYProgress, [0, 1], [0.8, 0.14]);
+
   return (
-    <section id="program" className="relative z-10 mx-auto max-w-7xl px-6 py-24">
-      <div className="mb-14 max-w-2xl">
+    <section id="program" ref={sectionRef} className="relative z-10 mx-auto max-w-7xl overflow-hidden px-6 py-24">
+      <motion.div
+        aria-hidden="true"
+        style={{ scale: markScale, x: markX, y: markY, opacity: markOpacity }}
+        className="pointer-events-none absolute right-6 top-6 z-0 h-14 w-36 origin-top-right sm:right-10 sm:top-10 sm:h-16 sm:w-40"
+      >
+        <ShatterText text="DUT" className="h-full w-full" repelRadius={70} />
+      </motion.div>
+
+      <div className="relative z-10 mb-14 max-w-2xl">
         <p className="text-xs uppercase tracking-[0.3em] text-primary">Programme of the Evening</p>
         <h2 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
           A ceremony <span className="text-primary">honouring our people.</span>
@@ -33,7 +52,7 @@ export default function EventProgram() {
         </p>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-12">
+      <div className="relative z-10 grid gap-10 lg:grid-cols-12">
         {/* Timeline */}
         <div className="lg:col-span-7">
           <div className="relative rounded-3xl border border-primary/20 bg-card/50 p-8 backdrop-blur-sm">

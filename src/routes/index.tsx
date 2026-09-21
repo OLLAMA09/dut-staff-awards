@@ -1,14 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
-  Fragment,
   lazy,
   Suspense,
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useMotionValueEvent, useScroll, useTransform, useVelocity } from "framer-motion";
+import { gsap } from "gsap";
 import {
   Award,
   Sparkles,
@@ -22,8 +23,11 @@ import {
   Star,
   Loader,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
+import ShatterText from "@/components/ShatterText";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 import EventProgram from "@/components/EventProgram";
 import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
 import { useNominationsOpen } from "@/lib/nomination-settings";
@@ -61,6 +65,13 @@ const CATEGORY_ICONS: Record<string, typeof Award> = {
   "outstanding-registrars": Award,
 };
 
+const CAMPUS_PHOTOS = [
+  { src: "/images.jpg", alt: "DUT Steve Biko campus" },
+  { src: "/Khanyisile-Afrisolar-Project-DUT11.jpg", alt: "DUT campus building" },
+  { src: "/images (1).jpg", alt: "DUT S Block campus buildings" },
+  { src: "/images (2).jpg", alt: "DUT Innovation Campus entrance" },
+];
+
 const stats = [
   { num: "1", label: "Premier Event" },
   { num: "6", label: "Categories" },
@@ -69,15 +80,6 @@ const stats = [
 
 /** Premium, expo-style ease used across reveal animations for a consistent, deliberate feel. */
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
-const headingGroup = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.025, delayChildren: 0.15 } },
-};
-const headingChar = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
-};
 
 type RippleDot = { id: number; x: number; y: number; size: number };
 
@@ -114,6 +116,175 @@ function useRipple(color: "light" | "dark" = "light") {
   return { onPointerDown, rippleSpans };
 }
 
+function StickerPhoto({ photo, className = "" }: { photo: (typeof CAMPUS_PHOTOS)[number]; className?: string }) {
+  return (
+    <motion.figure
+      initial={{ opacity: 0, scale: 0.4, rotate: -10 }}
+      whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ type: "spring", stiffness: 260, damping: 14, mass: 0.9 }}
+      whileHover={{ scale: 1.06, rotate: -2 }}
+      whileTap={{ scale: 0.95 }}
+      className={`sticker-photo relative p-2 ${className}`}
+    >
+      <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
+    </motion.figure>
+  );
+}
+
+type HeadingSegment = { text: string; highlight?: boolean };
+
+/** Heading that slides in from the right and types itself out, once, on first scroll into view. */
+function TypewriterHeading({
+  segments,
+  className,
+  as: Tag = "h2",
+  speedMs = 28,
+}: {
+  segments: HeadingSegment[];
+  className?: string;
+  as?: "h1" | "h2" | "h3";
+  speedMs?: number;
+}) {
+  const [started, setStarted] = useState(false);
+  const [revealed, setRevealed] = useState(0);
+  const fullText = segments.map((s) => s.text).join("");
+
+  useEffect(() => {
+    if (!started || revealed >= fullText.length) return;
+    const id = window.setTimeout(() => setRevealed((r) => r + 1), speedMs);
+    return () => window.clearTimeout(id);
+  }, [started, revealed, fullText.length, speedMs]);
+
+  let remaining = revealed;
+  const rendered = segments.map((seg, i) => {
+    const take = Math.max(0, Math.min(seg.text.length, remaining));
+    remaining -= take;
+    return (
+      <span key={i} className={seg.highlight ? "text-primary" : undefined}>
+        {seg.text.slice(0, take)}
+      </span>
+    );
+  });
+
+  const MotionTag = motion[Tag];
+
+  return (
+    <MotionTag
+      initial={{ opacity: 0, x: 72 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.7, ease: EASE }}
+      onViewportEnter={() => setStarted(true)}
+      className={className}
+      aria-label={fullText}
+    >
+      <span aria-hidden="true">
+        {rendered}
+        {started && revealed < fullText.length && <span className="typewriter-cursor" />}
+      </span>
+    </MotionTag>
+  );
+}
+
+/** Thin fading rule used to visually separate major page sections. */
+function SectionDivider() {
+  return (
+    <div className="relative z-10 mx-auto h-px w-full max-w-4xl bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
+  );
+}
+
+function HeroStory() {
+  const storyRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: storyRef, offset: ["start start", "end end"] });
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.82], [1, 0.72]);
+  const contentScale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -24]);
+  const photoY = useTransform(scrollYProgress, [0, 1], [0, -44]);
+  const photoScale = useTransform(scrollYProgress, [0, 1], [1, 1.05]);
+  const nominateRipple = useRipple("light");
+  const winnersRipple = useRipple("dark");
+
+  // DUT mark: starts at the top-left of the hero and travels down to settle a few
+  // paddings below the "Nomination journey" pill (not beside it), using the section's
+  // *entire* scroll run so there's no dead stretch where it just sits frozen mid-scroll.
+  const dutX = useTransform(scrollYProgress, [0, 1], ["0px", "32vw"]);
+  const dutY = useTransform(scrollYProgress, [0, 1], ["0vh", "84vh"]);
+  const dutOpacity = useTransform(scrollYProgress, [0, 0.4], [0.92, 0.78]);
+  // Scrolling down blasts it apart (destroy); scrolling up (or settling) just lets it
+  // spring back home (reform) — on top of the existing pointer-hover shatter.
+  const dutScrollVelocity = useVelocity(scrollYProgress);
+  const dutShatterForce = useTransform(dutScrollVelocity, (v) => Math.min(16, Math.max(0, v) * 5));
+
+  return (
+    <section ref={storyRef} className="relative min-h-[122svh]">
+      <div className="sticky top-0 flex min-h-[92svh] items-center overflow-hidden py-24 sm:py-28">
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 px-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <motion.div
+            style={{ opacity: contentOpacity, scale: contentScale, y: contentY }}
+            className="mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left"
+          >
+            {/* DUT mark: a normal flow element (so it reserves its own space and keeps a
+                real gap before the eyebrow, same as before it became "destroyable") that
+                then travels to the bottom-right via transform as the hero scrolls — a
+                transform doesn't affect layout, so the gap below stays intact throughout. */}
+            <motion.div
+              aria-label="Durban University of Technology"
+              style={{ x: dutX, y: dutY, opacity: dutOpacity }}
+              className="dut-mark pointer-events-none relative z-0 mx-auto mb-6 h-14 w-36 lg:mx-0 sm:h-16 sm:w-40"
+            >
+              <ShatterText text="DUT" className="h-full w-full" repelRadius={90} scrollDisturbance={dutShatterForce} />
+            </motion.div>
+
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Registrar's Ambit Staff Awards</p>
+            <h1 className="mt-5 text-4xl font-bold leading-[1.05] sm:text-6xl">Recognition starts with a story worth telling.</h1>
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">Celebrate colleagues and units whose work gives excellence a daily shape.</p>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+              <Link to="/" hash="categories" className="w-full sm:w-auto">
+                <motion.div initial={{ opacity: 0, x: -22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE }} onPointerDown={nominateRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: -1 }} whileTap={{ scale: 0.95 }} className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-elegant sm:w-auto">
+                  Nominate Now
+                  {nominateRipple.rippleSpans}
+                </motion.div>
+              </Link>
+              <Link to="/winners" className="w-full sm:w-auto">
+                <motion.div initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6, duration: 0.5, ease: EASE }} onPointerDown={winnersRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: 1 }} whileTap={{ scale: 0.95 }} className="glass-pill relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full px-8 font-semibold text-foreground sm:w-auto">
+                  View Winners
+                  {winnersRipple.rippleSpans}
+                </motion.div>
+              </Link>
+            </div>
+          </motion.div>
+
+          <div className="relative mx-auto h-72 w-full max-w-2xl sm:h-[28rem]">
+            <motion.div initial={{ opacity: 0, scale: 1.08, rotate: -5 }} animate={{ opacity: 1, scale: 1, rotate: -2 }} transition={{ duration: 0.8, ease: EASE }} style={{ y: photoY, scale: photoScale }} className="absolute inset-2">
+              <StickerPhoto photo={CAMPUS_PHOTOS[0]} className="h-full w-full" />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, scale: 0.55, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }} whileHover={{ scale: 1.06, rotate: -2 }} transition={{ delay: 0.65, type: "spring", stiffness: 260, damping: 16 }} className="absolute -bottom-3 -left-1 rounded-full border border-white/70 bg-white/75 px-4 py-2 text-xs font-semibold text-primary shadow-elegant backdrop-blur-xl sm:left-4">
+              Nomination journey
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 18, rotate: -8 }}
+              animate={{ opacity: 1, y: 0, rotate: -4 }}
+              whileHover={{ y: -6, rotate: -1, scale: 1.03 }}
+              transition={{ delay: 0.8, duration: 0.55, ease: EASE }}
+              className="absolute -right-2 top-8 w-44 rounded-2xl border border-white/80 bg-white/90 p-3 text-left shadow-elegant backdrop-blur-xl sm:right-3"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold text-primary">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">3</span>
+                Nomination ready
+              </div>
+              <div className="mt-3 space-y-2 border-t border-primary/10 pt-2 text-[10px] text-muted-foreground">
+                <p className="flex items-center justify-between"><span>Category selected</span><span className="font-bold text-primary">Done</span></p>
+                <p className="flex items-center justify-between"><span>Evidence prepared</span><span className="font-bold text-primary">Ready</span></p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** Sections tracked by the side scroll-spy navigator, in page order. */
 const SECTIONS = [
   { id: "hero", label: "Home" },
@@ -129,6 +300,14 @@ function Index() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [nominatingId, setNominatingId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const aboutRef = useRef<HTMLElement>(null);
+  // Types the About DUT mark in left-to-right as the section scrolls into view, and
+  // un-types it the same way if you scroll back up before it finishes.
+  const { scrollYProgress: aboutScrollProgress } = useScroll({
+    target: aboutRef,
+    offset: ["start end", "end start"],
+  });
+  const aboutDutType = useTransform(aboutScrollProgress, [0.15, 0.45], [0, 1]);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: heroProgress } = useScroll({
@@ -163,14 +342,37 @@ function Index() {
     return () => observer.disconnect();
   }, []);
 
+  useLayoutEffect(() => {
+    const section = aboutRef.current;
+    if (!section || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const context = gsap.context(() => {
+      const targets = [".about-photo", ".about-eyebrow", ".about-title", ".about-copy", ".about-role"];
+      gsap.set(targets, { willChange: "transform, opacity" });
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          gsap.timeline()
+            .fromTo(".about-photo", { opacity: 0, scale: 0.88, rotate: -8, x: 52 }, { opacity: 1, scale: 1, rotate: -2, x: 0, duration: 0.9, ease: "power3.out" })
+            .fromTo(".about-eyebrow", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.42, ease: "power3.out" }, "-=0.65")
+            .fromTo(".about-title", { opacity: 0, y: 34, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.68, ease: "power4.out" }, "-=0.2")
+            .fromTo(".about-copy", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.52, ease: "power3.out" }, "-=0.35")
+            .fromTo(".about-role", { opacity: 0, y: 28, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.48, stagger: 0.1, ease: "back.out(1.4)" }, "-=0.2");
+          observer.disconnect();
+        },
+        { threshold: 0.24 },
+      );
+      observer.observe(section);
+      return () => observer.disconnect();
+    }, section);
+    return () => context.revert();
+  }, []);
+
   const handleNominate = async (categoryId: string) => {
     setNominatingId(categoryId);
     await new Promise((resolve) => setTimeout(resolve, 300));
     navigate({ to: "/nominate/$categoryId", params: { categoryId } });
   };
-
-  const nominateRipple = useRipple("light");
-  const winnersRipple = useRipple("dark");
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-hero text-foreground">
@@ -228,7 +430,7 @@ function Index() {
       <section
         ref={heroRef}
         id="hero"
-        className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24"
+        className="relative overflow-hidden"
       >
         {/* Liquid background blobs — parallax on scroll */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -243,105 +445,18 @@ function Index() {
           </motion.div>
         </div>
 
-        <motion.div
-          style={{ opacity: heroContentOpacity, scale: heroContentScale, y: heroContentY }}
-          className="relative mx-auto max-w-xl px-6 text-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: EASE }}
-          >
-            <span className="glass-pill inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium text-primary">
-              <motion.span
-                animate={{ rotate: [0, 15, -10, 0], scale: [1, 1.15, 1] }}
-                transition={{
-                  duration: 3.5,
-                  repeat: Infinity,
-                  repeatDelay: 1.5,
-                  ease: "easeInOut",
-                }}
-                className="inline-flex"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-              </motion.span>
-              {AWARD_THEME.recognitionPeriod}
-            </span>
+        <HeroStory />
 
-            <motion.h1
-              variants={headingGroup}
-              initial="hidden"
-              animate="show"
-              className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl"
-            >
-              {AWARD_THEME.yearsBadge.split(" ").map((word, wi, words) => (
-                <Fragment key={wi}>
-                  <span className="inline-block whitespace-nowrap">
-                    {word.split("").map((char, ci) => (
-                      <motion.span key={ci} variants={headingChar} className="inline-block">
-                        {char}
-                      </motion.span>
-                    ))}
-                  </span>
-                  {wi < words.length - 1 ? " " : ""}
-                </Fragment>
-              ))}
-            </motion.h1>
-            <p className="mx-auto mt-4 max-w-sm text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Recognising Excellence. Celebrating Service. Honouring Our People.
-            </p>
+      </section>
 
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/" hash="categories" className="w-full sm:w-auto">
-                <motion.div
-                  onPointerDown={nominateRipple.onPointerDown}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-elegant sm:w-auto"
-                >
-                  Nominate Now
-                  {nominateRipple.rippleSpans}
-                </motion.div>
-              </Link>
-              <Link to="/winners" className="w-full sm:w-auto">
-                <motion.div
-                  onPointerDown={winnersRipple.onPointerDown}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="glass-pill relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full px-8 font-semibold text-foreground sm:w-auto"
-                >
-                  View Winners
-                  {winnersRipple.rippleSpans}
-                </motion.div>
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Info chips — horizontal scroll on mobile, no scrollbar */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-            className="no-scrollbar -mx-6 mt-12 flex gap-3 overflow-x-auto px-6 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0"
-          >
-            <InfoChip
-              icon={Calendar}
-              title="Recognition Period"
-              value={AWARD_THEME.recognitionPeriod}
-            />
-            <InfoChip
-              icon={Sparkles}
-              title="Nomination Window"
-              value={AWARD_THEME.nominationWindow}
-            />
-            <InfoChip icon={MapPin} title="Venue" value={AWARD_THEME.venue} />
-            <InfoChip
-              icon={Users}
-              title={AWARD_THEME.openingAddressTitle}
-              value={AWARD_THEME.openingAddressRemarks}
-            />
-          </motion.div>
-        </motion.div>
+      {/* Event information */}
+      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <InfoChip index={0} icon={Calendar} title="Recognition Period" value={AWARD_THEME.recognitionPeriod} />
+          <InfoChip index={1} icon={Sparkles} title="Nomination Window" value={AWARD_THEME.nominationWindow} />
+          <InfoChip index={2} icon={MapPin} title="Venue" value={AWARD_THEME.venue} />
+          <InfoChip index={3} icon={Users} title={AWARD_THEME.openingAddressTitle} value={AWARD_THEME.openingAddressRemarks} />
+        </div>
       </section>
 
       {/* Stats */}
@@ -351,20 +466,82 @@ function Index() {
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
-              whileHover={{ backgroundColor: "oklch(1 0 0 / 0.25)" }}
+              whileHover={{ y: -4, scale: 1.04 }}
+              transition={{ delay: i * 0.1, type: "spring", stiffness: 220, damping: 17 }}
               className="px-4 py-6 text-center"
             >
               <p className="text-3xl font-bold text-primary sm:text-4xl">{s.num}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                {s.label}
-              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{s.label}</p>
             </motion.div>
           ))}
         </div>
       </section>
+
+      <SectionDivider />
+
+      {/* About */}
+      <section ref={aboutRef} id="about" className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 text-center lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:text-left">
+        <div className="lg:order-1">
+          <p className="about-eyebrow text-xs uppercase tracking-[0.3em] text-primary">About</p>
+          <TypewriterHeading
+            className="about-title mx-auto mt-4 max-w-xl text-3xl font-bold leading-tight sm:text-4xl lg:mx-0"
+            segments={[
+              { text: "Recognising " },
+              { text: "excellence and service", highlight: true },
+              { text: " across our staff." },
+            ]}
+          />
+          <p className="about-copy mx-auto mt-5 max-w-xl leading-relaxed text-muted-foreground lg:mx-0">
+            The Registrar's Ambit Staff Awards recognise the outstanding achievements of staff whose
+            values, leadership and service demonstrate the highest standards of excellence and
+            integrity — honouring those who embody:{" "}
+            <span className="text-foreground">
+              "{AWARD_THEME.title}: {AWARD_THEME.subtitle}"
+            </span>
+          </p>
+
+          {/* Reverse-triangle layout: two cards up top, the third centred below them. */}
+          <div className="mx-auto mt-8 grid max-w-md grid-cols-2 justify-items-center gap-3 lg:mx-0 lg:justify-items-start">
+            {[
+              { t: "Nominee", d: "Put forward in recognition of their contributions." },
+              { t: "Nominator", d: "Colleague, manager or self who submits the nomination." },
+              {
+                t: "Self-nomination",
+                d: "Encouraged when supported by a credible Portfolio of Evidence.",
+              },
+            ].map((d, i) => (
+              <motion.div
+                key={d.t}
+                whileHover={{ y: -3 }}
+                className={`about-role glass w-full max-w-[15rem] rounded-2xl px-4 py-3 text-left ${
+                  i === 2 ? "col-span-2 justify-self-center lg:justify-self-start" : ""
+                }`}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  {d.t}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-foreground/75">{d.d}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="about-photo relative mx-auto flex h-80 w-full max-w-xl items-center justify-center sm:h-[26rem] lg:order-2 lg:h-[32rem] lg:max-w-none">
+          {/* Idle float + sway so the mark reads as alive before anyone touches it —
+              a separate element from this container, which GSAP already animates on entry. */}
+          <motion.div
+            animate={{ y: [0, -14, 0], rotate: [0, 1.5, 0, -1.5, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="h-2/3 w-2/3"
+          >
+            <ShatterText text="DUT" className="h-full w-full" repelRadius={90} typeProgress={aboutDutType} />
+          </motion.div>
+        </div>
+      </section>
+
+      <SectionDivider />
 
       {/* Access portals */}
       <section id="access" className="relative z-10 mx-auto max-w-4xl px-6 py-6">
@@ -377,14 +554,13 @@ function Index() {
         >
           <p className="text-xs uppercase tracking-[0.25em] text-primary">Secure Access</p>
           <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Login Portals</h2>
-
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -28, rotate: -2 }}
+              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.4, delay: 0.05, ease: EASE }}
-              whileHover={{ y: -3 }}
+              whileHover={{ y: -5, scale: 1.015 }}
               whileTap={{ scale: 0.97 }}
             >
               <Link to="/admin" className="glass-strong block rounded-[22px] p-5 text-left">
@@ -398,11 +574,11 @@ function Index() {
               </Link>
             </motion.div>
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: 28, rotate: 2 }}
+              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.4, delay: 0.12, ease: EASE }}
-              whileHover={{ y: -3 }}
+              whileHover={{ y: -5, scale: 1.015 }}
               whileTap={{ scale: 0.97 }}
             >
               <Link to="/judge" className="glass-strong block rounded-[22px] p-5 text-left">
@@ -443,56 +619,7 @@ function Index() {
         </section>
       )}
 
-      {/* About */}
-      <section id="about" className="relative z-10 mx-auto max-w-3xl px-6 py-20 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, ease: EASE }}
-        >
-          <p className="text-xs uppercase tracking-[0.3em] text-primary">About</p>
-          <h2 className="mx-auto mt-4 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
-            Recognising <span className="text-primary">excellence and service</span> across our
-            staff.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl leading-relaxed text-muted-foreground">
-            The Registrar's Ambit Staff Awards recognise the outstanding achievements of staff whose
-            values, leadership and service demonstrate the highest standards of excellence and
-            integrity — honouring those who embody:{" "}
-            <span className="text-foreground">
-              "{AWARD_THEME.title}: {AWARD_THEME.subtitle}"
-            </span>
-          </p>
-        </motion.div>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          {[
-            { t: "Nominee", d: "Put forward in recognition of their contributions." },
-            { t: "Nominator", d: "Colleague, manager or self who submits the nomination." },
-            {
-              t: "Self-nomination",
-              d: "Encouraged when supported by a credible Portfolio of Evidence.",
-            },
-          ].map((d, i) => (
-            <motion.div
-              key={d.t}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.4, delay: i * 0.08, ease: EASE }}
-              whileHover={{ y: -3 }}
-              className="glass rounded-2xl px-4 py-3 text-left"
-              style={{ maxWidth: "15rem" }}
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-                {d.t}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-foreground/75">{d.d}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      <SectionDivider />
 
       {/* Categories */}
       <section id="categories" className="relative z-10 mx-auto max-w-6xl px-6 py-16">
@@ -506,7 +633,7 @@ function Index() {
           </p>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5">
           {AWARD_CATEGORIES.map((c, i) => {
             const Icon = CATEGORY_ICONS[c.id] ?? Award;
             const isExpanded = expandedId === c.id;
@@ -522,39 +649,51 @@ function Index() {
                 className={`glass relative flex flex-col overflow-hidden rounded-[26px] cursor-pointer transition-shadow ${
                   isExpanded ? "shadow-elegant" : ""
                 }`}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
+                aria-label={`${isExpanded ? "Collapse" : "Expand"} ${c.name}`}
                 onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setExpandedId(isExpanded ? null : c.id);
+                  }
+                }}
               >
-                <div className="relative flex flex-1 flex-col p-6">
-                  <div className="mb-5 flex items-start justify-between">
+                <div className="relative grid flex-1 gap-4 p-6 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-6">
+                  <div className="flex items-start justify-between sm:contents">
                     <motion.div
                       whileHover={{ rotate: 8, scale: 1.08 }}
                       transition={{ duration: 0.2 }}
-                      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary shadow-elegant"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-elegant"
                     >
                       <Icon className="h-5 w-5 text-primary-foreground" />
                     </motion.div>
                     <motion.div
                       animate={{ rotate: isExpanded ? 180 : 0 }}
                       transition={{ duration: 0.25 }}
-                      className="mt-1"
+                      className="mt-1 sm:order-3"
                     >
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     </motion.div>
                   </div>
-                  <h3 className="text-lg font-bold leading-snug">{c.name}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.tagline}</p>
+                  <div className="sm:col-start-2 sm:row-start-1">
+                    <h3 className="text-lg font-bold leading-snug">{c.name}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.tagline}</p>
 
-                  {!isExpanded && (
-                    <div className="mt-4 flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                      </span>
-                      <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
-                        Tap to nominate
-                      </span>
-                    </div>
-                  )}
+                    {!isExpanded && (
+                      <div className="mt-4 flex items-center gap-1.5 sm:mt-3">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                        </span>
+                        <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
+                          Tap to nominate
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <AnimatePresence>
@@ -567,26 +706,30 @@ function Index() {
                       className="overflow-hidden"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="border-t border-white/40 bg-white/30 px-6 py-4">
-                        <p className="mb-3 text-xs leading-relaxed text-foreground/80">
+                      <div className="grid gap-5 border-t border-white/40 bg-white/30 px-6 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-8">
+                        <div>
+                          <p className="text-xs leading-relaxed text-foreground/80">
                           {c.description}
-                        </p>
-                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
-                          Full Criteria
-                        </p>
-                        <ul className="space-y-2 text-xs text-foreground/80">
-                          {c.recognises.map((r) => (
-                            <li key={r} className="flex items-start gap-2">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                              {r}
-                            </li>
-                          ))}
-                        </ul>
-                        <NominateButton
-                          isProcessing={nominatingId === c.id}
-                          nominationsOpen={nominationsOpen}
-                          onNominate={() => handleNominate(c.id)}
-                        />
+                          </p>
+                          <NominateButton
+                            isProcessing={nominatingId === c.id}
+                            nominationsOpen={nominationsOpen}
+                            onNominate={() => handleNominate(c.id)}
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
+                            Full Criteria
+                          </p>
+                          <ul className="grid gap-x-6 gap-y-2 text-xs text-foreground/80 sm:grid-cols-2">
+                            {c.recognises.map((r) => (
+                              <li key={r} className="flex items-start gap-2">
+                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                                {r}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -597,13 +740,33 @@ function Index() {
         </div>
       </section>
 
+      <SectionDivider />
+
       {/* Event details */}
-      <section id="event" className="relative z-10 mx-auto max-w-4xl px-6 py-16">
+      <section id="event" className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,1fr)]">
+        <div className="relative mx-auto h-64 w-full max-w-sm sm:h-80 lg:mx-0">
+          <StickerPhoto photo={CAMPUS_PHOTOS[3]} className="h-full w-full rotate-2" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.4, rotate: 12 }}
+            whileInView={{ opacity: 1, scale: 1, rotate: 8 }}
+            viewport={{ once: true, margin: "-60px" }}
+            whileHover={{ scale: 1.08, rotate: 4 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 14 }}
+            className="absolute -right-4 -top-4 flex h-20 w-20 rotate-[8deg] items-center justify-center rounded-full border-2 border-dashed border-primary/70 bg-white/95 text-center shadow-elegant sm:-right-5 sm:-top-5 sm:h-24 sm:w-24"
+          >
+            <span className="flex flex-col items-center gap-0.5 px-1 text-[9px] font-bold uppercase leading-tight tracking-wide text-primary sm:text-[10px]">
+              <CheckCircle2 className="mb-0.5 h-4 w-4" />
+              Judging
+              Complete
+            </span>
+          </motion.div>
+        </div>
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.5 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, ease: EASE }}
+          transition={{ type: "spring", stiffness: 240, damping: 15, mass: 0.9, delay: 0.1 }}
+          whileHover={{ scale: 1.02 }}
           className="glass rounded-[28px] p-8 text-center sm:p-12"
         >
           <motion.div
@@ -621,21 +784,12 @@ function Index() {
         </motion.div>
       </section>
 
+      <SectionDivider />
+
       {/* Detailed Programme & Venue */}
       <EventProgram />
 
-      <footer className="relative z-10 px-6 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.5, ease: EASE }}
-          className="glass mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 rounded-[24px] px-6 py-6 text-sm text-muted-foreground sm:flex-row"
-        >
-          <p>© 2026 Registrar's Ambit Staff Awards</p>
-          <p>Recognising Excellence · Celebrating Service · Honouring Our People</p>
-        </motion.div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
@@ -690,18 +844,23 @@ function NominateButton({
 }
 
 function InfoChip({
+  index,
   icon: Icon,
   title,
   value,
 }: {
+  index: number;
   icon: typeof Award;
   title: string;
   value: string;
 }) {
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: index % 2 === 0 ? 22 : -22, scale: 0.94 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-40px" }}
+      whileHover={{ y: -5, scale: 1.02, rotate: index % 2 === 0 ? -0.5 : 0.5 }}
+      transition={{ delay: index * 0.09, type: "spring", stiffness: 230, damping: 18 }}
       className="glass flex min-w-[15rem] shrink-0 items-center gap-3 rounded-2xl p-4 sm:min-w-0"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-elegant">
