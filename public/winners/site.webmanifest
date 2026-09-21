@@ -1,6 +1,7 @@
 {
-  "name": "SALEA 2026 - Student Academic & Leadership Excellence Awards",
-  "short_name": "SALEA 2026",
+  "name": "Registrar's Ambit Staff Awards",
+  "short_name": "Registrar's Ambit",
+  "description": "Nominate, judge and celebrate outstanding DUT staff at the Registrar's Ambit Staff Awards.",
   "icons": [
     {
       "src": "/winners/favicon-16x16.png",
@@ -28,8 +29,9 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#14213d",
   "background_color": "#ffffff",
   "display": "standalone",
-  "start_url": "/"
+  "start_url": "/",
+  "scope": "/"
 }
