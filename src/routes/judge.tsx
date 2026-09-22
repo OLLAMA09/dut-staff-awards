@@ -669,7 +669,12 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
   function openDetail(nom: Nomination) {
     setDetail(nom);
     const existing = myScores[nom.id];
-    setCriteriaInput(existing?.criteriaScores ?? {});
+    if (existing?.criteriaScores) {
+      setCriteriaInput(existing.criteriaScores);
+    } else {
+      const criteria = getCriteriaForCategory(nom.categoryId);
+      setCriteriaInput(Object.fromEntries(criteria.map((c) => [c.id, 1])));
+    }
     setCommentInput(existing?.comment ?? "");
   }
 
@@ -1753,7 +1758,7 @@ function JudgeNominationDetail({
 
             <Button
               onClick={onSave}
-              disabled={saving || ratedCount === 0 || !realJudgingActive}
+              disabled={saving || ratedCount < criteria.length || !realJudgingActive}
               className="w-full bg-primary text-primary-foreground disabled:opacity-50"
               size="lg"
             >
@@ -1778,9 +1783,9 @@ function JudgeNominationDetail({
                 ⏸ Real judging is not active. Admin must activate it to submit scores.
               </p>
             )}
-            {ratedCount === 0 && scoringOpen && realJudgingActive && (
+            {ratedCount < criteria.length && scoringOpen && realJudgingActive && (
               <p className="text-center text-xs text-amber-600">
-                Rate at least one criterion to submit your evaluation.
+                Rate all {criteria.length} criteria to submit your evaluation.
               </p>
             )}
             {hasScore && (

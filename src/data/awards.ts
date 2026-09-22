@@ -129,7 +129,7 @@ export const AWARD_THEME = {
   title: "Registrar's Ambit Staff Awards",
   subtitle: "Recognising Excellence · Celebrating Service · Honouring Our People",
   eventName: "Registrar's Ambit Staff Awards",
-  recognitionPeriod: "1 July 2024 – 30 June 2025",
+  recognitionPeriod: "1 January 2025 – 31 December 2025",
   nominationWindow: "TBC",
   closingDate: "TBC",
   /** ISO date strings for judge scoring window — wide open until real dates are confirmed */
@@ -137,7 +137,7 @@ export const AWARD_THEME = {
   scoringDeadline: "2027-12-31",
   venue: "TBC",
   openingAddressTitle: "Welcome & Opening Address",
-  openingAddressRemarks: "Registrar's remarks",
+  openingAddressRemarks: "Program",
   yearsBadge: "Registrar's Ambit Staff Awards",
   /** Judge session times — single session until the ceremony is scheduled */
   judgeSessions: [
@@ -284,7 +284,7 @@ export type CategoryId = (typeof AWARD_CATEGORIES)[number]["id"];
  * shown on nomination Step 1 — not judged/scored criteria.
  */
 export const ELIGIBILITY_QUESTIONS = [
-  { id: "workPeriod", label: "Is the submission based on evidence of work that occurred between 1 July 2024 and 30 June 2025?" },
+  { id: "workPeriod", label: "Is the submission based on evidence of work that occurred between 1 January 2025 and 31 December 2025?" },
   { id: "notResubmitted", label: "Confirm this nominee has not been submitted for the same project/contribution in the last three years." },
   { id: "notMultiNominated", label: "Confirm this project/contribution has not already been nominated for more than one award in this Awards Framework." },
 ] as const;

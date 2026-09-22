@@ -543,58 +543,6 @@ function Index() {
 
       <SectionDivider />
 
-      {/* Access portals */}
-      <section id="access" className="relative z-10 mx-auto max-w-4xl px-6 py-6">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, ease: EASE }}
-          className="glass rounded-[28px] p-6 sm:p-8"
-        >
-          <p className="text-xs uppercase tracking-[0.25em] text-primary">Secure Access</p>
-          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Login Portals</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, x: -28, rotate: -2 }}
-              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.4, delay: 0.05, ease: EASE }}
-              whileHover={{ y: -5, scale: 1.015 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Link to="/admin" className="glass-strong block rounded-[22px] p-5 text-left">
-                <div className="mb-3 flex items-center gap-2 text-primary">
-                  <ShieldCheck className="h-5 w-5" />
-                  <p className="font-semibold">Admin Login</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Approve nominations, manage categories, and supervise judge activity.
-                </p>
-              </Link>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 28, rotate: 2 }}
-              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.4, delay: 0.12, ease: EASE }}
-              whileHover={{ y: -5, scale: 1.015 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Link to="/judge" className="glass-strong block rounded-[22px] p-5 text-left">
-                <div className="mb-3 flex items-center gap-2 text-primary">
-                  <Star className="h-5 w-5" />
-                  <p className="font-semibold">Judge Login</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Score shortlisted nominations and add judging comments.
-                </p>
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
       {/* Nomination Period Closed Banner */}
       {!nominationsOpen && (
         <section className="relative z-10 mx-auto max-w-4xl px-6 py-6">
@@ -781,6 +729,60 @@ function Index() {
           <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
             — Registrar's Ambit Staff Awards Mission
           </p>
+        </motion.div>
+      </section>
+
+      <SectionDivider />
+
+      {/* Access portals */}
+      <section id="access" className="relative z-10 mx-auto max-w-4xl px-6 py-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="glass rounded-[28px] p-6 sm:p-8"
+        >
+          <p className="text-xs uppercase tracking-[0.25em] text-primary">Secure Access</p>
+          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Login Portals</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <motion.div
+              initial={{ opacity: 0, x: -28, rotate: -2 }}
+              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.4, delay: 0.05, ease: EASE }}
+              whileHover={{ y: -5, scale: 1.015 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Link to="/admin" className="glass-strong block rounded-[22px] p-5 text-left">
+                <div className="mb-3 flex items-center gap-2 text-primary">
+                  <ShieldCheck className="h-5 w-5" />
+                  <p className="font-semibold">Admin Login</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Approve nominations, manage categories, and supervise judge activity.
+                </p>
+              </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 28, rotate: 2 }}
+              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.4, delay: 0.12, ease: EASE }}
+              whileHover={{ y: -5, scale: 1.015 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Link to="/judge" className="glass-strong block rounded-[22px] p-5 text-left">
+                <div className="mb-3 flex items-center gap-2 text-primary">
+                  <Star className="h-5 w-5" />
+                  <p className="font-semibold">Judge Login</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Score shortlisted nominations and add judging comments.
+                </p>
+              </Link>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 

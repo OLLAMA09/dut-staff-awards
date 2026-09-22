@@ -63,11 +63,10 @@
 
 :root {
   --radius: 0.625rem;
-  /* Registrar's Ambit brand: premium navy on cream, minimalist & professional */
-  /* Deepened slightly from the original cream/navy pairing for more contrast. */
-  --background: oklch(0.94 0.014 82);
+  /* Registrar's Ambit brand: premium navy on slate-blue, minimalist & professional */
+  --background: oklch(0.55 0.045 258);
   --foreground: oklch(0.18 0.03 258);
-  --gradient-hero: radial-gradient(ellipse at top, oklch(0.97 0.01 85) 0%, oklch(0.94 0.014 82) 55%, oklch(0.89 0.02 258) 100%);
+  --gradient-hero: radial-gradient(ellipse at top, oklch(0.62 0.035 258) 0%, oklch(0.55 0.045 258) 55%, oklch(0.4 0.06 258) 100%);
   --shadow-elegant: 0 20px 50px -12px oklch(0.24 0.09 258 / 0.26);
   --card: oklch(0.98 0.005 88);
   --card-foreground: oklch(0.18 0.03 258);
@@ -91,7 +90,7 @@
   --chart-3: oklch(0.66 0.05 85);
   --chart-4: oklch(0.4 0.15 200);
   --chart-5: oklch(0.3 0.08 280);
-  --sidebar: oklch(0.94 0.014 82);
+  --sidebar: oklch(0.55 0.045 258);
   --sidebar-foreground: oklch(0.18 0.03 258);
   --sidebar-primary: oklch(0.24 0.09 258);
   --sidebar-primary-foreground: oklch(0.98 0.008 85);
@@ -102,7 +101,7 @@
 }
 
 .dark {
-  --background: oklch(0.94 0.014 82);
+  --background: oklch(0.55 0.045 258);
 }
 
 @layer base {
