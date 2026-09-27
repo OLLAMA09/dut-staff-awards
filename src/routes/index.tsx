@@ -507,8 +507,8 @@ function Index() {
               transition={{ delay: i * 0.1, type: "spring", stiffness: 220, damping: 17 }}
               className="px-4 py-6 text-center"
             >
-              <p className="text-3xl font-bold text-primary sm:text-4xl">{s.num}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{s.label}</p>
+              <p className="text-3xl font-bold text-[#095aba] sm:text-4xl">{s.num}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#095aba]">{s.label}</p>
             </motion.div>
           ))}
         </div>
@@ -909,10 +909,10 @@ function InfoChip({
         <Icon className="h-4.5 w-4.5 text-primary-foreground" />
       </div>
       <div className="min-w-0 text-left">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#cacaca]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#095aba]">
           {title}
         </p>
-        <p className="mt-0.5 truncate text-sm font-semibold text-[#cacaca]">{value}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-[#095aba]">{value}</p>
       </div>
     </motion.div>
   );

@@ -353,7 +353,7 @@ function NominatePage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-50 text-foreground">
+    <div className="relative min-h-screen bg-hero text-foreground">
       <SiteNav />
       <main className="relative z-10 mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <NominationForm category={category} onBack={() => navigate({ to: "/", hash: "categories" })} />
