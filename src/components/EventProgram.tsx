@@ -47,7 +47,7 @@ export default function EventProgram() {
         <h2 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
           A ceremony <span className="text-primary">honouring our people.</span>
         </h2>
-        <p className="mt-5 text-muted-foreground">
+        <p className="mt-5 text-white/80">
           Full ceremony date, time and schedule details will be announced closer to the event.
         </p>
       </div>

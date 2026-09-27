@@ -33,6 +33,31 @@ export function useNominationsOpen(): { open: boolean; loading: boolean } {
   return { open, loading };
 }
 
+const JUDGING_SETTINGS_DOC = doc(db, "admin_settings", "judging");
+
+/** Read-only view of the admin_settings/judging toggle (written from the admin panel). */
+export function useJudgingActive(): { active: boolean; loading: boolean } {
+  const [active, setActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      JUDGING_SETTINGS_DOC,
+      (snap) => {
+        setActive(snap.exists() ? (snap.data()?.active ?? false) : false);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("[Firestore] Failed to load judging settings:", error);
+        setLoading(false);
+      },
+    );
+    return () => unsub();
+  }, []);
+
+  return { active, loading };
+}
+
 export async function setNominationsOpen(open: boolean): Promise<void> {
   await setDoc(NOMINATIONS_SETTINGS_DOC, {
     open,

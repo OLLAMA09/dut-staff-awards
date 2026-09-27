@@ -154,7 +154,7 @@ function sampleParticles(text: string, width: number, height: number, targetCoun
 export default function ShatterText({
   text,
   className = "",
-  color = "var(--primary)",
+  color = "#4646c6",
   repelRadius = 46,
   scrollDisturbance,
   typeProgress,

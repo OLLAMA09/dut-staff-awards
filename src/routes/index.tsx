@@ -30,7 +30,8 @@ import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import EventProgram from "@/components/EventProgram";
 import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
-import { useNominationsOpen } from "@/lib/nomination-settings";
+import { TriangleBackground } from "@/components/TriangleBackground";
+import { useJudgingActive, useNominationsOpen } from "@/lib/nomination-settings";
 import { AWARD_CATEGORIES, AWARD_THEME } from "@/data/awards";
 
 const AwardScene = lazy(() => import("@/components/AwardScene"));
@@ -194,7 +195,7 @@ function SectionDivider() {
   );
 }
 
-function HeroStory() {
+function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
   const storyRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: storyRef, offset: ["start start", "end end"] });
   const contentOpacity = useTransform(scrollYProgress, [0, 0.82], [1, 0.72]);
@@ -237,18 +238,24 @@ function HeroStory() {
             </motion.div>
 
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Registrar's Ambit Staff Awards</p>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.05] sm:text-6xl">Recognition starts with a story worth telling.</h1>
-            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">Celebrate colleagues and units whose work gives excellence a daily shape.</p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-              <Link to="/" hash="categories" className="w-full sm:w-auto">
+            <h1 className="mt-5 text-4xl font-bold leading-[1.05] text-white sm:text-6xl">Recognition starts with a story worth telling.</h1>
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/80 sm:text-lg lg:mx-0">Celebrate colleagues and units whose work gives excellence a daily shape.</p>
+            {!nominationsOpen && (
+              <p className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md lg:mx-0">
+                <AlertCircle className="h-3.5 w-3.5" /> Nominations are now closed
+              </p>
+            )}
+            {/* When nominations close, winners become the primary action */}
+            <div className={`${nominationsOpen ? "mt-8" : "mt-4"} flex flex-col items-center gap-3 sm:flex-row lg:justify-start`}>
+              <Link to={nominationsOpen ? "/" : "/winners"} hash={nominationsOpen ? "categories" : undefined} className="w-full sm:w-auto">
                 <motion.div initial={{ opacity: 0, x: -22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE }} onPointerDown={nominateRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: -1 }} whileTap={{ scale: 0.95 }} className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-elegant sm:w-auto">
-                  Nominate Now
+                  {nominationsOpen ? "Nominate Now" : "View Winners"}
                   {nominateRipple.rippleSpans}
                 </motion.div>
               </Link>
-              <Link to="/winners" className="w-full sm:w-auto">
+              <Link to={nominationsOpen ? "/winners" : "/"} hash={nominationsOpen ? undefined : "categories"} className="w-full sm:w-auto">
                 <motion.div initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6, duration: 0.5, ease: EASE }} onPointerDown={winnersRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: 1 }} whileTap={{ scale: 0.95 }} className="glass-pill relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full px-8 font-semibold text-foreground sm:w-auto">
-                  View Winners
+                  {nominationsOpen ? "View Winners" : "Award Categories"}
                   {winnersRipple.rippleSpans}
                 </motion.div>
               </Link>
@@ -288,15 +295,22 @@ function HeroStory() {
 /** Sections tracked by the side scroll-spy navigator, in page order. */
 const SECTIONS = [
   { id: "hero", label: "Home" },
-  { id: "access", label: "Access" },
   { id: "about", label: "About" },
   { id: "categories", label: "Categories" },
   { id: "event", label: "Event" },
+  { id: "access", label: "Access" },
   { id: "program", label: "Programme" },
 ] as const;
 
 function Index() {
   const { open: nominationsOpen } = useNominationsOpen();
+  const { active: judgingActive } = useJudgingActive();
+  // The event stamp follows the live award stage rather than a fixed label
+  const stage = nominationsOpen
+    ? { label: ["Nominations", "Open"], Icon: Sparkles }
+    : judgingActive
+      ? { label: ["Judging", "Underway"], Icon: Star }
+      : { label: ["Judging", "Complete"], Icon: CheckCircle2 };
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [nominatingId, setNominatingId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -378,6 +392,27 @@ function Index() {
     <div className="relative min-h-screen overflow-x-hidden bg-hero text-foreground">
       <RouteTransitionLoader />
 
+      {/* Left & right triangle banners in the gutters beside the content column */}
+      {(["left", "right"] as const).map((side) => (
+        <TriangleBackground
+          key={side}
+          tone="vivid"
+          pattern="cascade"
+          cellSize={40}
+          gap={4}
+          rippleRadius={2}
+          autoplay={320}
+          className={`pointer-events-none !fixed top-0 bottom-0 z-0 hidden !h-auto xl:block ${
+            side === "left" ? "left-0" : "right-0"
+          }`}
+          style={{
+            width: "min(260px, max(0px, calc((100vw - 72rem) / 2 - 8px)))",
+            maskImage: `linear-gradient(to ${side === "left" ? "right" : "left"}, black 55%, transparent)`,
+            WebkitMaskImage: `linear-gradient(to ${side === "left" ? "right" : "left"}, black 55%, transparent)`,
+          }}
+        />
+      ))}
+
       {/* Custom blue scroll-progress indicator — the native scrollbar stays hidden */}
       <div className="pointer-events-none fixed right-1 top-24 bottom-6 z-[60] w-1 rounded-full bg-blue-500/15">
         <motion.div
@@ -404,19 +439,19 @@ function Index() {
               className="group flex items-center gap-2.5"
             >
               <span
-                className={`text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-200 ${
+                className={`text-[10px] font-semibold uppercase tracking-[0.15em] text-white [text-shadow:0_1px_6px_oklch(0.24_0.09_258/0.9)] transition-all duration-200 ${
                   isActive
-                    ? "translate-x-0 text-primary opacity-100"
-                    : "translate-x-1 text-primary/60 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
                 }`}
               >
                 {s.label}
               </span>
               <span
-                className={`shrink-0 rounded-full transition-all duration-200 ${
+                className={`shrink-0 rounded-full shadow-[0_0_6px_oklch(0.24_0.09_258/0.8)] transition-all duration-200 ${
                   isActive
-                    ? "h-2.5 w-2.5 bg-primary"
-                    : "h-1.5 w-1.5 bg-primary/25 group-hover:bg-primary/60"
+                    ? "h-2.5 w-2.5 bg-white"
+                    : "h-1.5 w-1.5 bg-white/50 group-hover:bg-white/80"
                 }`}
               />
             </a>
@@ -445,7 +480,7 @@ function Index() {
           </motion.div>
         </div>
 
-        <HeroStory />
+        <HeroStory nominationsOpen={nominationsOpen} />
 
       </section>
 
@@ -493,11 +528,11 @@ function Index() {
               { text: " across our staff." },
             ]}
           />
-          <p className="about-copy mx-auto mt-5 max-w-xl leading-relaxed text-muted-foreground lg:mx-0">
+          <p className="about-copy mx-auto mt-5 max-w-xl font-bold leading-relaxed text-white lg:mx-0">
             The Registrar's Ambit Staff Awards recognise the outstanding achievements of staff whose
             values, leadership and service demonstrate the highest standards of excellence and
             integrity — honouring those who embody:{" "}
-            <span className="text-foreground">
+            <span className="text-white">
               "{AWARD_THEME.title}: {AWARD_THEME.subtitle}"
             </span>
           </p>
@@ -543,8 +578,9 @@ function Index() {
 
       <SectionDivider />
 
-      {/* Nomination Period Closed Banner */}
+      {/* Nomination Period Closed Banner — brings its own divider so none doubles up when hidden */}
       {!nominationsOpen && (
+        <>
         <section className="relative z-10 mx-auto max-w-4xl px-6 py-6">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -565,9 +601,9 @@ function Index() {
             </div>
           </motion.div>
         </section>
+        <SectionDivider />
+        </>
       )}
-
-      <SectionDivider />
 
       {/* Categories */}
       <section id="categories" className="relative z-10 mx-auto max-w-6xl px-6 py-16">
@@ -594,22 +630,26 @@ function Index() {
                 transition={{ delay: i * 0.05, duration: 0.4, ease: EASE }}
                 whileHover={{ y: -4 }}
                 whileTap={{ scale: 0.98 }}
-                className={`glass relative flex flex-col overflow-hidden rounded-[26px] cursor-pointer transition-shadow ${
+                className={`glass relative flex flex-col overflow-hidden rounded-[26px] transition-shadow ${
                   isExpanded ? "shadow-elegant" : ""
                 }`}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                aria-label={`${isExpanded ? "Collapse" : "Expand"} ${c.name}`}
-                onClick={() => setExpandedId(isExpanded ? null : c.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setExpandedId(isExpanded ? null : c.id);
-                  }
-                }}
               >
-                <div className="relative grid flex-1 gap-4 p-6 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-6">
+                {/* Only the header toggles — keeps the Nominate button from being nested inside another button */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  aria-controls={`category-${c.id}-details`}
+                  aria-label={`${isExpanded ? "Hide" : "Show"} criteria for ${c.name}`}
+                  onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setExpandedId(isExpanded ? null : c.id);
+                    }
+                  }}
+                  className="relative grid flex-1 cursor-pointer gap-4 rounded-[26px] p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-6"
+                >
                   <div className="flex items-start justify-between sm:contents">
                     <motion.div
                       whileHover={{ rotate: 8, scale: 1.08 }}
@@ -637,7 +677,7 @@ function Index() {
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                         </span>
                         <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
-                          Tap to nominate
+                          View criteria
                         </span>
                       </div>
                     )}
@@ -647,12 +687,12 @@ function Index() {
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
+                      id={`category-${c.id}-details`}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
-                      onClick={(e) => e.stopPropagation()}
                     >
                       <div className="grid gap-5 border-t border-white/40 bg-white/30 px-6 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-8">
                         <div>
@@ -703,9 +743,9 @@ function Index() {
             className="absolute -right-4 -top-4 flex h-20 w-20 rotate-[8deg] items-center justify-center rounded-full border-2 border-dashed border-primary/70 bg-white/95 text-center shadow-elegant sm:-right-5 sm:-top-5 sm:h-24 sm:w-24"
           >
             <span className="flex flex-col items-center gap-0.5 px-1 text-[9px] font-bold uppercase leading-tight tracking-wide text-primary sm:text-[10px]">
-              <CheckCircle2 className="mb-0.5 h-4 w-4" />
-              Judging
-              Complete
+              <stage.Icon className="mb-0.5 h-4 w-4" />
+              <span>{stage.label[0]}</span>
+              <span>{stage.label[1]}</span>
             </span>
           </motion.div>
         </div>
@@ -869,10 +909,10 @@ function InfoChip({
         <Icon className="h-4.5 w-4.5 text-primary-foreground" />
       </div>
       <div className="min-w-0 text-left">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#cacaca]">
           {title}
         </p>
-        <p className="mt-0.5 truncate text-sm font-semibold text-foreground">{value}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-[#cacaca]">{value}</p>
       </div>
     </motion.div>
   );

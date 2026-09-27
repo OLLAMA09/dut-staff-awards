@@ -116,7 +116,7 @@ export default function SiteNav() {
       <Link
         to="/"
         hash="categories"
-        className="transition hover:text-primary"
+        className="transition hover:text-white"
         onClick={() => setIsOpen(false)}
       >
         Awards
@@ -124,7 +124,7 @@ export default function SiteNav() {
       <Link
         to="/"
         hash="event"
-        className="transition hover:text-primary"
+        className="transition hover:text-white"
         onClick={() => setIsOpen(false)}
       >
         Event
@@ -132,15 +132,15 @@ export default function SiteNav() {
       <Link
         to="/"
         hash="categories"
-        className="transition hover:text-primary"
+        className="transition hover:text-white"
         onClick={() => setIsOpen(false)}
       >
         Nominate
       </Link>
       <Link
         to="/winners"
-        className="transition hover:text-primary"
-        activeProps={{ className: "text-primary" }}
+        className="transition hover:text-white"
+        activeProps={{ className: "text-white font-semibold" }}
         onClick={() => setIsOpen(false)}
       >
         Winners
@@ -148,8 +148,8 @@ export default function SiteNav() {
       {isPrivileged && (
         <Link
           to="/guide"
-          className="flex items-center gap-1 transition hover:text-primary"
-          activeProps={{ className: "text-primary" }}
+          className="flex items-center gap-1 transition hover:text-white"
+          activeProps={{ className: "text-white font-semibold" }}
           onClick={() => setIsOpen(false)}
         >
           <BookOpen className="h-3.5 w-3.5" /> Guide
@@ -158,8 +158,8 @@ export default function SiteNav() {
       {isPrivileged && (
         <Link
           to="/demo"
-          className="flex items-center gap-1 transition hover:text-primary"
-          activeProps={{ className: "text-primary" }}
+          className="flex items-center gap-1 transition hover:text-white"
+          activeProps={{ className: "text-white font-semibold" }}
           onClick={() => setIsOpen(false)}
         >
           <Play className="h-3.5 w-3.5" /> Demo
@@ -167,8 +167,8 @@ export default function SiteNav() {
       )}
       <Link
         to="/admin"
-        className="transition hover:text-primary"
-        activeProps={{ className: "text-primary" }}
+        className="transition hover:text-white"
+        activeProps={{ className: "text-white font-semibold" }}
         onClick={() => setIsOpen(false)}
       >
         Admin
@@ -195,17 +195,17 @@ export default function SiteNav() {
             <img src={logo} alt="DUT Logo" className="h-full w-auto object-contain" />
           </motion.div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold tracking-wider text-primary leading-tight">
+            <p className="text-sm font-semibold tracking-wider text-white leading-tight">
               Registrar's Ambit Staff Awards
             </p>
-            <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+            <p className="text-[10px] uppercase tracking-[0.1em] text-white/75">
               Durban University of Technology
             </p>
           </div>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
+        <nav className="hidden items-center gap-6 text-sm font-medium text-white/85 md:flex">
           <NavLinks />
         </nav>
 
@@ -273,7 +273,11 @@ export default function SiteNav() {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden text-primary">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden text-white hover:bg-white/10 hover:text-white"
+                >
                   <motion.div
                     animate={{ rotate: isOpen ? 90 : 0 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
@@ -290,8 +294,8 @@ export default function SiteNav() {
                   <div className="flex items-center gap-3">
                     <img src={logo} alt="Logo" className="h-10 w-auto" />
                     <div>
-                      <p className="font-bold text-sm tracking-tight">DUT AWARDS</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                      <p className="font-bold text-sm tracking-tight text-[#2c2c2c]">DUT AWARDS</p>
+                      <p className="text-[10px] text-[#2c2c2c] uppercase tracking-widest">
                         Registrar's Ambit
                       </p>
                     </div>

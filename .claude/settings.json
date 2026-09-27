@@ -25,7 +25,11 @@
       "Read(//c/Users/Ndumi/dut-staff-awards/dut-staff-awards/src/routes/**)",
       "Bash(node --env-file=.env scripts/seed-fake-data.mjs)",
       "Bash(node --env-file=.env -e ' *)",
-      "PowerShell(npx vite build --mode development 2>&1)"
+      "PowerShell(npx vite build --mode development 2>&1)",
+      "Bash(npx eslint *)",
+      "Bash(npm run *)",
+      "Bash(npx prettier *)",
+      "Bash(NODE_OPTIONS=--max-old-space-size=8192 npm run build)"
     ]
   }
 }
