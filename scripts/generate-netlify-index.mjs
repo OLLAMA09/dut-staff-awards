@@ -34,21 +34,37 @@ if (!jsFile) throw new Error("Bootstrap JS not found in dist/client/assets");
 //   - h: () => {}  is called as a post-init notification (window.$_TSR?.h())
 const tsrStub = `window.$_TSR={router:{matches:[],lastMatchId:null,manifest:null,dehydratedData:null},buffer:[],h:function(){}};`;
 
+// This shell is all that link previews (WhatsApp, Teams, email) ever read, so its
+// meta tags must match the site. Netlify sets URL to the site's main address
+// during builds; preview images need an absolute URL.
+const siteUrl = process.env.URL || "https://registrars-ambit-staff-awards.netlify.app";
+
 const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SALEA 2026 — Student Academic &amp; Leadership Excellence Awards</title>
-    <meta name="description" content="SALEA 2026: Recognising Excellence, Celebrating Leadership, Inspiring Greatness. Nominate outstanding student leaders and academics." />
-    <meta name="author" content="DUT Student Services" />
-    <meta property="og:title" content="SALEA 2026 — Student Academic &amp; Leadership Excellence Awards" />
-    <meta property="og:description" content="Recognising Excellence. Celebrating Leadership. Inspiring Greatness." />
+    <title>Registrar's Ambit Staff Awards</title>
+    <meta name="description" content="Registrar's Ambit Staff Awards: Recognising Excellence, Celebrating Service, Honouring Our People. Nominate outstanding DUT staff." />
+    <meta name="author" content="DUT Registrar's Division" />
+    <meta name="theme-color" content="#1B3B5C" />
+    <meta property="og:title" content="Registrar's Ambit Staff Awards" />
+    <meta property="og:description" content="Recognising Excellence · Celebrating Service · Honouring Our People." />
     <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:url" content="${siteUrl}/" />
+    <meta property="og:image" content="${siteUrl}/backdrops/1.jpg" />
+    <meta property="og:image:width" content="1536" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:alt" content="Award trophies on a lit stage" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/x-icon" href="/winners/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/winners/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/winners/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/winners/apple-touch-icon.png" />
+    <link rel="manifest" href="/winners/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
     <link rel="stylesheet" href="/assets/${cssFile}" />
     <script>${tsrStub}</script>
   </head>

@@ -40,6 +40,7 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Handler } from '@netlify/functions';
 import { getFirestoreDb } from './firebase-admin-init.js';
+import { requireRole } from './require-role.js';
 
 // Firebase Admin will be initialized in the handler (defer to avoid crash if env var missing)
 let db: any = null;
@@ -57,7 +58,7 @@ function initializeFirebase() {
 interface NominationData {
   nomineeName?: any;
   nomineeEmail?: any;
-  studentNumber?: any;
+  staffNumber?: any;
   categoryId?: string;
   categoryName?: string;
   uploads?: Record<string, any>;
@@ -80,7 +81,7 @@ function isCorrupted(data: NominationData): boolean {
   const requiredFields = [
     'nomineeName',
     'nomineeEmail',
-    'studentNumber',
+    'staffNumber',
     'categoryId'
   ];
 
@@ -93,7 +94,7 @@ function isCorrupted(data: NominationData): boolean {
 
   if (typeof data.nomineeName === 'object' && data.nomineeName !== null) return true;
   if (typeof data.nomineeEmail === 'object' && data.nomineeEmail !== null) return true;
-  if (typeof data.studentNumber === 'object' && data.studentNumber !== null) return true;
+  if (typeof data.staffNumber === 'object' && data.staffNumber !== null) return true;
 
   return false;
 }
@@ -175,6 +176,9 @@ const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Method not allowed' })
       };
     }
+
+    const denied = await requireRole(event);
+    if (denied) return denied;
 
     // Initialize Firebase on first request
     initializeFirebase();

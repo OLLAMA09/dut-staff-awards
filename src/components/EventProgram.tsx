@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { MapPin, Clock, Accessibility, Car, Shirt } from "lucide-react";
-import { AWARD_CATEGORIES } from "@/data/awards";
+import { AWARD_CATEGORIES, AWARD_THEME } from "@/data/awards";
 import ShatterText from "@/components/ShatterText";
 
 const ceremonySchedule = [
@@ -43,11 +43,11 @@ export default function EventProgram() {
       </motion.div>
 
       <div className="relative z-10 mb-14 max-w-2xl">
-        <p className="text-xs uppercase tracking-[0.3em] text-primary">Programme of the Evening</p>
-        <h2 className="mt-3 text-4xl font-bold leading-tight sm:text-5xl">
-          A ceremony <span className="text-primary">honouring our people.</span>
+        <p className="text-xs uppercase tracking-[0.3em] text-white">Programme of the Evening</p>
+        <h2 className="mt-3 text-4xl font-bold leading-tight text-white sm:text-5xl">
+          A ceremony <span className="gold-underline">honouring our people.</span>
         </h2>
-        <p className="mt-5 text-white/80">
+        <p className="mt-5 text-white">
           Full ceremony date, time and schedule details will be announced closer to the event.
         </p>
       </div>
@@ -87,10 +87,10 @@ export default function EventProgram() {
             <div className="overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-card to-secondary/40">
               <div className="p-6">
                 <p className="text-xs uppercase tracking-[0.25em] text-primary">The Venue</p>
-                <h3 className="mt-2 text-3xl font-bold">TBC</h3>
+                <h3 className="mt-2 text-3xl font-bold">{AWARD_THEME.venue}</h3>
                 <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4 text-primary" />
-                  Date & time: TBC
+                  Date & time: {AWARD_THEME.ceremonyDate}
                 </p>
               </div>
             </div>

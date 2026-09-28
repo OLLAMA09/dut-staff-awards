@@ -54,6 +54,8 @@ import {
   where,
   getDocs,
   limit,
+  writeBatch,
+  deleteField,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -67,6 +69,8 @@ import {
   withZoom,
 } from "@/lib/office-to-html-client";
 import { validateDocumentsForCategory, getIncompleteItemsList } from "@/lib/document-validation";
+import { authedFetch } from "@/lib/authed-fetch";
+import { groupDuplicates, isActive, isSetAside, needsDecision } from "@/lib/nomination-duplicates";
 import {
   getNominationJudgingStatus,
   getJudgingDetails,
@@ -85,6 +89,7 @@ import {
   logReportIssue,
   logAuditActionError,
   logUpdateNominationStatus,
+  logResolveDuplicateNominations,
   logDeleteNomination,
   logAddCategory,
   logDeleteCategory,
@@ -172,6 +177,9 @@ import {
 // ─── Firestore nomination type (includes per-category answers) ───────────────
 type NominationStatus = "pending" | "shortlisted" | "rejected";
 
+/** Nominations-list filter: a status, or one of the special views */
+type StatusFilter = "all" | NominationStatus | "judging_pending" | "duplicates";
+
 type Nomination = {
   id: string;
   createdAt: { toDate?: () => Date } | string | null;
@@ -201,6 +209,10 @@ type Nomination = {
     >
   >;
   status: NominationStatus;
+  /** Set when this nomination was set aside for another nomination of the same person (that one's id) */
+  duplicateOf?: string;
+  /** Status before being set aside as a duplicate — restored if the choice is undone */
+  statusBeforeDuplicate?: NominationStatus;
 };
 
 type PreviewKind = "pdf" | "office" | "image" | "video" | "html";
@@ -722,7 +734,7 @@ function Dashboard({
   const canManage = role === "admin";
   const [nominations, setNominations] = useState<Nomination[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("__all__");
-  const [statusFilter, setStatusFilter] = useState<"all" | NominationStatus | "judging_pending">("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selfNomFilter, setSelfNomFilter] = useState(false);
   const [search, setSearch] = useState("");
   const [detailNom, setDetailNom] = useState<Nomination | null>(null);
@@ -750,6 +762,8 @@ function Dashboard({
   const [realJudgingActive, setRealJudgingActive] = useState(false);
   const [nominationsOpen, setNominationsOpenState] = useState(true);
   const [judgeNotifications, setJudgeNotifications] = useState<Record<string, any>>({});
+  const [alertingJudge, setAlertingJudge] = useState<string | null>(null);
+  const [resolvingDuplicate, setResolvingDuplicate] = useState(false);
   const [resettingVotes, setResettingVotes] = useState(false);
   const [resettingNominations, setResettingNominations] = useState(false);
   const [newAccountEmail, setNewAccountEmail] = useState("");
@@ -1294,6 +1308,18 @@ function Dashboard({
     }
   }
 
+  // Same person nominated more than once in a category (see src/lib/nomination-duplicates.ts)
+  const duplicateGroups = useMemo(() => groupDuplicates(nominations), [nominations]);
+  const unresolvedDuplicateGroups = useMemo(
+    () => [...new Set(duplicateGroups.values())].filter(needsDecision),
+    [duplicateGroups],
+  );
+
+  // Keep an open detail panel in step with live Firestore changes (e.g. a duplicate decision)
+  useEffect(() => {
+    setDetailNom((prev) => (prev ? (nominations.find((n) => n.id === prev.id) ?? prev) : prev));
+  }, [nominations]);
+
   const stats = useMemo(
     () => {
       console.log(`[STATS] Calculating with ${judgeScores.length} judge scores loaded (ready: ${judgeScoresLoaded})`);
@@ -1306,7 +1332,7 @@ function Dashboard({
           pending: nominations.filter((n) => n.status === "pending").length,
           shortlisted: nominations.filter((n) => n.status === "shortlisted").length,
           judgingPending: 0,  // Show 0 while loading instead of false positive
-          rejected: nominations.filter((n) => n.status === "rejected").length,
+          rejected: nominations.filter((n) => n.status === "rejected" && !isSetAside(n)).length,
           selfNominated: nominations.filter((n) => n.isSelfNomination).length,
         };
       }
@@ -1320,7 +1346,7 @@ function Dashboard({
         pending: nominations.filter((n) => n.status === "pending").length,
         shortlisted: nominations.filter((n) => n.status === "shortlisted").length,
         judgingPending: judgingPendingCount,
-        rejected: nominations.filter((n) => n.status === "rejected").length,
+        rejected: nominations.filter((n) => n.status === "rejected" && !isSetAside(n)).length,
         selfNominated: nominations.filter((n) => n.isSelfNomination).length,
       };
       
@@ -1345,10 +1371,15 @@ function Dashboard({
     return nominations.filter((n) => {
       if (selectedCategory !== "__all__" && n.categoryId !== selectedCategory) return false;
       
-      // Handle special "judging_pending" filter
+      // Handle special "judging_pending" and "duplicates" filters
       if (statusFilter === "judging_pending") {
         if (n.status !== "shortlisted") return false;
         if (getNominationJudgingStatus(n.id, n.categoryId, judgeScores) !== "pending") return false;
+      } else if (statusFilter === "duplicates") {
+        if (!duplicateGroups.has(n.id)) return false;
+      } else if (statusFilter === "rejected") {
+        // Set-aside duplicates are listed under "Duplicates", not as rejections
+        if (n.status !== "rejected" || isSetAside(n)) return false;
       } else if (statusFilter !== "all" && n.status !== statusFilter) {
         return false;
       }
@@ -1360,12 +1391,14 @@ function Dashboard({
           n.nomineeName?.toLowerCase().includes(s) ||
           n.staffNumber?.toLowerCase().includes(s) ||
           n.nominatorName?.toLowerCase().includes(s) ||
-          n.nomineeEmail?.toLowerCase().includes(s)
+          n.nomineeEmail?.toLowerCase().includes(s) ||
+          // Reference shown to nominators on the success screen (the document id)
+          n.id.toLowerCase() === s.trim()
         );
       }
       return true;
     });
-  }, [nominations, selectedCategory, statusFilter, selfNomFilter, search, judgeScores]);
+  }, [nominations, selectedCategory, statusFilter, selfNomFilter, search, judgeScores, duplicateGroups]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
@@ -1388,6 +1421,100 @@ function Dashboard({
       console.error("Failed to update nomination:", err);
       toast.error("Failed to update nomination status. Please try again.");
       await logAuditActionError('UPDATE_NOMINATION_STATUS', `Failed to update nomination ${id}`, err as Error);
+    }
+  }
+
+  /**
+   * Let `chosen` go through for its nominee + category and set the rest of its duplicate
+   * group aside (status "rejected" + duplicateOf). Nominations already rejected on their
+   * own merits are left as they are.
+   */
+  async function chooseDuplicate(chosen: Nomination) {
+    if (!canManage) return;
+    const group = duplicateGroups.get(chosen.id) ?? [];
+    const others = group.filter((n) => n.id !== chosen.id && (isActive(n) || isSetAside(n)));
+    const scored = others.filter(
+      (n) => !isSetAside(n) && judgeScores.some((s) => s.nominationId === n.id && s.score > 0),
+    );
+    const message =
+      `Let ${chosen.nominatorName}'s nomination of ${chosen.nomineeName} go through?\n\n` +
+      `The other ${others.length} nomination${others.length !== 1 ? "s" : ""} for this person will be set aside. ` +
+      `They stay on record, and you can undo this.` +
+      (scored.length > 0
+        ? `\n\nJudges have already scored ${scored.map((n) => `${n.nominatorName}'s nomination`).join(" and ")}. ` +
+          `Those scores will stop counting on the leaderboard.`
+        : "");
+    if (!confirm(message)) return;
+
+    setResolvingDuplicate(true);
+    try {
+      const batch = writeBatch(db);
+      batch.update(doc(db, "nominations", chosen.id), {
+        ...(isSetAside(chosen) ? { status: chosen.statusBeforeDuplicate ?? "pending" } : {}),
+        duplicateOf: deleteField(),
+        statusBeforeDuplicate: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+      for (const n of others) {
+        batch.update(doc(db, "nominations", n.id), {
+          // Already set aside: just point it at the new choice, keeping its original status
+          ...(isSetAside(n) ? {} : { status: "rejected", statusBeforeDuplicate: n.status }),
+          duplicateOf: chosen.id,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      toast.success(`${chosen.nominatorName}'s nomination of ${chosen.nomineeName} goes through.`);
+      await logResolveDuplicateNominations(
+        chosen.nomineeName,
+        chosen.categoryName,
+        chosen.id,
+        others.map((n) => n.id),
+      ).catch((err) => console.error("Failed to log duplicate decision:", err));
+    } catch (err) {
+      console.error("Failed to resolve duplicate nominations:", err);
+      toast.error("Couldn't save your choice. Please try again.");
+      await logAuditActionError(
+        "RESOLVE_DUPLICATE_NOMINATIONS",
+        `Failed to choose nomination ${chosen.id}`,
+        err as Error,
+      ).catch(() => {});
+    } finally {
+      setResolvingDuplicate(false);
+    }
+  }
+
+  /** Undo a duplicate decision: every set-aside nomination in the group gets its old status back. */
+  async function undoDuplicateChoice(group: Nomination[]) {
+    if (!canManage) return;
+    const setAside = group.filter(isSetAside);
+    if (setAside.length === 0) return;
+    if (!confirm(`Bring back the ${setAside.length} set-aside nomination${setAside.length !== 1 ? "s" : ""} for ${group[0].nomineeName}? You'll need to choose again.`)) return;
+
+    setResolvingDuplicate(true);
+    try {
+      const batch = writeBatch(db);
+      for (const n of setAside) {
+        batch.update(doc(db, "nominations", n.id), {
+          status: n.statusBeforeDuplicate ?? "pending",
+          duplicateOf: deleteField(),
+          statusBeforeDuplicate: deleteField(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      toast.success("Choice undone. Pick the nomination that goes through.");
+      await logResolveDuplicateNominations(
+        group[0].nomineeName,
+        group[0].categoryName,
+        null,
+        setAside.map((n) => n.id),
+      ).catch((err) => console.error("Failed to log duplicate undo:", err));
+    } catch (err) {
+      console.error("Failed to undo duplicate choice:", err);
+      toast.error("Couldn't undo the choice. Please try again.");
+    } finally {
+      setResolvingDuplicate(false);
     }
   }
 
@@ -1417,6 +1544,8 @@ function Dashboard({
   const incompleteNominations = useMemo(() => {
     return nominations
       .filter(nom => {
+        // No document reminders for a nomination set aside in favour of another one
+        if (isSetAside(nom)) return false;
         const validation = validateDocumentsForCategory(nom.categoryId, nom.uploads || {});
         return !validation.isValid;
       })
@@ -1449,7 +1578,7 @@ function Dashboard({
     setReminderResults([]);
 
     try {
-      const response = await fetch('/.netlify/functions/send-reminders', {
+      const response = await authedFetch('/.netlify/functions/send-reminders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1488,6 +1617,35 @@ function Dashboard({
     }
   }
 
+  async function alertJudge(judgeEmail: string) {
+    const notif = judgeNotifications[judgeEmail];
+    setAlertingJudge(judgeEmail);
+    try {
+      const response = await authedFetch('/.netlify/functions/send-judge-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          judgeEmail,
+          incompleteCount: notif?.incompleteCount ?? 0,
+          nomineeNames: (notif?.incompleteNominations ?? []).map((inc: any) => inc.nomineeName),
+        }),
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast.success(`Reminder sent to ${judgeEmail}.`);
+      } else {
+        toast.error(`Couldn't alert ${judgeEmail}: ${result.error || 'Failed to send'}`);
+      }
+    } catch (err) {
+      console.error("Failed to alert judge:", err);
+      toast.error(`Couldn't alert ${judgeEmail}. Please try again.`);
+    } finally {
+      setAlertingJudge(null);
+    }
+  }
+
   async function sendReminderToNominee(nomineeId: string) {
     const incomplete = incompleteNominations.find(n => n.id === nomineeId);
     if (!incomplete) return;
@@ -1496,7 +1654,7 @@ function Dashboard({
     setNomineeEmailResults(prev => ({ ...prev, [nomineeId]: { success: false, message: "Sending..." } }));
 
     try {
-      const response = await fetch('/.netlify/functions/send-nominee-reminder', {
+      const response = await authedFetch('/.netlify/functions/send-nominee-reminder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1555,7 +1713,7 @@ function Dashboard({
 
       for (const nom of shortlistedNoms) {
         try {
-          const response = await fetch('/.netlify/functions/send-shortlist-email', {
+          const response = await authedFetch('/.netlify/functions/send-shortlist-email', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1749,12 +1907,13 @@ function Dashboard({
     return !ts;
   }
 
-  const STATUS_FILTERS: { label: string; value: "all" | NominationStatus | "judging_pending" }[] = [
+  const STATUS_FILTERS: { label: string; value: StatusFilter }[] = [
     { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
     { label: "Shortlisted", value: "shortlisted" },
     { label: "Pending Judging", value: "judging_pending" },
     { label: "Rejected", value: "rejected" },
+    { label: "Duplicates", value: "duplicates" },
   ];
 
   return (
@@ -2090,6 +2249,39 @@ function Dashboard({
 
       <div className="flex-1 min-w-0">
         {activeSection === "nominations" && <div className="space-y-6">
+          {/* Same person nominated more than once in a category — the admin picks one */}
+          {canManage && unresolvedDuplicateGroups.length > 0 && (
+            <Card className="space-y-3 border-amber-300 bg-amber-50/40 p-5">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div>
+                  <p className="font-semibold text-amber-900">
+                    {unresolvedDuplicateGroups.length === 1
+                      ? "1 person has"
+                      : `${unresolvedDuplicateGroups.length} people have`}{" "}
+                    been nominated more than once in the same category
+                  </p>
+                  <p className="mt-0.5 text-xs text-amber-800">
+                    Every nomination is kept. Choose the one that goes through — the others are set
+                    aside, and you can undo this. Until you choose, none of them can be shortlisted.
+                  </p>
+                </div>
+              </div>
+              {unresolvedDuplicateGroups.map((group) => (
+                <DuplicateGroupCard
+                  key={group[0].id}
+                  group={group}
+                  canManage={canManage}
+                  busy={resolvingDuplicate}
+                  formatDate={formatDate}
+                  onView={setDetailNom}
+                  onChoose={chooseDuplicate}
+                  onUndo={undoDuplicateChoice}
+                />
+              ))}
+            </Card>
+          )}
+
           {/* Category tiles */}
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
@@ -2119,7 +2311,7 @@ function Dashboard({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search nominee, student number, nominator…"
+                placeholder="Search nominee, staff number, nominator, reference…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -2190,7 +2382,7 @@ function Dashboard({
                     }`}
                   >
                     <div className="mb-3 flex items-center justify-between gap-2">
-                      <StatusBadge status={n.status} />
+                      <StatusBadge status={n.status} setAside={isSetAside(n)} />
                       <span
                         className={`text-[11px] ${
                           isDateMissing(n.createdAt)
@@ -2241,6 +2433,14 @@ function Dashboard({
                               </span>
                             );
                           })()
+                        )}
+                        {duplicateGroups.has(n.id) && (
+                          <span
+                            className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                            title="This person has more than one nomination in this category"
+                          >
+                            Nominated {duplicateGroups.get(n.id)!.length}×
+                          </span>
                         )}
                         {n.isSelfNomination && (
                           <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
@@ -2416,12 +2616,10 @@ function Dashboard({
                             size="sm"
                             variant="outline"
                             className="shrink-0 border-red-200 text-red-600 hover:bg-red-50 gap-1"
-                            onClick={() => {
-                              // TODO: Implement email alert to judge
-                              console.log(`Send alert to ${judgeEmail}`);
-                            }}
+                            disabled={alertingJudge === judgeEmail}
+                            onClick={() => alertJudge(judgeEmail)}
                           >
-                            📢 Alert Judge
+                            {alertingJudge === judgeEmail ? "Sending…" : "📢 Alert Judge"}
                           </Button>
                         </div>
                       </Card>
@@ -2828,7 +3026,7 @@ function Dashboard({
                               onClick={() => sendReminderToNominee(nom.id)}
                               disabled={sendingToNomineeId === nom.id}
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
                             >
                               {sendingToNomineeId === nom.id ? (
                                 <>
@@ -2929,6 +3127,11 @@ function Dashboard({
           {detailNom && (
             <NominationDetail
               nom={detailNom}
+              duplicateGroup={duplicateGroups.get(detailNom.id)}
+              duplicateBusy={resolvingDuplicate}
+              onChooseDuplicate={chooseDuplicate}
+              onUndoDuplicate={undoDuplicateChoice}
+              onViewNomination={setDetailNom}
               onUpdate={update}
               onDelete={remove}
               formatDate={formatDate}
@@ -3508,7 +3711,18 @@ function StatCard({
 }
 
 /* ── Status badge ──────────────────────────────────────────────────── */
-function StatusBadge({ status }: { status: NominationStatus }) {
+function StatusBadge({ status, setAside = false }: { status: NominationStatus; setAside?: boolean }) {
+  if (setAside)
+    return (
+      <Badge
+        variant="outline"
+        className="border-amber-300 bg-amber-50 text-amber-800 gap-1"
+        title="Another nomination of this person was chosen to go through"
+      >
+        <Users2 className="h-3 w-3" />
+        Set aside
+      </Badge>
+    );
   if (status === "shortlisted")
     return (
       <Badge className="bg-primary text-primary-foreground gap-1">
@@ -3531,9 +3745,126 @@ function StatusBadge({ status }: { status: NominationStatus }) {
   );
 }
 
+/* ── Duplicate nominations (same person, same category) ────────────── */
+function DuplicateGroupCard({
+  group,
+  currentId,
+  canManage,
+  busy,
+  formatDate,
+  onView,
+  onChoose,
+  onUndo,
+}: {
+  group: Nomination[];
+  /** The nomination open in the detail panel, if the card is shown there */
+  currentId?: string;
+  canManage: boolean;
+  busy: boolean;
+  formatDate: (ts: Nomination["createdAt"]) => string;
+  onView: (n: Nomination) => void;
+  onChoose: (n: Nomination) => void;
+  onUndo: (group: Nomination[]) => void;
+}) {
+  const undecided = needsDecision(group);
+  const stillIn = group.filter(isActive);
+  const summary = undecided
+    ? `Nominated ${group.length} times. Choose the nomination that goes through.`
+    : stillIn.length === 1
+      ? `${stillIn[0].nominatorName}'s nomination goes through. The others are set aside or rejected.`
+      : "None of these nominations is still in the running.";
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-white p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            {group[0].nomineeName}{" "}
+            <span className="font-normal text-muted-foreground">
+              · {group[0].categoryName ?? group[0].categoryId}
+            </span>
+          </p>
+          <p className="mt-0.5 text-xs text-amber-800">{summary}</p>
+        </div>
+        {canManage && group.some(isSetAside) && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => onUndo(group)}
+            className="h-7 px-2 text-xs"
+          >
+            <RotateCcw className="mr-1 h-3.5 w-3.5" /> Undo choice
+          </Button>
+        )}
+      </div>
+      <ul className="mt-3 space-y-2">
+        {group.map((n) => {
+          const files = n.uploads
+            ? Object.values(n.uploads).flatMap((slots) => Object.values(slots)).flat().length
+            : 0;
+          const answered = Object.values(n.answers ?? {}).filter((a) => a?.trim()).length;
+          return (
+            <li
+              key={n.id}
+              className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2.5 text-xs ${
+                n.id === currentId ? "border-primary/40 bg-primary/5" : "border-primary/15 bg-gray-50"
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground">
+                  By {n.nominatorName}
+                  {n.isSelfNomination && (
+                    <span className="font-normal text-muted-foreground"> (self-nomination)</span>
+                  )}
+                  {n.id === currentId && <span className="font-normal text-muted-foreground"> · viewing</span>}
+                </p>
+                <p className="truncate text-muted-foreground">
+                  {n.nominatorEmail} · {formatDate(n.createdAt)} · {answered} answer{answered !== 1 ? "s" : ""} ·{" "}
+                  {files} file{files !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <StatusBadge status={n.status} setAside={isSetAside(n)} />
+              {n.id !== currentId && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => onView(n)}
+                >
+                  <Eye className="mr-1 h-3.5 w-3.5" /> View
+                </Button>
+              )}
+              {canManage && (undecided ? isActive(n) : isSetAside(n)) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={busy}
+                  className="h-7 bg-primary px-2 text-xs text-primary-foreground"
+                  onClick={() => onChoose(n)}
+                >
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  {undecided ? "Use this one" : "Use this one instead"}
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /* ── Nomination detail panel ───────────────────────────────────────── */
 function NominationDetail({
   nom,
+  duplicateGroup,
+  duplicateBusy,
+  onChooseDuplicate,
+  onUndoDuplicate,
+  onViewNomination,
   onUpdate,
   onDelete,
   formatDate,
@@ -3543,6 +3874,12 @@ function NominationDetail({
   judgeScores,
 }: {
   nom: Nomination;
+  /** Every nomination of this person in this category (itself included), when there's more than one */
+  duplicateGroup?: Nomination[];
+  duplicateBusy: boolean;
+  onChooseDuplicate: (n: Nomination) => void;
+  onUndoDuplicate: (group: Nomination[]) => void;
+  onViewNomination: (n: Nomination) => void;
   onUpdate: (id: string, s: NominationStatus) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   formatDate: (ts: Nomination["createdAt"]) => string;
@@ -3568,6 +3905,8 @@ function NominationDetail({
         .flatMap((slots) => Object.values(slots))
         .flat().length
     : 0;
+  // Only one nomination per person and category may be shortlisted, so wait for the admin's choice
+  const shortlistBlocked = isSetAside(nom) || (!!duplicateGroup && needsDecision(duplicateGroup));
 
   const evidenceFiles = useMemo(() => {
     type EvidenceFile = {
@@ -4148,7 +4487,7 @@ function NominationDetail({
         <div className="border-b border-primary/15 bg-white px-6 py-5">
           <SheetHeader>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <StatusBadge status={nom.status} />
+              <StatusBadge status={nom.status} setAside={isSetAside(nom)} />
               <Badge variant="outline" className="border-primary/30 text-primary text-xs">
                 {nom.categoryName ?? nom.categoryId}
               </Badge>
@@ -4186,6 +4525,19 @@ function NominationDetail({
 
         {/* Scrollable body */}
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+          {duplicateGroup && (
+            <DuplicateGroupCard
+              group={duplicateGroup}
+              currentId={nom.id}
+              canManage={canManage}
+              busy={duplicateBusy}
+              formatDate={formatDate}
+              onView={onViewNomination}
+              onChoose={onChooseDuplicate}
+              onUndo={onUndoDuplicate}
+            />
+          )}
+
           {/* Key info grid */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
@@ -4440,10 +4792,17 @@ function NominationDetail({
         <div className="flex flex-wrap gap-2 border-t border-primary/15 bg-white px-6 py-4">
           {canManage ? (
             <>
+              {shortlistBlocked && (
+                <p className="w-full text-xs text-amber-800">
+                  {isSetAside(nom)
+                    ? "Set aside: another nomination of this person goes through. Use “Use this one instead” above to switch."
+                    : "This person has more than one nomination here. Choose the one that goes through (above) before shortlisting."}
+                </p>
+              )}
               <Button
                 size="sm"
                 onClick={() => onUpdate(nom.id, "shortlisted")}
-                disabled={nom.status === "shortlisted"}
+                disabled={nom.status === "shortlisted" || shortlistBlocked}
                 className="flex-1 bg-primary text-primary-foreground"
               >
                 <CheckCircle2 className="mr-1.5 h-4 w-4" /> Shortlist
@@ -4728,12 +5087,14 @@ function NominationDetail({
 function LeaderboardAdminPanel() {
   const [allScores, setAllScores] = useState<any[]>([]);
   const [nominations, setNominations] = useState<any[]>([]);
+  const [nominationsLoaded, setNominationsLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch nominations
     getDocs(collection(db, "nominations")).then((snap) => {
       setNominations(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setNominationsLoaded(true);
     });
 
     // Listen to scores
@@ -4744,11 +5105,19 @@ function LeaderboardAdminPanel() {
     return () => unsub();
   }, []);
 
+  // Rank only nominations still in judging, matching the /leaderboard page: one set aside
+  // as a duplicate (or rejected) after it was scored drops off.
+  const rankedScores = useMemo(() => {
+    if (!nominationsLoaded) return allScores;
+    const inJudging = new Set(nominations.filter((n) => n.status === "shortlisted").map((n) => n.id));
+    return allScores.filter((s) => inJudging.has(s.nominationId));
+  }, [allScores, nominations, nominationsLoaded]);
+
   // Build ranking with all nominees
   const ranking = useMemo(() => {
     const nomineeMap = new Map<string, any>();
 
-    for (const s of allScores) {
+    for (const s of rankedScores) {
       if (s.score === 0) continue;
       const key = s.nominationId;
       if (!nomineeMap.has(key)) {
@@ -4774,7 +5143,7 @@ function LeaderboardAdminPanel() {
     const all: any[] = Array.from(nomineeMap.values());
     all.sort((a, b) => b.totalScore - a.totalScore || b.avgScore - a.avgScore);
     return all.map((n, i) => ({ ...n, rank: i + 1 }));
-  }, [allScores]);
+  }, [rankedScores]);
 
   const filtered = useMemo(() => {
     if (!selectedCategory) return ranking;
@@ -4807,10 +5176,10 @@ function LeaderboardAdminPanel() {
               className="gap-1"
               onClick={() => {
                 console.log('[Leaderboard Export] Clicked Global Rankings button');
-                const result = exportLeaderboardUnified(allScores, nominations);
+                const result = exportLeaderboardUnified(rankedScores, nominations);
                 console.log('[Leaderboard Export] Result:', result);
                 if (result.success) {
-                  logExportJudgeReport('leaderboard-unified', allScores.length);
+                  logExportJudgeReport('leaderboard-unified', rankedScores.length);
                 }
               }}
             >

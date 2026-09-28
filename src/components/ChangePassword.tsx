@@ -166,7 +166,7 @@ export function ChangePassword() {
           onClick={() => setMethod('direct')}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
             method === 'direct'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -178,7 +178,7 @@ export function ChangePassword() {
           onClick={() => setMethod('email')}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
             method === 'email'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >

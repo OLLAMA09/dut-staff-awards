@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import emailjs from '@emailjs/nodejs';
+import { requireRole } from './require-role.js';
 
 /**
  * Netlify Function: Send reminder email to a nominee
@@ -25,7 +26,7 @@ interface NomineeReminderRequest {
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
 };
 
@@ -49,6 +50,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
+    const denied = await requireRole(event);
+    if (denied) return { ...denied, headers: corsHeaders };
+
     // Check for required environment variables
     if (!EMAILJS_PUBLIC_KEY || !EMAILJS_PRIVATE_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
       console.error('Missing EmailJS configuration', {
@@ -97,8 +101,7 @@ ${incompleteItems.map((item: string) => `  <li style="margin-bottom: 8px; color:
         category_name: categoryName,
         incomplete_items: incompleteItems.join('\n• '),
         incomplete_items_html: incompleteItemsHtml,
-        // TODO: update once the Registrar's Ambit Staff Awards site is deployed.
-        submission_url: `https://registrars-ambit-staff-awards.netlify.app/nominate/${categoryId}#documents`,
+        submission_url: `${process.env.URL || 'https://registrars-ambit-staff-awards.netlify.app'}/nominate/${categoryId}#documents`,
         current_year: new Date().getFullYear(),
       };
 

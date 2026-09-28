@@ -30,6 +30,7 @@ export type AuditAction =
   | 'ADD_CATEGORY'
   | 'DELETE_CATEGORY'
   | 'UPDATE_NOMINATION_STATUS'
+  | 'RESOLVE_DUPLICATE_NOMINATIONS'
   | 'DELETE_NOMINATION'
   | 'PROMOTE_WINNER'
   | 'DELETE_WINNER'
@@ -185,6 +186,27 @@ export async function logUpdateNominationStatus(
     action: 'UPDATE_NOMINATION_STATUS',
     description: `Updated nomination for ${nomineeName} from ${oldStatus} to ${newStatus}`,
     metadata: { nomineeEmail, nomineeName, oldStatus, newStatus },
+    status: 'success',
+  });
+}
+
+/**
+ * Log a duplicate-nomination decision: which nomination of the same person goes
+ * through (chosenId), or an undo of that choice (chosenId null)
+ */
+export async function logResolveDuplicateNominations(
+  nomineeName: string,
+  categoryName: string,
+  chosenId: string | null,
+  setAsideIds: string[],
+): Promise<string> {
+  return logAuditAction({
+    action: 'RESOLVE_DUPLICATE_NOMINATIONS',
+    description: chosenId
+      ? `Chose nomination ${chosenId} for ${nomineeName} in ${categoryName}; set aside ${setAsideIds.length} other nomination(s)`
+      : `Undid the duplicate-nomination choice for ${nomineeName} in ${categoryName}; restored ${setAsideIds.length} nomination(s)`,
+    affectedCount: setAsideIds.length,
+    metadata: { nomineeName, categoryName, chosenId, setAsideIds },
     status: 'success',
   });
 }

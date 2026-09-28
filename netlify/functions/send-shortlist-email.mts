@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import emailjs from '@emailjs/nodejs';
+import { requireRole } from './require-role.js';
 
 /**
  * Netlify Function: Send shortlist notification email to a nominee
@@ -30,6 +31,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
+    const denied = await requireRole(event);
+    if (denied) return denied;
+
     // Check for required environment variables
     if (!EMAILJS_PUBLIC_KEY || !EMAILJS_PRIVATE_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_SHORTLIST_TEMPLATE_ID) {
       console.error('Missing EmailJS configuration');
@@ -65,8 +69,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
         nominee_name: nomineeName,
         nominator_name: nominatorName,
         category_name: categoryName,
-        // TODO: update once the Registrar's Ambit Staff Awards site is deployed.
-        submission_url: `https://registrars-ambit-staff-awards.netlify.app/winners`,
+        submission_url: `${process.env.URL || 'https://registrars-ambit-staff-awards.netlify.app'}/winners`,
         current_year: new Date().getFullYear(),
       };
 

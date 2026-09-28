@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Star, Quote, School, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -6,6 +6,7 @@ import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import { WinnerGridSkeleton } from "@/components/SkeletonLoaders";
 import { subscribePastWinners, type PastWinner, type WinnerTier } from "@/lib/firestore";
+import { AWARD_THEME } from "@/data/awards";
 
 export const Route = createFileRoute("/winners")({
   component: WinnersPage,
@@ -245,11 +246,11 @@ function WinnersPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">Hall of Fame</p>
-            <h1 className="mt-4 text-4xl font-bold sm:text-6xl">
-              Past <span className="text-primary">Winners.</span>
+            <p className="text-xs uppercase tracking-[0.3em] text-white">Hall of Fame</p>
+            <h1 className="mt-4 text-4xl font-bold text-white sm:text-6xl">
+              Past <span className="gold-underline">Winners.</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-white">
               Celebrating the legacy of staff whose excellence and service have
               shaped the culture of excellence at DUT.
             </p>
@@ -259,8 +260,21 @@ function WinnersPage() {
         {loading ? (
           <WinnerGridSkeleton />
         ) : winners.length === 0 ? (
-          <div className="flex justify-center py-32">
-            <p className="text-sm text-muted-foreground">No winners recorded yet.</p>
+          <div className="mx-auto max-w-lg rounded-[28px] border border-primary/30 bg-card px-8 py-12 text-center shadow-elegant">
+            <Trophy className="mx-auto h-9 w-9 text-primary" />
+            <h2 className="mt-4 text-2xl font-bold">Winners are announced at the ceremony</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {AWARD_THEME.ceremonyDate !== "TBC"
+                ? `Join us on ${AWARD_THEME.ceremonyDate}. This page will list the winners after the event.`
+                : "The ceremony date will be announced soon. This page will list the winners after the event."}
+            </p>
+            <Link
+              to="/"
+              hash="categories"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-gold px-6 text-sm font-semibold text-primary shadow-elegant transition-[filter] hover:brightness-95"
+            >
+              See the award categories
+            </Link>
           </div>
         ) : (
           <div className="space-y-24">

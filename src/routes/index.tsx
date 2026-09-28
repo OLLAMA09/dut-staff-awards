@@ -24,6 +24,7 @@ import {
   Loader,
   AlertCircle,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import ShatterText from "@/components/ShatterText";
 import SiteNav from "@/components/SiteNav";
@@ -162,7 +163,7 @@ function TypewriterHeading({
     const take = Math.max(0, Math.min(seg.text.length, remaining));
     remaining -= take;
     return (
-      <span key={i} className={seg.highlight ? "text-primary" : undefined}>
+      <span key={i} className={seg.highlight ? "gold-underline" : undefined}>
         {seg.text.slice(0, take)}
       </span>
     );
@@ -237,9 +238,9 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
               <ShatterText text="DUT" className="h-full w-full" repelRadius={90} scrollDisturbance={dutShatterForce} />
             </motion.div>
 
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Registrar's Ambit Staff Awards</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white">Registrar's Ambit Staff Awards</p>
             <h1 className="mt-5 text-4xl font-bold leading-[1.05] text-white sm:text-6xl">Recognition starts with a story worth telling.</h1>
-            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/80 sm:text-lg lg:mx-0">Celebrate colleagues and units whose work gives excellence a daily shape.</p>
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white sm:text-lg lg:mx-0">Celebrate colleagues and units whose work gives excellence a daily shape.</p>
             {!nominationsOpen && (
               <p className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md lg:mx-0">
                 <AlertCircle className="h-3.5 w-3.5" /> Nominations are now closed
@@ -248,7 +249,7 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
             {/* When nominations close, winners become the primary action */}
             <div className={`${nominationsOpen ? "mt-8" : "mt-4"} flex flex-col items-center gap-3 sm:flex-row lg:justify-start`}>
               <Link to={nominationsOpen ? "/" : "/winners"} hash={nominationsOpen ? "categories" : undefined} className="w-full sm:w-auto">
-                <motion.div initial={{ opacity: 0, x: -22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE }} onPointerDown={nominateRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: -1 }} whileTap={{ scale: 0.95 }} className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full bg-primary px-8 font-semibold text-primary-foreground shadow-elegant sm:w-auto">
+                <motion.div initial={{ opacity: 0, x: -22 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.5, ease: EASE }} onPointerDown={nominateRipple.onPointerDown} whileHover={{ scale: 1.04, y: -2, rotate: -1 }} whileTap={{ scale: 0.95 }} className="relative flex h-12 w-full items-center justify-center overflow-hidden rounded-full bg-gold px-8 font-semibold text-primary shadow-elegant transition-[filter] hover:brightness-95 sm:w-auto">
                   {nominationsOpen ? "Nominate Now" : "View Winners"}
                   {nominateRipple.rippleSpans}
                 </motion.div>
@@ -260,6 +261,11 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
                 </motion.div>
               </Link>
             </div>
+            {nominationsOpen && AWARD_THEME.closingDate !== "TBC" && (
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-white lg:justify-start">
+                <Calendar className="h-4 w-4" /> Nominations close {AWARD_THEME.closingDate}
+              </p>
+            )}
           </motion.div>
 
           <div className="relative mx-auto h-72 w-full max-w-2xl sm:h-[28rem]">
@@ -277,12 +283,12 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
               className="absolute -right-2 top-8 w-44 rounded-2xl border border-white/80 bg-white/90 p-3 text-left shadow-elegant backdrop-blur-xl sm:right-3"
             >
               <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">3</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-copper text-[10px] text-white">3</span>
                 Nomination ready
               </div>
               <div className="mt-3 space-y-2 border-t border-primary/10 pt-2 text-[10px] text-muted-foreground">
-                <p className="flex items-center justify-between"><span>Category selected</span><span className="font-bold text-primary">Done</span></p>
-                <p className="flex items-center justify-between"><span>Evidence prepared</span><span className="font-bold text-primary">Ready</span></p>
+                <p className="flex items-center justify-between"><span>Category selected</span><span className="font-bold text-copper">Done</span></p>
+                <p className="flex items-center justify-between"><span>Evidence prepared</span><span className="font-bold text-copper">Ready</span></p>
               </div>
             </motion.div>
           </div>
@@ -413,11 +419,11 @@ function Index() {
         />
       ))}
 
-      {/* Custom blue scroll-progress indicator — the native scrollbar stays hidden */}
-      <div className="pointer-events-none fixed right-1 top-24 bottom-6 z-[60] w-1 rounded-full bg-blue-500/15">
+      {/* Custom gold scroll-progress indicator — the native scrollbar stays hidden */}
+      <div className="pointer-events-none fixed right-1 top-24 bottom-6 z-[60] w-1 rounded-full bg-gold/20">
         <motion.div
           style={{ scaleY: pageProgress }}
-          className="h-full w-full origin-top rounded-full bg-blue-500"
+          className="h-full w-full origin-top rounded-full bg-gold"
           initial={false}
         />
       </div>
@@ -439,7 +445,7 @@ function Index() {
               className="group flex items-center gap-2.5"
             >
               <span
-                className={`text-[10px] font-semibold uppercase tracking-[0.15em] text-white [text-shadow:0_1px_6px_oklch(0.24_0.09_258/0.9)] transition-all duration-200 ${
+                className={`text-[10px] font-semibold uppercase tracking-[0.15em] text-white [text-shadow:0_1px_6px_oklch(0.34_0.07_250/0.9)] transition-all duration-200 ${
                   isActive
                     ? "translate-x-0 opacity-100"
                     : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
@@ -448,7 +454,7 @@ function Index() {
                 {s.label}
               </span>
               <span
-                className={`shrink-0 rounded-full shadow-[0_0_6px_oklch(0.24_0.09_258/0.8)] transition-all duration-200 ${
+                className={`shrink-0 rounded-full shadow-[0_0_6px_oklch(0.34_0.07_250/0.8)] transition-all duration-200 ${
                   isActive
                     ? "h-2.5 w-2.5 bg-white"
                     : "h-1.5 w-1.5 bg-white/50 group-hover:bg-white/80"
@@ -507,8 +513,8 @@ function Index() {
               transition={{ delay: i * 0.1, type: "spring", stiffness: 220, damping: 17 }}
               className="px-4 py-6 text-center"
             >
-              <p className="text-3xl font-bold text-[#095aba] sm:text-4xl">{s.num}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#095aba]">{s.label}</p>
+              <p className="text-3xl font-bold text-primary sm:text-4xl">{s.num}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{s.label}</p>
             </motion.div>
           ))}
         </div>
@@ -519,20 +525,20 @@ function Index() {
       {/* About */}
       <section ref={aboutRef} id="about" className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 text-center lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:text-left">
         <div className="lg:order-1">
-          <p className="about-eyebrow text-xs uppercase tracking-[0.3em] text-primary">About</p>
+          <p className="about-eyebrow text-xs uppercase tracking-[0.3em] text-white">About</p>
           <TypewriterHeading
-            className="about-title mx-auto mt-4 max-w-xl text-3xl font-bold leading-tight sm:text-4xl lg:mx-0"
+            className="about-title mx-auto mt-4 max-w-xl text-3xl font-bold leading-tight text-white sm:text-4xl lg:mx-0"
             segments={[
               { text: "Recognising " },
               { text: "excellence and service", highlight: true },
               { text: " across our staff." },
             ]}
           />
-          <p className="about-copy mx-auto mt-5 max-w-xl font-bold leading-relaxed text-white lg:mx-0">
+          <p className="about-copy mx-auto mt-5 max-w-xl leading-relaxed text-white lg:mx-0">
             The Registrar's Ambit Staff Awards recognise the outstanding achievements of staff whose
             values, leadership and service demonstrate the highest standards of excellence and
             integrity — honouring those who embody:{" "}
-            <span className="text-white">
+            <span className="font-semibold text-white">
               "{AWARD_THEME.title}: {AWARD_THEME.subtitle}"
             </span>
           </p>
@@ -608,11 +614,11 @@ function Index() {
       {/* Categories */}
       <section id="categories" className="relative z-10 mx-auto max-w-6xl px-6 py-16">
         <div className="mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-primary">Six Categories</p>
-          <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
-            Celebrating <span className="text-primary">staff excellence.</span>
+          <p className="text-xs uppercase tracking-[0.3em] text-white">Six Categories</p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
+            Celebrating <span className="gold-underline">staff excellence.</span>
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-md text-sm text-white">
             Tap a category to read the full criteria and nominate a colleague.
           </p>
         </div>
@@ -630,7 +636,7 @@ function Index() {
                 transition={{ delay: i * 0.05, duration: 0.4, ease: EASE }}
                 whileHover={{ y: -4 }}
                 whileTap={{ scale: 0.98 }}
-                className={`glass relative flex flex-col overflow-hidden rounded-[26px] transition-shadow ${
+                className={`relative flex flex-col overflow-hidden rounded-[26px] border border-primary/30 bg-gradient-to-br from-card to-secondary/40 transition-[box-shadow,border-color] hover:border-gold hover:shadow-[0_0_20px_color-mix(in_oklab,var(--gold)_40%,transparent)] ${
                   isExpanded ? "shadow-elegant" : ""
                 }`}
               >
@@ -648,7 +654,7 @@ function Index() {
                       setExpandedId(isExpanded ? null : c.id);
                     }
                   }}
-                  className="relative grid flex-1 cursor-pointer gap-4 rounded-[26px] p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-6"
+                  className={`relative grid flex-1 cursor-pointer gap-4 rounded-[26px] px-6 pt-6 ${isExpanded ? "pb-6" : "pb-3"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-6`}
                 >
                   <div className="flex items-start justify-between sm:contents">
                     <motion.div
@@ -669,20 +675,46 @@ function Index() {
                   <div className="sm:col-start-2 sm:row-start-1">
                     <h3 className="text-lg font-bold leading-snug">{c.name}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.tagline}</p>
-
-                    {!isExpanded && (
-                      <div className="mt-4 flex items-center gap-1.5 sm:mt-3">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                        </span>
-                        <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
-                          View criteria
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* Card actions sit outside the toggle so neither button is nested inside another */}
+                {!isExpanded && (
+                  <div className="flex items-center justify-between gap-4 px-6 pb-6 sm:pl-[5.75rem]">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(c.id)}
+                      aria-expanded={false}
+                      aria-controls={`category-${c.id}-details`}
+                      className="flex items-center gap-1.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                    >
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                      </span>
+                      <span className="text-[11px] font-medium uppercase tracking-widest text-primary/70">
+                        View criteria
+                      </span>
+                    </button>
+                    {nominationsOpen && (
+                      <button
+                        type="button"
+                        onClick={() => handleNominate(c.id)}
+                        disabled={nominatingId === c.id}
+                        aria-label={`Nominate for the ${c.name}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gold px-3.5 py-1.5 text-xs font-semibold text-primary shadow-elegant transition-[filter] hover:brightness-95 disabled:opacity-60"
+                      >
+                        {nominatingId === c.id ? (
+                          "Opening…"
+                        ) : (
+                          <>
+                            Nominate <ArrowRight className="h-3.5 w-3.5" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 <AnimatePresence>
                   {isExpanded && (
@@ -755,7 +787,7 @@ function Index() {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ type: "spring", stiffness: 240, damping: 15, mass: 0.9, delay: 0.1 }}
           whileHover={{ scale: 1.02 }}
-          className="glass rounded-[28px] p-8 text-center sm:p-12"
+          className="rounded-[28px] border border-primary/30 bg-card p-8 text-center shadow-elegant sm:p-12"
         >
           <motion.div
             animate={{ y: [0, -6, 0] }}
@@ -860,7 +892,7 @@ function NominateButton({
       }}
       disabled={isProcessing || !nominationsOpen}
       whileTap={!isProcessing && nominationsOpen ? { scale: 0.95 } : {}}
-      className="relative mt-4 w-full overflow-hidden rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elegant transition hover:opacity-90 disabled:opacity-60"
+      className="relative mt-4 w-full overflow-hidden rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-primary shadow-elegant transition hover:brightness-95 disabled:opacity-60"
       title={!nominationsOpen ? "Nomination period has closed" : ""}
     >
       <div className="flex items-center justify-center gap-2">
@@ -909,10 +941,10 @@ function InfoChip({
         <Icon className="h-4.5 w-4.5 text-primary-foreground" />
       </div>
       <div className="min-w-0 text-left">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#095aba]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           {title}
         </p>
-        <p className="mt-0.5 truncate text-sm font-semibold text-[#095aba]">{value}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-primary">{value}</p>
       </div>
     </motion.div>
   );

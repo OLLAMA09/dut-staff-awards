@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import emailjs from '@emailjs/nodejs';
+import { requireRole } from './require-role.js';
 
 /**
  * Netlify Function: Send reminder emails to incomplete nominators
@@ -32,6 +33,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
+    const denied = await requireRole(event);
+    if (denied) return denied;
+
     // Check for required environment variables
     if (!EMAILJS_PUBLIC_KEY || !EMAILJS_PRIVATE_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
       console.error('Missing EmailJS configuration');

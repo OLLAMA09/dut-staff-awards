@@ -28,6 +28,17 @@ export default function SiteFooter() {
               Recognising excellence, celebrating service, and honouring the people who make the
               Registrar's Division exceptional.
             </p>
+            {AWARD_THEME.contactEmail && (
+              <p className="mt-4 text-sm text-white/70">
+                Questions?{" "}
+                <a
+                  href={`mailto:${AWARD_THEME.contactEmail}`}
+                  className="font-semibold text-white hover:underline"
+                >
+                  {AWARD_THEME.contactEmail}
+                </a>
+              </p>
+            )}
             <a
               href="https://planet09ai.co.za/"
               target="_blank"

@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { MotionConfig } from "framer-motion";
+
 import appCss from "../styles.css?url";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { Toaster } from "@/components/ui/sonner";
@@ -87,14 +89,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Recognising Excellence · Celebrating Service · Honouring Our People.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      // The deployed Netlify shell (scripts/generate-netlify-index.mjs) repeats these with an absolute image URL.
+      { property: "og:image", content: "/backdrops/1.jpg" },
+      { property: "og:image:alt", content: "Award trophies on a lit stage" },
+      { name: "twitter:card", content: "summary_large_image" },
       // PWA
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "Registrar's Ambit" },
-      { name: "theme-color", content: "#14213d" },
-      { name: "msapplication-TileColor", content: "#14213d" },
+      { name: "theme-color", content: "#1B3B5C" },
+      { name: "msapplication-TileColor", content: "#1B3B5C" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -141,8 +146,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SmoothScroll />
-      <Outlet />
+      {/* Honour the OS "reduce motion" setting: Framer Motion skips movement and keeps fades */}
+      <MotionConfig reducedMotion="user">
+        <SmoothScroll />
+        <Outlet />
+      </MotionConfig>
       <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );

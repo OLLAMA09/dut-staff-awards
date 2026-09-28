@@ -29,6 +29,7 @@ import { getAuth } from 'firebase-admin/auth';
 import emailjs from '@emailjs/nodejs';
 import type { Handler } from '@netlify/functions';
 import { getAuthService } from './firebase-admin-init.js';
+import { requireRole } from './require-role.js';
 
 // Firebase Admin will be initialized in the handler
 let auth: any = null;
@@ -134,6 +135,9 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    const denied = await requireRole(event);
+    if (denied) return denied;
+
     // Initialize Firebase on first request
     initializeFirebase();
 

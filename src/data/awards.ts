@@ -136,6 +136,10 @@ export const AWARD_THEME = {
   scoringOpenDate: "2025-01-01",
   scoringDeadline: "2027-12-31",
   venue: "TBC",
+  /** Ceremony date & time as it should read on the site, e.g. "Friday 20 March 2026, 18:00" */
+  ceremonyDate: "TBC",
+  /** Public contact for nominators' questions — shown in the footer and on the nomination form once set */
+  contactEmail: "",
   openingAddressTitle: "Welcome & Opening Address",
   openingAddressRemarks: "Program",
   yearsBadge: "Registrar's Ambit Staff Awards",

@@ -26,6 +26,7 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Handler } from '@netlify/functions';
 import { getFirestoreDb } from './firebase-admin-init.js';
+import { requireRole } from './require-role.js';
 
 // Firebase Admin will be initialized in the handler (defer to avoid crash if env var missing)
 let db: any = null;
@@ -60,7 +61,7 @@ function isCorrupted(docId: string, data: Record<string, any>): { corrupted: boo
   const requiredFields = [
     'nomineeName',
     'nomineeEmail',
-    'studentNumber',
+    'staffNumber',
     'categoryId',
     'categoryName',
     'status'
@@ -100,10 +101,10 @@ function isCorrupted(docId: string, data: Record<string, any>): { corrupted: boo
     };
   }
 
-  if (typeof data.studentNumber === 'object' && data.studentNumber !== null) {
+  if (typeof data.staffNumber === 'object' && data.staffNumber !== null) {
     return {
       corrupted: true,
-      reason: 'studentNumber is object instead of string'
+      reason: 'staffNumber is object instead of string'
     };
   }
 
@@ -112,9 +113,6 @@ function isCorrupted(docId: string, data: Record<string, any>): { corrupted: boo
 
 const handler: Handler = async (event) => {
   try {
-    // Initialize Firebase on first request
-    initializeFirebase();
-
     // Only allow POST requests
     if (event.httpMethod !== 'POST') {
       return {
@@ -122,6 +120,12 @@ const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Method not allowed' })
       };
     }
+
+    const denied = await requireRole(event);
+    if (denied) return denied;
+
+    // Initialize Firebase on first request
+    initializeFirebase();
 
     // Parse request body
     const body = JSON.parse(event.body || '{}');
@@ -157,7 +161,7 @@ const handler: Handler = async (event) => {
           data: {
             nomineeName: data.nomineeName,
             nomineeEmail: data.nomineeEmail,
-            studentNumber: data.studentNumber,
+            staffNumber: data.staffNumber,
             categoryId: data.categoryId,
             categoryName: data.categoryName,
             createdAt: data.createdAt,

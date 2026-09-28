@@ -92,7 +92,7 @@ export default function SiteNav() {
   const navShadowOpacity = useTransform(scrollY, [0, 120], [0, 0.16]);
   const navShadow = useTransform(
     navShadowOpacity,
-    (v) => `0 12px 30px -16px oklch(0.24 0.09 258 / ${v})`,
+    (v) => `0 12px 30px -16px oklch(0.34 0.07 250 / ${v})`,
   );
 
   async function handleInstall(onFallback?: () => void) {
@@ -165,20 +165,23 @@ export default function SiteNav() {
           <Play className="h-3.5 w-3.5" /> Demo
         </Link>
       )}
-      <Link
-        to="/admin"
-        className="transition hover:text-white"
-        activeProps={{ className: "text-white font-semibold" }}
-        onClick={() => setIsOpen(false)}
-      >
-        Admin
-      </Link>
+      {/* Signed-out visitors reach the portals from the footer and the home page's Login Portals section */}
+      {isPrivileged && (
+        <Link
+          to="/admin"
+          className="transition hover:text-white"
+          activeProps={{ className: "text-white font-semibold" }}
+          onClick={() => setIsOpen(false)}
+        >
+          Admin
+        </Link>
+      )}
     </>
   );
 
   return (
     <motion.header
-      className="pointer-events-auto fixed top-0 left-0 right-0 z-50 border-b border-primary/10 bg-background/70 backdrop-blur-2xl"
+      className="pointer-events-auto fixed top-0 left-0 right-0 z-50 border-b-2 border-gold bg-background/70 backdrop-blur-2xl"
       style={{ boxShadow: navShadow }}
     >
       <motion.div
@@ -294,8 +297,8 @@ export default function SiteNav() {
                   <div className="flex items-center gap-3">
                     <img src={logo} alt="Logo" className="h-10 w-auto" />
                     <div>
-                      <p className="font-bold text-sm tracking-tight text-[#2c2c2c]">DUT AWARDS</p>
-                      <p className="text-[10px] text-[#2c2c2c] uppercase tracking-widest">
+                      <p className="font-bold text-sm tracking-tight text-primary">DUT AWARDS</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                         Registrar's Ambit
                       </p>
                     </div>

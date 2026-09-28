@@ -15,7 +15,7 @@ import {
   ChevronDown,
   Award,
 } from "lucide-react";
-import { collection, onSnapshot, query, orderBy, doc, getDoc, addDoc, serverTimestamp, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, doc, getDoc, addDoc, serverTimestamp, getDocs, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { signIn, signOut as firebaseSignOut, subscribeToAuthState } from "@/lib/auth-firebase";
 import { AWARD_THEME, AWARD_CATEGORIES, getCriteriaForCategory } from "@/data/awards";
@@ -469,6 +469,19 @@ function LeaderboardContent({ role }: { role: string | null }) {
     return () => { isMounted = false; unsub(); };
   }, []);
 
+  // Only nominations still in judging are ranked: one set aside as a duplicate (or
+  // rejected) after it was scored keeps its judge_scores but drops off the board.
+  // null until loaded (or if unreadable) — then every scored nomination is ranked.
+  const [shortlistedIds, setShortlistedIds] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    const q = query(collection(db, "nominations"), where("status", "==", "shortlisted"));
+    return onSnapshot(
+      q,
+      (snap) => setShortlistedIds(new Set(snap.docs.map((d) => d.id))),
+      (err) => console.error("[Firestore] Failed to load shortlisted nominations for the leaderboard:", err),
+    );
+  }, []);
+
   // Build per-category ranking
   const categories = useMemo(() => {
     // Map: nominationId → NomineeEntry
@@ -476,6 +489,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
 
     for (const s of allScores) {
       if (s.score === 0) continue; // skip unscored
+      if (shortlistedIds && !shortlistedIds.has(s.nominationId)) continue;
       const key = s.nominationId;
       if (!nomineeMap.has(key)) {
         // Try to find the categoryId from AWARD_CATEGORIES by matching name
@@ -535,7 +549,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
       console.log(`   - ${catName}: ${nominees.length} nominees`);
     });
     return result;
-  }, [allScores]);
+  }, [allScores, shortlistedIds]);
 
   // For unified view: flatten all nominees and rank globally
   const unifiedRanking = useMemo(() => {

@@ -16,11 +16,13 @@ import {
   ChevronDown,
   Check,
   Search,
+  Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useNominationsOpen } from "@/lib/nomination-settings";
-import { AWARD_CATEGORIES, ELIGIBILITY_QUESTIONS, type AwardCategory } from "@/data/awards";
+import { AWARD_CATEGORIES, AWARD_THEME, ELIGIBILITY_QUESTIONS, type AwardCategory } from "@/data/awards";
 import { useDraftForm } from "@/hooks/useDraftForm";
 import { EvidenceUploader, type UploadedFile, type EvidenceUploads } from "@/components/EvidenceUploader";
 import { validateDocumentsForCategory, getMissingDocumentsSummary } from "@/lib/document-validation";
@@ -344,7 +346,7 @@ function NominatePage() {
   if (!category) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
-        <p className="text-lg text-muted-foreground">Award category not found.</p>
+        <p className="text-lg text-white">Award category not found.</p>
         <Button onClick={() => navigate({ to: "/", hash: "categories" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Awards
         </Button>
@@ -409,6 +411,8 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  /** Firestore id of the submitted nomination, shown to the nominator as their reference */
+  const [reference, setReference] = useState("");
   const [error, setError] = useState("");
   const [draftBannerDismissed, setDraftBannerDismissed] = useState(false);
 
@@ -576,11 +580,13 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       categoryId: category.id,
       categoryName: category.name,
       nomineeName: nominee.name.trim(),
-      nomineeEmail: nominee.email.trim(),
+      // Stored lower-cased so the resubmission lookup below and the admin panel's
+      // duplicate check match emails regardless of how they were typed.
+      nomineeEmail: nominee.email.trim().toLowerCase(),
       staffNumber: nominee.staffNumber.trim(),
       department: nominee.department.trim(),
       nominatorName: nominator.name.trim(),
-      nominatorEmail: nominator.email.trim(),
+      nominatorEmail: nominator.email.trim().toLowerCase(),
       nominatorRelationship: nominator.relationship,
       isSelfNomination,
       eligibility,
@@ -636,20 +642,26 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
         ),
       });
 
-      // Check for existing nomination for this nominee + category
+      // A nominator resubmitting for the same nominee + category (e.g. after a
+      // missing-documents reminder) updates their own earlier nomination. A nomination
+      // of the same person by anyone else is saved as a separate document, and admins
+      // choose which one goes through (see src/lib/nomination-duplicates.ts).
       const existingQuery = query(
         collection(db, "nominations"),
-        where("nomineeEmail", "==", nominee.email.trim().toLowerCase()),
+        where("nomineeEmail", "==", cleanedPayload.nomineeEmail),
         where("categoryId", "==", category.id)
       );
-      
+
       const existingResults = await getDocs(existingQuery);
+      const ownEarlierDoc = existingResults.docs.find(
+        (d) => String(d.get("nominatorEmail") ?? "").trim().toLowerCase() === cleanedPayload.nominatorEmail,
+      );
       let docRef;
       let isUpdate = false;
 
-      if (existingResults.size > 0) {
-        // Update existing nomination (use first match)
-        const existingDoc = existingResults.docs[0];
+      if (ownEarlierDoc) {
+        // Update this nominator's own earlier nomination
+        const existingDoc = ownEarlierDoc;
         docRef = existingDoc.ref;
         
         // Add updatedAt timestamp to track the merge
@@ -686,6 +698,15 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       }
 
       clearDraft(); // wipe the saved draft on success
+
+      // Email the nominator a receipt. The nomination is already saved, so a failure here is only logged.
+      fetch('/.netlify/functions/send-nomination-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nominationId: docRef.id }),
+      }).catch((err) => console.warn('⚠️ [Submit] Receipt email request failed:', err));
+
+      setReference(docRef.id);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
@@ -717,7 +738,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
   }
 
   if (submitted) {
-    return <SuccessScreen categoryName={category.name} onBack={onBack} />;
+    return <SuccessScreen categoryName={category.name} reference={reference} onBack={onBack} />;
   }
 
   // Check if nomination period is closed
@@ -729,7 +750,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
         {/* Breadcrumb */}
         <button
           onClick={onBack}
-          className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          className="mb-6 flex items-center gap-2 text-sm font-medium text-white/90 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Award Categories
         </button>
@@ -749,7 +770,16 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
                 No new nominations are being accepted at this time.
               </p>
               <p className="text-red-700 text-sm mt-4">
-                If you believe this is an error or have questions, please contact the awards team.
+                If you believe this is an error or have questions, please contact the awards team
+                {AWARD_THEME.contactEmail && (
+                  <>
+                    {" "}at{" "}
+                    <a href={`mailto:${AWARD_THEME.contactEmail}`} className="font-semibold underline">
+                      {AWARD_THEME.contactEmail}
+                    </a>
+                  </>
+                )}
+                .
               </p>
               <Button
                 onClick={onBack}
@@ -769,7 +799,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       {/* Breadcrumb */}
       <button
         onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+        className="mb-6 flex items-center gap-2 text-sm font-medium text-white/90 transition hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Award Categories
       </button>
@@ -787,7 +817,7 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm shadow-sm"
+          className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-white px-5 py-4 text-sm shadow-sm"
         >
           <span className="text-foreground">
             <span className="font-medium">Draft restored.</span>{" "}
@@ -998,9 +1028,18 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
         )}
 
         {error && (
-          <p className="mt-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
-          </p>
+          <div className="mt-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <p>{error}</p>
+            {AWARD_THEME.contactEmail && (
+              <p className="mt-1 text-xs">
+                Need help? Email{" "}
+                <a href={`mailto:${AWARD_THEME.contactEmail}`} className="font-semibold underline">
+                  {AWARD_THEME.contactEmail}
+                </a>
+                .
+              </p>
+            )}
+          </div>
         )}
 
         {/* Navigation */}
@@ -1373,13 +1412,30 @@ function StepQuestions({
 
 // ─── Success screen ───────────────────────────────────────────────────────────
 
-function SuccessScreen({ categoryName, onBack }: { categoryName: string; onBack: () => void }) {
+function SuccessScreen({
+  categoryName,
+  reference,
+  onBack,
+}: {
+  categoryName: string;
+  reference: string;
+  onBack: () => void;
+}) {
+  async function copyReference() {
+    try {
+      await navigator.clipboard.writeText(reference);
+      toast.success("Reference copied");
+    } catch {
+      toast.error("Couldn't copy — please write the reference down.");
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col items-center py-16 text-center"
+      className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center shadow-sm sm:px-10"
     >
       <div className="mb-6 grid h-20 w-20 place-items-center rounded-full bg-primary shadow-elegant">
         <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
@@ -1390,10 +1446,41 @@ function SuccessScreen({ categoryName, onBack }: { categoryName: string; onBack:
         <strong className="text-foreground">{categoryName}</strong> has been received. The Awards
         Committee will review all submissions and contact shortlisted candidates directly.
       </p>
-      <p className="mt-3 text-sm text-muted-foreground">
+
+      {reference && (
+        <div className="mt-6 w-full max-w-sm rounded-xl border border-primary/15 bg-primary/5 px-5 py-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Your reference
+          </p>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <code className="break-all font-mono text-base font-bold text-primary">{reference}</code>
+            <button
+              onClick={copyReference}
+              aria-label="Copy reference"
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Quote this if you contact the awards team about this nomination
+            {AWARD_THEME.contactEmail && (
+              <>
+                {" "}at{" "}
+                <a href={`mailto:${AWARD_THEME.contactEmail}`} className="font-semibold text-primary underline">
+                  {AWARD_THEME.contactEmail}
+                </a>
+              </>
+            )}
+            .
+          </p>
+        </div>
+      )}
+
+      <p className="mt-6 text-sm text-muted-foreground">
         Thank you for recognising excellence at DUT.
       </p>
-      <Button onClick={onBack} className="mt-10 bg-primary text-primary-foreground gap-2">
+      <Button onClick={onBack} className="mt-8 bg-primary text-primary-foreground gap-2">
         <Home className="h-4 w-4" /> Back to Award Categories
       </Button>
     </motion.div>
