@@ -21,6 +21,14 @@ interface ShatterTextProps {
    * right-to-left as it falls back toward 0. Omit to always show the full mark.
    */
   typeProgress?: MotionValue<number>;
+  /**
+   * Optional 0..1 signal (e.g. tied to scroll position) that blows the mark apart:
+   * as it rises toward 1 every particle flies outward, drops and fades out, and as
+   * it falls back toward 0 they fly home and the mark reassembles.
+   */
+  explodeProgress?: MotionValue<number>;
+  /** Extra canvas, in CSS px, on every side of the box so particles blasted outward stay visible. */
+  bleed?: number;
 }
 
 interface Particle {
@@ -99,8 +107,11 @@ function resolveColor(cssColor: string): [number, number, number, number] {
   return [r / 255, g / 255, b / 255, a / 255];
 }
 
-/** Samples `text`'s glyph coverage on an offscreen 2D canvas into a field of particle origins. */
-function sampleParticles(text: string, width: number, height: number, targetCount = 4200): Particle[] {
+/**
+ * Samples `text`'s glyph coverage on an offscreen 2D canvas into a field of particle origins,
+ * shifted by `offset` so the glyphs sit inside a canvas padded by that much on every side.
+ */
+function sampleParticles(text: string, width: number, height: number, offset = 0, targetCount = 4200): Particle[] {
   const off = document.createElement("canvas");
   off.width = width;
   off.height = height;
@@ -131,10 +142,10 @@ function sampleParticles(text: string, width: number, height: number, targetCoun
       const alpha = data[(y * width + x) * 4 + 3];
       if (alpha > 120) {
         particles.push({
-          homeX: x,
-          homeY: y,
-          x,
-          y,
+          homeX: x + offset,
+          homeY: y + offset,
+          x: x + offset,
+          y: y + offset,
           vx: 0,
           vy: 0,
           jitterX: (Math.random() - 0.5) * 2,
@@ -158,14 +169,18 @@ export default function ShatterText({
   repelRadius = 46,
   scrollDisturbance,
   typeProgress,
+  explodeProgress,
+  bleed = 0,
 }: ShatterTextProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const dprRef = useRef(1);
+  const padRef = useRef(0);
   const pointerRef = useRef<{ x: number; y: number; active: boolean }>({ x: -9999, y: -9999, active: false });
   const scrollForceRef = useRef(0);
   const typeProgressRef = useRef(1);
+  const explodeRef = useRef(0);
 
   useEffect(() => {
     if (!scrollDisturbance) return;
@@ -185,6 +200,17 @@ export default function ShatterText({
       typeProgressRef.current = v;
     });
   }, [typeProgress]);
+
+  useEffect(() => {
+    if (!explodeProgress) {
+      explodeRef.current = 0;
+      return;
+    }
+    explodeRef.current = explodeProgress.get();
+    return explodeProgress.on("change", (v) => {
+      explodeRef.current = v;
+    });
+  }, [explodeProgress]);
 
   const glStateRef = useRef<{
     gl: WebGLRenderingContext;
@@ -238,15 +264,17 @@ export default function ShatterText({
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.round(cssWidth * dpr));
       const height = Math.max(1, Math.round(cssHeight * dpr));
-      canvas!.width = width;
-      canvas!.height = height;
+      const pad = Math.round(bleed * dpr);
+      canvas!.width = width + pad * 2;
+      canvas!.height = height + pad * 2;
       dprRef.current = dpr;
-      particlesRef.current = sampleParticles(text, width, height);
+      padRef.current = pad;
+      particlesRef.current = sampleParticles(text, width, height, pad);
 
       const state = glStateRef.current;
       if (state) {
-        state.gl.viewport(0, 0, width, height);
-        state.gl.uniform2f(state.resolutionLocation, width, height);
+        state.gl.viewport(0, 0, canvas!.width, canvas!.height);
+        state.gl.uniform2f(state.resolutionLocation, canvas!.width, canvas!.height);
         // Bigger boxes get chunkier dots so the mark still reads clearly at watermark scale.
         const pointSize = Math.min(6, Math.max(1.8, cssWidth / 140)) * dpr;
         state.gl.uniform1f(state.pointSizeLocation, pointSize);
@@ -264,7 +292,7 @@ export default function ShatterText({
     });
     observer.observe(wrapper);
     return () => observer.disconnect();
-  }, [text]);
+  }, [text, bleed]);
 
   // Physics + render loop: blast particles from the pointer, spring them back home.
   useEffect(() => {
@@ -281,10 +309,15 @@ export default function ShatterText({
         const scrollForce = scrollForceRef.current;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        const revealEdge = Math.max(1, canvas.width * 0.05);
+        const pad = padRef.current;
+        const textWidth = canvas.width - pad * 2;
+        const revealEdge = Math.max(1, textWidth * 0.05);
         // Offset so progress=0 hides even the leftmost particle and progress=1 fully
-        // reveals even the rightmost one (not just "reveal up to exactly canvas.width").
-        const revealX = -revealEdge / 2 + typeProgressRef.current * (canvas.width + revealEdge);
+        // reveals even the rightmost one (not just "reveal up to exactly the text's width").
+        const revealX = pad - revealEdge / 2 + typeProgressRef.current * (textWidth + revealEdge);
+        const explode = explodeRef.current;
+        // How far the furthest-flung particles travel at explode=1: out into the bleed.
+        const blastReach = pad * 0.9 + textWidth * 0.2;
         const positions = new Float32Array(particles.length * 2);
         const reveals = new Float32Array(particles.length);
 
@@ -301,17 +334,28 @@ export default function ShatterText({
               p.vy += (Math.sin(angle) + p.jitterY * 0.6) * force * 6.5;
             }
           }
-          if (scrollForce > 0.01) {
-            // Blast outward from the shape's own centre — a "destroy" pulse from scrolling.
+          let targetX = p.homeX;
+          let targetY = p.homeY;
+          if (scrollForce > 0.01 || explode > 0.001) {
             const ex = p.homeX - centerX + p.jitterX * 14;
             const ey = p.homeY - centerY + p.jitterY * 14;
             const edist = Math.hypot(ex, ey) || 0.001;
-            p.vx += (ex / edist) * scrollForce;
-            p.vy += (ey / edist) * scrollForce;
+            if (scrollForce > 0.01) {
+              // Blast outward from the shape's own centre — a "destroy" pulse from scrolling.
+              p.vx += (ex / edist) * scrollForce;
+              p.vy += (ey / edist) * scrollForce;
+            }
+            if (explode > 0.001) {
+              // Move each particle's resting point outward (and let it drop, like debris)
+              // rather than kicking it, so the blast tracks the signal both ways.
+              const reach = explode * blastReach * (0.5 + 0.5 * Math.abs(p.jitterY));
+              targetX += (ex / edist) * reach;
+              targetY += (ey / edist) * reach + explode * explode * blastReach * 0.35;
+            }
           }
-          // Spring back toward the sampled glyph position.
-          p.vx += (p.homeX - p.x) * 0.06;
-          p.vy += (p.homeY - p.y) * 0.06;
+          // Spring back toward the sampled glyph position (or its blasted-out stand-in).
+          p.vx += (targetX - p.x) * 0.06;
+          p.vy += (targetY - p.y) * 0.06;
           // Friction.
           p.vx *= 0.82;
           p.vy *= 0.82;
@@ -323,7 +367,8 @@ export default function ShatterText({
           // Typewriter reveal: particles to the left of the reveal edge are shown,
           // ones to the right fade/shrink out — reversible, so scrolling back up
           // un-types it right-to-left just as naturally.
-          reveals[i] = Math.max(0, Math.min(1, (revealX - p.homeX) / revealEdge + 0.5));
+          const typed = Math.max(0, Math.min(1, (revealX - p.homeX) / revealEdge + 0.5));
+          reveals[i] = typed * (1 - explode);
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -353,9 +398,8 @@ export default function ShatterText({
   useEffect(() => {
     function handleMove(event: PointerEvent) {
       const canvas = canvasRef.current;
-      const wrapper = wrapperRef.current;
-      if (!canvas || !wrapper) return;
-      const rect = wrapper.getBoundingClientRect();
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       pointerRef.current = {
@@ -380,7 +424,18 @@ export default function ShatterText({
 
   return (
     <div ref={wrapperRef} className={`relative ${className}`}>
-      <canvas ref={canvasRef} className="block h-full w-full" aria-hidden="true" />
+      {/* Explicit width/height: an absolutely positioned canvas won't stretch between insets. */}
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none absolute block"
+        style={{
+          left: -bleed,
+          top: -bleed,
+          width: `calc(100% + ${bleed * 2}px)`,
+          height: `calc(100% + ${bleed * 2}px)`,
+        }}
+        aria-hidden="true"
+      />
       <span className="sr-only">{text}</span>
     </div>
   );

@@ -44,5 +44,12 @@ dist-ssr
 scripts/test-*.mjs
 scripts/verify-*.mjs
 
+# Account-creation output — lists users with their temporary passwords
+USER_CREDENTIALS*.csv
+scripts/bulk-create-results-*
+scripts/create-users-simple-*
+scripts/recreated-users-*
+scripts/login-credentials-*
+
 # Local Netlify folder
 .netlify

@@ -53,13 +53,12 @@ if (!(globalThis as Record<string, unknown>).Path2D) {
   (globalThis as Record<string, unknown>).Path2D = Path2D;
 }
 
-const STORAGE_BUCKET =
-  process.env.FIREBASE_STORAGE_BUCKET || "student-services-745d5.appspot.com";
 const CACHE_PREFIX = "pdf-compressed-cache/";
 const SIGNED_URL_TTL_MS = 6 * 24 * 60 * 60 * 1000; // 6 days (GCS signed URL max is 7 days)
 
+// FIREBASE_STORAGE_BUCKET, else the service account's own project bucket.
 function getBucket() {
-  return getStorageBucket(STORAGE_BUCKET);
+  return getStorageBucket();
 }
 
 function cacheKeyFor(sourceUrl: string): string {
@@ -298,6 +297,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
   console.log(`[compress-pdf] Uploading ${pdfBuffer.length} bytes to Storage cache`);
   try {
     await getBucket().file(cacheKey).save(pdfBuffer, {
+      // Single-request upload — see the note on the same call in office-to-pdf.mts.
+      resumable: false,
       contentType: "application/pdf",
       metadata: {
         cacheControl: "public, max-age=31536000, immutable",

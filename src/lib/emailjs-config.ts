@@ -6,16 +6,26 @@
  */
 
 import emailjs from 'emailjs-com';
+import { AWARD_CATEGORIES } from '@/data/awards';
 
 // Initialize EmailJS with your public key
 // Get your public key from: https://dashboard.emailjs.com/admin/account
+// These are read at build time, so on Netlify they need the "Builds" scope too.
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'YOUR_PUBLIC_KEY';
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'YOUR_SERVICE_ID';
 const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID';
 
-// Production site URL for nomination links
-// TODO: update once the Registrar's Ambit Staff Awards site is deployed.
-const SITE_URL = 'https://registrars-ambit-staff-awards.netlify.app';
+// Nomination links point back at whichever site sent the email.
+const SITE_URL =
+  typeof window !== 'undefined' ? window.location.origin : 'https://registrars-ambit-staff-awards.netlify.app';
+
+/** Route id for a category's nomination page, looked up by its display name. */
+function categoryIdFor(categoryName: string) {
+  return (
+    AWARD_CATEGORIES.find((c) => c.name === categoryName)?.id ??
+    categoryName.toLowerCase().replace(/\s+/g, '-')
+  );
+}
 
 let initialized = false;
 
@@ -50,7 +60,7 @@ export async function sendReminderEmail(
       nominee_name: nomineeName,
       category_name: categoryName,
       incomplete_items: incompleteItems.join('\n• '),
-      submission_url: `${SITE_URL}/nominate/${categoryName.toLowerCase().replace(/\s+/g, '-')}#documents`,
+      submission_url: `${SITE_URL}/nominate/${categoryIdFor(categoryName)}#documents`,
       current_year: new Date().getFullYear(),
     };
 

@@ -29,13 +29,12 @@ import { getStorageBucket } from "./firebase-admin-init.js";
 // to Firebase Storage and return a small JSON payload with a signed URL. This
 // also lets us cache conversions by source-file hash, so repeated previews of
 // the same document skip the (slow, memory-heavy) Chromium render entirely.
-const STORAGE_BUCKET =
-  process.env.FIREBASE_STORAGE_BUCKET || "student-services-745d5.appspot.com";
 const CACHE_PREFIX = "office-preview-cache/";
 const SIGNED_URL_TTL_MS = 6 * 24 * 60 * 60 * 1000; // 6 days (GCS signed URL max is 7 days)
 
+// FIREBASE_STORAGE_BUCKET, else the service account's own project bucket.
 function getBucket() {
-  return getStorageBucket(STORAGE_BUCKET);
+  return getStorageBucket();
 }
 
 function cacheKeyFor(sourceUrl: string): string {
@@ -511,6 +510,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
   console.log(`[office-to-pdf] Success: uploading ${pdfBuffer.length} bytes to Storage cache`);
   try {
     await getBucket().file(cacheKey).save(pdfBuffer, {
+      // Single-request upload. The resumable path pulls in the abort-controller polyfill,
+      // whose AbortSignal class esbuild renames when bundling, and node-fetch then rejects
+      // it ("Expected signal to be an instanceof AbortSignal").
+      resumable: false,
       contentType: "application/pdf",
       metadata: {
         cacheControl: "public, max-age=31536000, immutable",

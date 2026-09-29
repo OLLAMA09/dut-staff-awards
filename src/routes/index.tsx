@@ -7,8 +7,17 @@ import {
   useEffect,
   useLayoutEffect,
   type MouseEvent as ReactMouseEvent,
+  type RefObject,
 } from "react";
-import { motion, AnimatePresence, useMotionValueEvent, useScroll, useTransform, useVelocity } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+  useVelocity,
+} from "framer-motion";
 import { gsap } from "gsap";
 import {
   Award,
@@ -196,7 +205,25 @@ function SectionDivider() {
   );
 }
 
-function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
+/** Element's position in the document from layout alone — ignores transforms and scroll. */
+function pageOffset(el: HTMLElement) {
+  let left = 0;
+  let top = 0;
+  for (let node: HTMLElement | null = el; node; node = node.offsetParent as HTMLElement | null) {
+    left += node.offsetLeft;
+    top += node.offsetTop;
+  }
+  return { left, top };
+}
+
+function HeroStory({
+  nominationsOpen,
+  landingRef,
+}: {
+  nominationsOpen: boolean;
+  /** Where the DUT mark lands and bursts apart once it has flown down the hero. */
+  landingRef: RefObject<HTMLElement | null>;
+}) {
   const storyRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: storyRef, offset: ["start start", "end end"] });
   const contentOpacity = useTransform(scrollYProgress, [0, 0.82], [1, 0.72]);
@@ -207,12 +234,67 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
   const nominateRipple = useRipple("light");
   const winnersRipple = useRipple("dark");
 
-  // DUT mark: starts at the top-left of the hero and travels down to settle a few
-  // paddings below the "Nomination journey" pill (not beside it), using the section's
-  // *entire* scroll run so there's no dead stretch where it just sits frozen mid-scroll.
-  const dutX = useTransform(scrollYProgress, [0, 1], ["0px", "32vw"]);
-  const dutY = useTransform(scrollYProgress, [0, 1], ["0vh", "84vh"]);
+  // DUT mark: takes off from its slot above the eyebrow and glides down to land on the
+  // event-info cards, touching down about halfway down the screen, then bursts apart as
+  // you keep scrolling (scroll back up and it reassembles and flies home). The route is
+  // measured from the real layout, so it lands on the cards at any screen size.
+  const dutHomeRef = useRef<HTMLDivElement>(null);
+  const [dutHome, setDutHome] = useState<{ left: number; top: number } | null>(null);
+  type Flight = { dx: number; dy: number; landAt: number; burstSpan: number };
+  const flightRef = useRef<Flight | null>(null);
+  const { scrollY } = useScroll();
+  const dutX = useMotionValue(0);
+  const dutY = useMotionValue(0);
+  const dutBurst = useMotionValue(0);
   const dutOpacity = useTransform(scrollYProgress, [0, 0.4], [0.92, 0.78]);
+
+  const placeDut = () => {
+    const flight = flightRef.current;
+    if (!flight) return;
+    const y = window.scrollY;
+    const travelled = Math.min(1, Math.max(0, y / flight.landAt));
+    dutX.set(flight.dx * travelled);
+    dutY.set(flight.dy * travelled);
+    dutBurst.set(Math.min(1, Math.max(0, (y - flight.landAt) / flight.burstSpan)));
+  };
+  useMotionValueEvent(scrollY, "change", placeDut);
+
+  // A passive effect, not a layout one: the landing section renders after this component,
+  // so its ref isn't attached yet when this component's layout effects run.
+  useEffect(() => {
+    const story = storyRef.current;
+    const home = dutHomeRef.current;
+    const landing = landingRef.current;
+    if (!story || !home || !landing) return;
+
+    const measure = () => {
+      const storyAt = pageOffset(story);
+      const homeAt = pageOffset(home);
+      const landingAt = pageOffset(landing);
+      const viewportHeight = window.innerHeight;
+      // Centred on the card row, with the mark's lower quarter over the cards' top edge.
+      const landLeft = landingAt.left + landing.offsetWidth / 2 - home.offsetWidth / 2;
+      const landTop = landingAt.top - home.offsetHeight * 0.75;
+      flightRef.current = {
+        dx: landLeft - homeAt.left,
+        dy: landTop - homeAt.top,
+        landAt: Math.max(1, landTop - viewportHeight * 0.45),
+        burstSpan: Math.max(160, viewportHeight * 0.25),
+      };
+      setDutHome({ left: homeAt.left - storyAt.left, top: homeAt.top - storyAt.top });
+      placeDut();
+    };
+
+    measure();
+    // The slot moves when the hero copy re-wraps (fonts, resizes) even if the section
+    // keeps its size, so watch the column it sits in as well as both sections.
+    const observer = new ResizeObserver(measure);
+    observer.observe(story);
+    observer.observe(landing);
+    if (home.parentElement) observer.observe(home.parentElement);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs and motion values are stable
+  }, []);
   // Scrolling down blasts it apart (destroy); scrolling up (or settling) just lets it
   // spring back home (reform) — on top of the existing pointer-hover shatter.
   const dutScrollVelocity = useVelocity(scrollYProgress);
@@ -220,23 +302,44 @@ function HeroStory({ nominationsOpen }: { nominationsOpen: boolean }) {
 
   return (
     <section ref={storyRef} className="relative min-h-[122svh]">
+      {/* The flying DUT lives out here rather than in its slot below: the panel it starts
+          in clips its overflow, which used to cut the mark off partway down its flight.
+          Placed before the panel so the hero copy still reads on top of it. */}
+      <motion.div
+        aria-label="Durban University of Technology"
+        style={{
+          x: dutX,
+          y: dutY,
+          opacity: dutOpacity,
+          left: dutHome?.left ?? 0,
+          top: dutHome?.top ?? 0,
+          visibility: dutHome ? "visible" : "hidden",
+        }}
+        className="dut-mark pointer-events-none absolute z-0 h-14 w-36 sm:h-16 sm:w-40"
+      >
+        <ShatterText
+          text="DUT"
+          className="h-full w-full"
+          repelRadius={90}
+          scrollDisturbance={dutShatterForce}
+          explodeProgress={dutBurst}
+          bleed={120}
+        />
+      </motion.div>
+
       <div className="sticky top-0 flex min-h-[92svh] items-center overflow-hidden py-24 sm:py-28">
         <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 px-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
           <motion.div
             style={{ opacity: contentOpacity, scale: contentScale, y: contentY }}
             className="mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left"
           >
-            {/* DUT mark: a normal flow element (so it reserves its own space and keeps a
-                real gap before the eyebrow, same as before it became "destroyable") that
-                then travels to the bottom-right via transform as the hero scrolls — a
-                transform doesn't affect layout, so the gap below stays intact throughout. */}
-            <motion.div
-              aria-label="Durban University of Technology"
-              style={{ x: dutX, y: dutY, opacity: dutOpacity }}
-              className="dut-mark pointer-events-none relative z-0 mx-auto mb-6 h-14 w-36 lg:mx-0 sm:h-16 sm:w-40"
-            >
-              <ShatterText text="DUT" className="h-full w-full" repelRadius={90} scrollDisturbance={dutShatterForce} />
-            </motion.div>
+            {/* The DUT mark's home slot: reserves its space and the gap before the eyebrow.
+                The mark itself is drawn (and flies) from outside this panel — see above. */}
+            <div
+              ref={dutHomeRef}
+              aria-hidden="true"
+              className="mx-auto mb-6 h-14 w-36 lg:mx-0 sm:h-16 sm:w-40"
+            />
 
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white">Registrar's Ambit Staff Awards</p>
             <h1 className="mt-5 text-4xl font-bold leading-[1.05] text-white sm:text-6xl">Recognition starts with a story worth telling.</h1>
@@ -330,6 +433,7 @@ function Index() {
   const aboutDutType = useTransform(aboutScrollProgress, [0.15, 0.45], [0, 1]);
 
   const heroRef = useRef<HTMLDivElement>(null);
+  const eventInfoRef = useRef<HTMLElement>(null);
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -468,10 +572,12 @@ function Index() {
       <SiteNav />
 
       {/* Hero */}
+      {/* overflow-x-clip, not overflow-hidden: the DUT mark flies out of the bottom of
+          this section to land on the event-info cards and must not be cut off there. */}
       <section
         ref={heroRef}
         id="hero"
-        className="relative overflow-hidden"
+        className="relative overflow-x-clip"
       >
         {/* Liquid background blobs — parallax on scroll */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -486,12 +592,12 @@ function Index() {
           </motion.div>
         </div>
 
-        <HeroStory nominationsOpen={nominationsOpen} />
+        <HeroStory nominationsOpen={nominationsOpen} landingRef={eventInfoRef} />
 
       </section>
 
       {/* Event information */}
-      <section className="relative z-10 mx-auto max-w-6xl px-6 pb-6">
+      <section ref={eventInfoRef} className="relative z-10 mx-auto max-w-6xl px-6 pb-6">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <InfoChip index={0} icon={Calendar} title="Recognition Period" value={AWARD_THEME.recognitionPeriod} />
           <InfoChip index={1} icon={Sparkles} title="Nomination Window" value={AWARD_THEME.nominationWindow} />

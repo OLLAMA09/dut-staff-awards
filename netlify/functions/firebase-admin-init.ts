@@ -45,7 +45,9 @@ export function getAdminApp() {
   try {
     const serviceAccount = loadServiceAccount();
     const projectId = serviceAccount.project_id as string;
-    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`;
+    // Firebase projects created since late 2024 (this one included) get a
+    // <project-id>.firebasestorage.app bucket rather than <project-id>.appspot.com.
+    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.firebasestorage.app`;
 
     return initializeApp({
       credential: cert(serviceAccount as never),

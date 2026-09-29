@@ -32,7 +32,9 @@ if (!jsFile) throw new Error("Bootstrap JS not found in dist/client/assets");
 //   - dehydratedData: null skips server-data rehydration
 //   - manifest: null is stored as n.ssr.manifest (optional, used for preloading)
 //   - h: () => {}  is called as a post-init notification (window.$_TSR?.h())
-const tsrStub = `window.$_TSR={router:{matches:[],lastMatchId:null,manifest:null,dehydratedData:null},buffer:[],h:function(){}};`;
+// __SPA_SHELL__ tells src/client.tsx that this page has no server-rendered markup, so the
+// hydration mismatch React reports on every load here is expected rather than a bug.
+const tsrStub = `window.$_TSR={router:{matches:[],lastMatchId:null,manifest:null,dehydratedData:null},buffer:[],h:function(){}};window.__SPA_SHELL__=true;`;
 
 // This shell is all that link previews (WhatsApp, Teams, email) ever read, so its
 // meta tags must match the site. Netlify sets URL to the site's main address
