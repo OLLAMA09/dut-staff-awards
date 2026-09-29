@@ -338,7 +338,7 @@ function AdminQuickGuide({ canManage }: { canManage: boolean }) {
       <button
         type="button"
         onClick={() => { setDismissed(false); try { localStorage.removeItem(storageKey); } catch { /* ignore */ } setOpen(true); }}
-        className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
+        className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-card px-3 py-1 text-xs font-semibold text-primary hover:bg-muted/30 transition"
       >
         <BookOpen className="h-3.5 w-3.5" /> Show quick guide
       </button>
@@ -346,7 +346,7 @@ function AdminQuickGuide({ canManage }: { canManage: boolean }) {
   }
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-primary/20 bg-card shadow-sm overflow-hidden">
       <div className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-muted/20 transition">
         <button
           type="button"
@@ -2011,15 +2011,17 @@ function Dashboard({
       </Sidebar>
 
       <SidebarInset>
-        <div className="flex items-center gap-2 border-b border-primary/10 px-4 py-3 sm:px-6">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-4" />
+        {/* Text sitting directly on the slate page background is white — only white
+            reads clearly on that mid-tone. */}
+        <div className="flex items-center gap-2 border-b border-white/15 px-4 py-3 text-white sm:px-6">
+          <SidebarTrigger className="hover:bg-white/10 hover:text-white" />
+          <Separator orientation="vertical" className="h-4 bg-white/25" />
           <Breadcrumb>
-            <BreadcrumbList>
+            <BreadcrumbList className="text-white/75">
               <BreadcrumbItem>Admin</BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage className="font-semibold text-foreground">
+                <BreadcrumbPage className="font-semibold text-white">
                   {activeSectionInfo?.label ?? "Nominations"}
                 </BreadcrumbPage>
               </BreadcrumbItem>
@@ -2032,9 +2034,9 @@ function Dashboard({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards</p>
-            <h1 className="text-3xl font-bold sm:text-4xl">
-              {canManage ? "Administration Panel" : "Review Panel"}
+            <p className="text-xs uppercase tracking-[0.3em] text-white">Registrar's Ambit Staff Awards</p>
+            <h1 className="text-3xl font-bold text-white sm:text-4xl">
+              {canManage ? "Administration" : "Review"} <span className="gold-underline">Panel</span>
             </h1>
           </div>
           {/* Sign Out - Always in top right on desktop, in action bar on mobile */}
@@ -2042,7 +2044,7 @@ function Dashboard({
             variant="outline"
             onClick={onLogout}
             disabled={loggingOut}
-            className="border-primary/40 bg-primary/5 text-primary sm:w-auto w-full justify-start sm:justify-center disabled:opacity-70"
+            className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white sm:w-auto w-full justify-start sm:justify-center disabled:opacity-70"
           >
             {loggingOut ? (
               <>
@@ -2106,7 +2108,7 @@ function Dashboard({
             <div className="relative">
               <button
                 onClick={() => setShowAdminMenu(!showAdminMenu)}
-                className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-semibold transition hover:bg-primary/10"
+                className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
                 Actions
@@ -2239,13 +2241,13 @@ function Dashboard({
       {/* Stats — compact pill strip instead of a card grid */}
       <div className="flex flex-wrap gap-2">
         <StatCard label="Total" value={stats.total} />
-        <StatCard label="Pending" value={stats.pending} color="amber" />
-        <StatCard label="Shortlisted" value={stats.shortlisted} color="gold" />
-        <StatCard label="Pending Judging" value={stats.judgingPending} color="amber" />
-        <StatCard label="Rejected" value={stats.rejected} color="red" />
+        <StatCard label="Pending" value={stats.pending} status="pending" />
+        <StatCard label="Shortlisted" value={stats.shortlisted} status="shortlisted" />
+        <StatCard label="Pending Judging" value={stats.judgingPending} status="judging" />
+        <StatCard label="Rejected" value={stats.rejected} status="rejected" />
         <button
           onClick={() => setSelfNomFilter((v) => !v)}
-          className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 transition ${selfNomFilter ? "border-blue-400 bg-blue-50" : "border-primary/15 bg-white hover:border-primary/30"}`}
+          className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 transition ${selfNomFilter ? "border-blue-400 bg-blue-50" : "border-primary/15 bg-card hover:border-primary/30"}`}
         >
           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
           <span className="text-sm font-bold text-foreground">{stats.selfNominated}</span>
@@ -2255,14 +2257,14 @@ function Dashboard({
 
       {/* Section description — the breadcrumb itself now lives in the sidebar header bar */}
       {activeSectionInfo?.description && (
-        <p className="text-sm text-muted-foreground">{activeSectionInfo.description}</p>
+        <p className="text-sm text-white">{activeSectionInfo.description}</p>
       )}
 
       <div className="flex-1 min-w-0">
         {activeSection === "nominations" && <div className="space-y-6">
           {/* Same person nominated more than once, in any category — the admin picks one */}
           {canManage && unresolvedDuplicateGroups.length > 0 && (
-            <Card className="space-y-3 border-amber-300 bg-amber-50/40 p-5">
+            <Card className="space-y-3 border-amber-300 bg-amber-50 p-5">
               <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <div>
@@ -2295,7 +2297,7 @@ function Dashboard({
 
           {/* Category tiles */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-white flex items-center gap-1.5">
               <Filter className="h-3 w-3" /> Filter by Category
             </p>
             <div className="flex flex-wrap gap-2">
@@ -2325,7 +2327,7 @@ function Dashboard({
                 placeholder="Search nominee, staff number, nominator, reference…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="bg-card pl-9"
               />
               {search && (
                 <button
@@ -2336,12 +2338,12 @@ function Dashboard({
                 </button>
               )}
             </div>
-            <div className="flex overflow-hidden rounded-xl border border-primary/20 bg-muted/30 shrink-0">
+            <div className="flex overflow-hidden rounded-xl border border-primary/20 bg-card shrink-0">
               {STATUS_FILTERS.map((f) => (
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-3 py-1.5 text-xs font-medium transition ${statusFilter === f.value ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`px-3 py-1.5 text-xs font-medium transition ${statusFilter === f.value ? "bg-gold font-semibold text-primary shadow" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {f.label}
                 </button>
@@ -2351,13 +2353,13 @@ function Dashboard({
 
           {/* Results count */}
           {nominations.length > 0 && (
-            <p className="text-sm text-muted-foreground -mt-2">
-              Showing <span className="font-semibold text-foreground">{filtered.length}</span> of{" "}
+            <p className="text-sm text-white -mt-2">
+              Showing <span className="font-semibold">{filtered.length}</span> of{" "}
               {nominations.length} nominations
               {selectedCategory !== "__all__" && (
                 <>
                   {" "}in{" "}
-                  <span className="text-primary font-medium">
+                  <span className="gold-underline font-semibold">
                     {categoryTiles.find((c) => c.id === selectedCategory)?.name}
                   </span>
                 </>
@@ -2386,7 +2388,7 @@ function Dashboard({
                   <button
                     key={n.id}
                     onClick={() => setDetailNom(n)}
-                    className={`group text-left rounded-2xl border bg-gray-100 p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    className={`group text-left rounded-2xl border bg-card p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isDateMissing(n.createdAt)
                         ? "border-amber-200 hover:border-amber-400"
                         : "border-primary/20 hover:border-primary/50"
@@ -2433,7 +2435,7 @@ function Dashboard({
                           (() => {
                             const judgingDetails = getJudgingDetails(n.id, n.categoryId, judgeScores);
                             return judgingDetails.status === "pending" ? (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 flex items-center gap-1">
+                              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 Judging pending
                               </span>
@@ -2448,7 +2450,7 @@ function Dashboard({
                         {duplicateGroups.has(n.id) && (
                           <span
                             className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
-                            title="This person has more than one nomination in this category"
+                            title="This person has more than one nomination"
                           >
                             Nominated {duplicateGroups.get(n.id)!.length}×
                           </span>
@@ -3407,7 +3409,7 @@ function WinnersTab() {
     <div className="space-y-6">
       {/* Header actions */}
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="flex-1 text-lg font-bold">Past Winners</h2>
+        <h2 className="flex-1 text-lg font-bold text-white">Past Winners</h2>
         <Button
           variant="outline"
           className="border-primary/30 text-primary text-xs"
@@ -3680,13 +3682,13 @@ function CategoryChip({
       onClick={onClick}
       className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition ${
         active
-          ? "border-primary bg-primary text-primary-foreground shadow-elegant"
-          : "border-primary/20 bg-white text-muted-foreground hover:border-primary/50 hover:text-foreground"
+          ? "border-gold bg-gold font-semibold text-primary shadow-elegant"
+          : "border-primary/20 bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
       }`}
     >
       {label}
       <span
-        className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${active ? "bg-white/20 text-white" : "bg-primary/10 text-primary"}`}
+        className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${active ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"}`}
       >
         {count}
       </span>
@@ -3695,25 +3697,29 @@ function CategoryChip({
 }
 
 /* ── Stat card ─────────────────────────────────────────────────────── */
+/**
+ * One colour per status, used by the stat pill dots and matched by the badges and chips
+ * on the nomination cards: pending amber, shortlisted navy, judging violet, rejected red.
+ */
+const STATUS_DOT = {
+  pending: "bg-amber-500",
+  shortlisted: "bg-primary",
+  judging: "bg-violet-500",
+  rejected: "bg-red-500",
+} as const;
+
 function StatCard({
   label,
   value,
-  color,
+  status,
 }: {
   label: string;
   value: number;
-  color?: "gold" | "amber" | "red";
+  status?: keyof typeof STATUS_DOT;
 }) {
-  const dot =
-    color === "gold"
-      ? "bg-yellow-500"
-      : color === "amber"
-        ? "bg-orange-500"
-        : color === "red"
-          ? "bg-red-500"
-          : "bg-primary";
+  const dot = status ? STATUS_DOT[status] : "bg-slate-400";
   return (
-    <div className="flex shrink-0 items-center gap-2 rounded-full border border-primary/15 bg-white px-3.5 py-2">
+    <div className="flex shrink-0 items-center gap-2 rounded-full border border-primary/15 bg-card px-3.5 py-2">
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       <span className="text-sm font-bold text-foreground">{value}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -3727,7 +3733,7 @@ function StatusBadge({ status, setAside = false }: { status: NominationStatus; s
     return (
       <Badge
         variant="outline"
-        className="border-amber-300 bg-amber-50 text-amber-800 gap-1"
+        className="border-slate-300 bg-slate-100 text-slate-700 gap-1"
         title="Another nomination of this person was chosen to go through"
       >
         <Users2 className="h-3 w-3" />
@@ -3749,7 +3755,7 @@ function StatusBadge({ status, setAside = false }: { status: NominationStatus; s
       </Badge>
     );
   return (
-    <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
+    <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 gap-1">
       <Clock className="h-3 w-3" />
       Pending
     </Badge>
@@ -3788,7 +3794,7 @@ function DuplicateGroupCard({
       : "None of these nominations is still in the running.";
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-white p-4">
+    <div className="rounded-xl border border-amber-200 bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">
@@ -3822,7 +3828,7 @@ function DuplicateGroupCard({
             <li
               key={n.id}
               className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2.5 text-xs ${
-                n.id === currentId ? "border-primary/40 bg-primary/5" : "border-primary/15 bg-gray-50"
+                n.id === currentId ? "border-primary/40 bg-primary/5" : "border-primary/15 bg-white"
               }`}
             >
               <div className="min-w-0 flex-1">
@@ -3847,7 +3853,7 @@ function DuplicateGroupCard({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 px-2 text-xs"
+                  className="h-7 border-primary/30 px-2 text-xs text-primary"
                   onClick={() => onView(n)}
                 >
                   <Eye className="mr-1 h-3.5 w-3.5" /> View
@@ -3858,7 +3864,7 @@ function DuplicateGroupCard({
                   type="button"
                   size="sm"
                   disabled={busy}
-                  className="h-7 bg-primary px-2 text-xs text-primary-foreground"
+                  className="h-7 bg-gold px-2 text-xs font-semibold text-primary hover:bg-gold/90"
                   onClick={() => onChoose(n)}
                 >
                   <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
