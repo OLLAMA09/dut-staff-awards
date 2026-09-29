@@ -543,6 +543,11 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
       return obj.map(item => cleanPayload(item)) as any;
     }
     
+    // Leave anything that isn't a plain object as it is. Copying serverTimestamp()'s
+    // sentinel into a plain {} made Firestore store {_methodName: "serverTimestamp"}
+    // instead of the submission time, so the admin panel showed "Date unavailable".
+    if (Object.getPrototypeOf(obj) !== Object.prototype) return obj;
+
     const cleaned: any = {};
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined) {
@@ -664,9 +669,10 @@ function NominationForm({ category, onBack }: { category: AwardCategory; onBack:
         const existingDoc = ownEarlierDoc;
         docRef = existingDoc.ref;
         
-        // Add updatedAt timestamp to track the merge
+        // Keep the original submission date; updatedAt/mergedAt record the resubmission.
+        const { createdAt: _originalSubmission, ...resubmitted } = cleanedPayload;
         const updatePayload = {
-          ...cleanedPayload,
+          ...resubmitted,
           updatedAt: serverTimestamp(),
           mergedAt: serverTimestamp(), // Track when nomination was merged/updated
           previousSubmissionId: existingDoc.id, // Track the previous version

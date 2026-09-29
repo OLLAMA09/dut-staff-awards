@@ -1,6 +1,7 @@
 /**
- * Duplicate nominations: the same person nominated more than once in the same award
- * category, usually by different nominators.
+ * Duplicate nominations: the same person nominated more than once — in the same award
+ * category or across categories, by the same nominator or by different ones. Only one
+ * nomination per person can go through.
  *
  * Every nomination is kept. An admin chooses the one that goes through; the others are
  * set aside with status "rejected" plus `duplicateOf` (the chosen nomination's id) and
@@ -25,7 +26,7 @@ export type DuplicateFields = {
 const normalise = (value?: string) => (value ?? "").toLowerCase().replace(/\s+/g, "");
 
 /**
- * Groups nominations of the same nominee in the same category. Two nominations match
+ * Groups nominations of the same nominee, whatever their category. Two nominations match
  * when their nominee email or staff number is the same (ignoring case and spaces), so a
  * typo in one of those fields still links them.
  *
@@ -46,7 +47,7 @@ export function groupDuplicates<T extends DuplicateFields>(nominations: T[]): Ma
   for (const n of nominations) {
     const email = normalise(n.nomineeEmail);
     const staff = normalise(n.staffNumber);
-    const keys = [email && `${n.categoryId}|email|${email}`, staff && `${n.categoryId}|staff|${staff}`];
+    const keys = [email && `email|${email}`, staff && `staff|${staff}`];
     for (const key of keys) {
       if (!key) continue;
       const other = firstWithKey.get(key);
@@ -79,3 +80,8 @@ export const isSetAside = (n: DuplicateFields) => n.status === "rejected" && !!n
 
 /** True while two or more nominations in the group are still in the running. */
 export const needsDecision = (group: DuplicateFields[]) => group.filter(isActive).length > 1;
+
+/** The distinct categories a group's nominations were made in. */
+export const groupCategories = (group: (DuplicateFields & { categoryName?: string })[]) => [
+  ...new Set(group.map((n) => n.categoryName ?? n.categoryId)),
+];

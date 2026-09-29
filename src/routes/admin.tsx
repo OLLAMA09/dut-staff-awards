@@ -70,7 +70,13 @@ import {
 } from "@/lib/office-to-html-client";
 import { validateDocumentsForCategory, getIncompleteItemsList } from "@/lib/document-validation";
 import { authedFetch } from "@/lib/authed-fetch";
-import { groupDuplicates, isActive, isSetAside, needsDecision } from "@/lib/nomination-duplicates";
+import {
+  groupCategories,
+  groupDuplicates,
+  isActive,
+  isSetAside,
+  needsDecision,
+} from "@/lib/nomination-duplicates";
 import {
   getNominationJudgingStatus,
   getJudgingDetails,
@@ -1308,7 +1314,7 @@ function Dashboard({
     }
   }
 
-  // Same person nominated more than once in a category (see src/lib/nomination-duplicates.ts)
+  // Same person nominated more than once, in any category (see src/lib/nomination-duplicates.ts)
   const duplicateGroups = useMemo(() => groupDuplicates(nominations), [nominations]);
   const unresolvedDuplicateGroups = useMemo(
     () => [...new Set(duplicateGroups.values())].filter(needsDecision),
@@ -1436,8 +1442,10 @@ function Dashboard({
     const scored = others.filter(
       (n) => !isSetAside(n) && judgeScores.some((s) => s.nominationId === n.id && s.score > 0),
     );
+    const forCategory =
+      groupCategories(group).length > 1 ? ` for ${chosen.categoryName ?? chosen.categoryId}` : "";
     const message =
-      `Let ${chosen.nominatorName}'s nomination of ${chosen.nomineeName} go through?\n\n` +
+      `Let ${chosen.nominatorName}'s nomination of ${chosen.nomineeName}${forCategory} go through?\n\n` +
       `The other ${others.length} nomination${others.length !== 1 ? "s" : ""} for this person will be set aside. ` +
       `They stay on record, and you can undo this.` +
       (scored.length > 0
@@ -1843,7 +1851,7 @@ function Dashboard({
     logExportShortlisted(rows.length).catch((err) => console.error("Failed to log export:", err));
   }
 
-  function formatDate(ts: Nomination["createdAt"]) {
+  function formatDate(ts: Nomination["createdAt"], { withTime = false } = {}) {
     if (!ts) {
       // No submission date available
       return "Date unavailable";
@@ -1892,11 +1900,14 @@ function Dashboard({
     }
 
     if (date && !isNaN(date.getTime())) {
-      return date.toLocaleDateString("en-ZA", {
+      const day = date.toLocaleDateString("en-ZA", {
         day: "numeric",
         month: "short",
         year: "numeric",
       });
+      if (!withTime) return day;
+      const time = date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit", hour12: false });
+      return `${day}, ${time}`;
     }
 
     // No valid date found
@@ -2249,7 +2260,7 @@ function Dashboard({
 
       <div className="flex-1 min-w-0">
         {activeSection === "nominations" && <div className="space-y-6">
-          {/* Same person nominated more than once in a category — the admin picks one */}
+          {/* Same person nominated more than once, in any category — the admin picks one */}
           {canManage && unresolvedDuplicateGroups.length > 0 && (
             <Card className="space-y-3 border-amber-300 bg-amber-50/40 p-5">
               <div className="flex items-start gap-2">
@@ -2259,7 +2270,7 @@ function Dashboard({
                     {unresolvedDuplicateGroups.length === 1
                       ? "1 person has"
                       : `${unresolvedDuplicateGroups.length} people have`}{" "}
-                    been nominated more than once in the same category
+                    been nominated more than once
                   </p>
                   <p className="mt-0.5 text-xs text-amber-800">
                     Every nomination is kept. Choose the one that goes through — the others are set
@@ -3745,7 +3756,7 @@ function StatusBadge({ status, setAside = false }: { status: NominationStatus; s
   );
 }
 
-/* ── Duplicate nominations (same person, same category) ────────────── */
+/* ── Duplicate nominations (same person, any category) ─────────────── */
 function DuplicateGroupCard({
   group,
   currentId,
@@ -3761,15 +3772,17 @@ function DuplicateGroupCard({
   currentId?: string;
   canManage: boolean;
   busy: boolean;
-  formatDate: (ts: Nomination["createdAt"]) => string;
+  formatDate: (ts: Nomination["createdAt"], opts?: { withTime?: boolean }) => string;
   onView: (n: Nomination) => void;
   onChoose: (n: Nomination) => void;
   onUndo: (group: Nomination[]) => void;
 }) {
   const undecided = needsDecision(group);
   const stillIn = group.filter(isActive);
+  const categories = groupCategories(group);
+  const acrossCategories = categories.length > 1;
   const summary = undecided
-    ? `Nominated ${group.length} times. Choose the nomination that goes through.`
+    ? `Nominated ${group.length} times${acrossCategories ? ` across ${categories.length} categories` : ""}. Choose the nomination that goes through.`
     : stillIn.length === 1
       ? `${stillIn[0].nominatorName}'s nomination goes through. The others are set aside or rejected.`
       : "None of these nominations is still in the running.";
@@ -3781,7 +3794,7 @@ function DuplicateGroupCard({
           <p className="text-sm font-semibold text-foreground">
             {group[0].nomineeName}{" "}
             <span className="font-normal text-muted-foreground">
-              · {group[0].categoryName ?? group[0].categoryId}
+              · {acrossCategories ? categories.join(", ") : categories[0]}
             </span>
           </p>
           <p className="mt-0.5 text-xs text-amber-800">{summary}</p>
@@ -3818,10 +3831,13 @@ function DuplicateGroupCard({
                   {n.isSelfNomination && (
                     <span className="font-normal text-muted-foreground"> (self-nomination)</span>
                   )}
+                  {acrossCategories && (
+                    <span className="font-normal text-primary"> · {n.categoryName ?? n.categoryId}</span>
+                  )}
                   {n.id === currentId && <span className="font-normal text-muted-foreground"> · viewing</span>}
                 </p>
                 <p className="truncate text-muted-foreground">
-                  {n.nominatorEmail} · {formatDate(n.createdAt)} · {answered} answer{answered !== 1 ? "s" : ""} ·{" "}
+                  {n.nominatorEmail} · {formatDate(n.createdAt, { withTime: true })} · {answered} answer{answered !== 1 ? "s" : ""} ·{" "}
                   {files} file{files !== 1 ? "s" : ""}
                 </p>
               </div>
@@ -3882,7 +3898,7 @@ function NominationDetail({
   onViewNomination: (n: Nomination) => void;
   onUpdate: (id: string, s: NominationStatus) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  formatDate: (ts: Nomination["createdAt"]) => string;
+  formatDate: (ts: Nomination["createdAt"], opts?: { withTime?: boolean }) => string;
   isDateMissing: (ts: Nomination["createdAt"]) => boolean;
   canManage: boolean;
   setShowVideoPreview: (state: { url: string; name: string } | null) => void;
@@ -4543,7 +4559,7 @@ function NominationDetail({
             {[
               ["Department", nom.department],
               ["Staff #", nom.staffNumber],
-              ["Submitted", formatDate(nom.createdAt)],
+              ["Submitted", formatDate(nom.createdAt, { withTime: true })],
             ].map(([k, v]) => (
               <div
                 key={k}
