@@ -2386,7 +2386,7 @@ function Dashboard({
                   <button
                     key={n.id}
                     onClick={() => setDetailNom(n)}
-                    className={`group text-left rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    className={`group text-left rounded-2xl border bg-gray-100 p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                       isDateMissing(n.createdAt)
                         ? "border-amber-200 hover:border-amber-400"
                         : "border-primary/20 hover:border-primary/50"
