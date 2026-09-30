@@ -12,6 +12,7 @@ import { MotionConfig } from "framer-motion";
 
 import appCss from "../styles.css?url";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -150,6 +151,7 @@ function RootComponent() {
       <MotionConfig reducedMotion="user">
         <SmoothScroll />
         <Outlet />
+        <RouteTransitionLoader />
       </MotionConfig>
       <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>

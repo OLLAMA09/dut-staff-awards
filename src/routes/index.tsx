@@ -39,7 +39,6 @@ import ShatterText from "@/components/ShatterText";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
 import EventProgram from "@/components/EventProgram";
-import { RouteTransitionLoader } from "@/components/RouteTransitionLoader";
 import { TriangleBackground } from "@/components/TriangleBackground";
 import { useJudgingActive, useNominationsOpen } from "@/lib/nomination-settings";
 import { AWARD_CATEGORIES, AWARD_THEME } from "@/data/awards";
@@ -500,7 +499,6 @@ function Index() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-hero text-foreground">
-      <RouteTransitionLoader />
 
       {/* Left & right triangle banners in the gutters beside the content column */}
       {(["left", "right"] as const).map((side) => (

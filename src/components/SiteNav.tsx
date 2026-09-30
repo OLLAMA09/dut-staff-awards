@@ -291,14 +291,15 @@ export default function SiteNav() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="w-[85%] sm:w-[400px] border-l border-primary/20 backdrop-blur-xl bg-background/95 flex flex-col overflow-hidden"
+                // White text: the menu panel is the navy/slate page colour
+                className="w-[85%] sm:w-[400px] border-l border-white/15 backdrop-blur-xl bg-background/95 text-white flex flex-col overflow-hidden"
               >
-                <SheetHeader className="flex flex-row items-center justify-between mb-6 pb-6 border-b border-primary/10 shrink-0">
+                <SheetHeader className="flex flex-row items-center justify-between mb-6 pb-6 border-b border-white/15 shrink-0">
                   <div className="flex items-center gap-3">
                     <img src={logo} alt="Logo" className="h-10 w-auto" />
                     <div>
-                      <p className="font-bold text-sm tracking-tight text-primary">DUT AWARDS</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                      <p className="font-bold text-sm tracking-tight text-white">DUT AWARDS</p>
+                      <p className="text-[10px] text-white/75 uppercase tracking-widest">
                         Registrar's Ambit
                       </p>
                     </div>
@@ -308,10 +309,10 @@ export default function SiteNav() {
                   <Link
                     to="/"
                     hash="categories"
-                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
+                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                       <Trophy className="h-5 w-5" />
                     </div>
                     <span className="text-lg font-semibold">Awards</span>
@@ -320,10 +321,10 @@ export default function SiteNav() {
                   <Link
                     to="/"
                     hash="event"
-                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
+                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                       <Calendar className="h-5 w-5" />
                     </div>
                     <span className="text-lg font-semibold">Event</span>
@@ -332,10 +333,10 @@ export default function SiteNav() {
                   <Link
                     to="/"
                     hash="categories"
-                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
+                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                       <Award className="h-5 w-5" />
                     </div>
                     <span className="text-lg font-semibold">Nominate</span>
@@ -343,11 +344,11 @@ export default function SiteNav() {
 
                   <Link
                     to="/winners"
-                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
-                    activeProps={{ className: "bg-primary/10 text-primary" }}
+                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
+                    activeProps={{ className: "bg-white/15 text-white" }}
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <span className="text-lg font-semibold">Winners</span>
@@ -356,11 +357,11 @@ export default function SiteNav() {
                   {isPrivileged && (
                     <Link
                       to="/guide"
-                      className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
-                      activeProps={{ className: "bg-primary/10 text-primary" }}
+                      className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
+                      activeProps={{ className: "bg-white/15 text-white" }}
                       onClick={() => setIsOpen(false)}
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                         <BookOpen className="h-5 w-5" />
                       </div>
                       <span className="text-lg font-semibold">Guide</span>
@@ -370,11 +371,11 @@ export default function SiteNav() {
                   {isPrivileged && (
                     <Link
                       to="/demo"
-                      className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
-                      activeProps={{ className: "bg-primary/10 text-primary" }}
+                      className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
+                      activeProps={{ className: "bg-white/15 text-white" }}
                       onClick={() => setIsOpen(false)}
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                         <Play className="h-5 w-5" />
                       </div>
                       <span className="text-lg font-semibold">Demo</span>
@@ -383,17 +384,17 @@ export default function SiteNav() {
 
                   <Link
                     to="/admin"
-                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-primary/5 hover:text-primary group"
-                    activeProps={{ className: "bg-primary/10 text-primary" }}
+                    className="flex items-center gap-4 px-4 py-4 rounded-xl transition hover:bg-white/10 hover:text-white group"
+                    activeProps={{ className: "bg-white/15 text-white" }}
                     onClick={() => setIsOpen(false)}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 text-white group-hover:bg-white group-hover:text-primary transition-colors">
                       <Users className="h-5 w-5" />
                     </div>
                     <span className="text-lg font-semibold">Admin</span>
                   </Link>
 
-                  <div className="mt-8 pt-8 border-t border-primary/10 space-y-2">
+                  <div className="mt-8 pt-8 border-t border-white/15 space-y-2">
                     {isPWA ? (
                       <Link to="/" hash="about" onClick={() => setIsOpen(false)}>
                         <Button className="w-full h-14 bg-primary text-primary-foreground text-lg font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
@@ -421,8 +422,8 @@ export default function SiteNav() {
                           )}
                         </button>
                         {installState === "unavailable" && (
-                          <div className="rounded-lg border border-primary/15 bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                            <p className="font-semibold text-foreground">
+                          <div className="rounded-lg border border-white/20 bg-white/10 p-3 text-xs text-white/85 space-y-1.5">
+                            <p className="font-semibold text-white">
                               Install Registrar's Ambit Staff Awards
                             </p>
                             <p>

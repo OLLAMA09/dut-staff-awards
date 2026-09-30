@@ -778,10 +778,10 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary">Registrar's Ambit Staff Awards</p>
-          <h1 className="text-3xl font-bold sm:text-4xl">Judge Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Signed in as <span className="font-medium text-foreground">{judgeEmail}</span>
+          <p className="text-xs uppercase tracking-[0.3em] text-white">Registrar's Ambit Staff Awards</p>
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">Judge Dashboard</h1>
+          <p className="mt-1 text-sm text-white">
+            Signed in as <span className="font-semibold text-white">{judgeEmail}</span>
           </p>
         </div>
         <Button
@@ -894,18 +894,20 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative min-w-52 flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/80" />
           <Input
             placeholder="Search nominee or student #…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="border-white/40 pl-9 text-white placeholder:text-white/80"
           />
         </div>
+        {/* White text on the slate background; options get explicit dark-on-white
+            so the native dropdown list stays readable on every platform. */}
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="rounded-md border border-white/40 bg-background px-3 py-2 text-sm text-white [&_option]:bg-white [&_option]:text-foreground"
         >
           <option value="__all__">All categories</option>
           {categories.map((c) => (
@@ -1511,8 +1513,13 @@ function JudgeNominationDetail({
           )}
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+        {/* Scrollable body — focusable, so after a click the arrow/Page keys scroll it too */}
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Nomination answers and evaluation"
+          className="flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-5 focus:outline-none"
+        >
           {/* Key info */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             {[
@@ -1543,16 +1550,17 @@ function JudgeNominationDetail({
           {(catData || (nom.answers && Object.keys(nom.answers).length > 0)) && (
             <div>
               <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+                {/* White: this sits on the dialog's navy/slate background, not on a card */}
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white">
                   Answers &amp; Evidence
                   {criterionByQuestion.size > 0 && (
-                    <span className="font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="font-normal normal-case tracking-normal text-white/80">
                       {" "}
                       · rate each answer as you read it
                     </span>
                   )}
                 </p>
-                <Badge variant="outline" className="shrink-0 border-primary/20 text-[11px]">
+                <Badge variant="outline" className="shrink-0 border-white/40 text-[11px] text-white">
                   {ratedCount}/{criteria.length} rated
                 </Badge>
               </div>
@@ -1759,26 +1767,24 @@ function JudgeNominationDetail({
 
             {/* Section header */}
             <div className="flex items-center justify-between gap-2">
-              <p className="flex items-center gap-2 text-base font-bold">
-                <MessageSquare className="h-4 w-4 text-primary" /> Your Evaluation
+              <p className="flex items-center gap-2 text-base font-bold text-white">
+                <MessageSquare className="h-4 w-4 text-gold" /> Your Evaluation
               </p>
               <div className="flex items-center gap-1.5">
                 <div
                   className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
-                    overallPreview > 0
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
+                    overallPreview > 0 ? "bg-white/20 text-white" : "bg-white/10 text-white/80"
                   }`}
                 >
                   <Star className={`h-3.5 w-3.5 ${overallPreview > 0 ? "fill-yellow-400 text-yellow-400" : ""}`} />
                   {overallPreview.toFixed(1)}/5 overall
                 </div>
-                <Badge variant="outline" className="border-primary/20 text-[11px]">
+                <Badge variant="outline" className="border-white/40 text-[11px] text-white">
                   {ratedCount}/{criteria.length} rated
                 </Badge>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-white/85">
               {criteriaRatedElsewhere.length === criteria.length
                 ? "Rate each criterion 1–5 stars."
                 : "Rate each answer 1–5 stars under its question above."}{" "}
@@ -1835,12 +1841,12 @@ function JudgeNominationDetail({
               )}
             </Button>
             {!realJudgingActive && (
-              <p className="text-center text-xs text-amber-600">
+              <p className="text-center text-xs text-amber-200">
                 ⏸ Real judging is not active. Admin must activate it to submit scores.
               </p>
             )}
             {ratedCount < criteria.length && scoringOpen && realJudgingActive && (
-              <p className="text-center text-xs text-amber-600">
+              <p className="text-center text-xs text-amber-200">
                 Rate all {criteria.length} criteria to submit your evaluation. Still to rate:{" "}
                 {unratedCriteria.map((c) => c.label).join(", ")}.
               </p>

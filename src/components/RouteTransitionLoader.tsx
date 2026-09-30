@@ -1,51 +1,57 @@
-﻿import { useEffect, useState } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
+/** Navigations that finish faster than this never show the loader, so it doesn't flash. */
+const SHOW_AFTER_MS = 150;
+/** Once shown, the loader stays at least this long so it doesn't flicker off. */
+const MIN_VISIBLE_MS = 400;
+
+/**
+ * Full-screen loading page while the router is fetching the next page — its code
+ * (the admin and judge pages are large) and any route data. Mounted once in the root
+ * layout, so it covers every navigation on the site.
+ */
 export function RouteTransitionLoader() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const pending = useRouterState({ select: (s) => s.status === "pending" });
+  const [visible, setVisible] = useState(false);
+  const shownAt = useRef(0);
 
   useEffect(() => {
-    const handleRouteChange = () => {
-      setIsLoading(true);
-      const timer = setTimeout(() => setIsLoading(false), 500);
+    if (pending) {
+      if (visible) return;
+      const timer = setTimeout(() => {
+        shownAt.current = Date.now();
+        setVisible(true);
+      }, SHOW_AFTER_MS);
       return () => clearTimeout(timer);
-    };
-
-    // Subscribe to route changes
-    const unsubscribe = router.subscribe("onBeforeLoad", handleRouteChange);
-
-    return () => {
-      unsubscribe?.();
-    };
-  }, [router]);
+    }
+    if (!visible) return;
+    const remaining = MIN_VISIBLE_MS - (Date.now() - shownAt.current);
+    const timer = setTimeout(() => setVisible(false), Math.max(0, remaining));
+    return () => clearTimeout(timer);
+  }, [pending, visible]);
 
   return (
     <AnimatePresence>
-      {isLoading && (
-        <>
-          {/* Soft curtain wash — bridges the outgoing and incoming page */}
-          <motion.div
-            key="curtain"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="pointer-events-none fixed inset-0 z-40 bg-background/70 backdrop-blur-sm"
-          />
-          <motion.div
-            key="bar"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-primary via-primary to-primary"
-            style={{
-              backgroundSize: "200% 100%",
-              animation: "loading-bar 1.5s ease-in-out",
-            }}
-          />
-        </>
+      {visible && (
+        <motion.div
+          key="route-loader"
+          role="status"
+          aria-live="polite"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] grid place-items-center bg-background/85 backdrop-blur-sm"
+        >
+          <div className="flex flex-col items-center gap-4 text-white">
+            <img src="/logo.png" alt="" className="h-12 w-auto rounded-md shadow-elegant" />
+            <Loader2 className="h-8 w-8 animate-spin text-gold" aria-hidden="true" />
+            <p className="text-sm font-semibold tracking-wide">Loading…</p>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -15,6 +15,9 @@ export function SmoothScroll() {
       duration: 1.1,
       easing: (t) => 1 - Math.pow(1 - t, 3),
       smoothWheel: true,
+      // Let scrollable panels (judge/admin detail views, previews, dialogs) scroll
+      // themselves under the mouse wheel instead of Lenis scrolling the page.
+      allowNestedScroll: true,
     });
 
     let frame: number;
