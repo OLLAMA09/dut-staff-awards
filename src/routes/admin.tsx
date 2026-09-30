@@ -301,6 +301,10 @@ export const Route = createFileRoute("/admin")({
   }),
 });
 
+// "Reset All Nominations" is only available until midnight SAST at the end of
+// 30 Sep 2026; after that the button disables itself (even on an open page).
+const RESET_NOMINATIONS_CUTOFF = new Date("2026-10-01T00:00:00+02:00").getTime();
+
 // ─── Admin quick-start guide ──────────────────────────────────────────────────
 
 const ADMIN_STEPS = [
@@ -772,6 +776,9 @@ function Dashboard({
   const [resolvingDuplicate, setResolvingDuplicate] = useState(false);
   const [resettingVotes, setResettingVotes] = useState(false);
   const [resettingNominations, setResettingNominations] = useState(false);
+  const [resetNominationsAllowed, setResetNominationsAllowed] = useState(
+    () => Date.now() < RESET_NOMINATIONS_CUTOFF,
+  );
   const [newAccountEmail, setNewAccountEmail] = useState("");
   const [newAccountPassword, setNewAccountPassword] = useState("");
   const [newAccountConfirm, setNewAccountConfirm] = useState("");
@@ -871,6 +878,17 @@ function Dashboard({
   );
 
   const activeSectionInfo = sections.find((s) => s.key === activeSection);
+
+  // Disable "Reset All Nominations" at the cutoff without needing a page reload.
+  useEffect(() => {
+    const msLeft = RESET_NOMINATIONS_CUTOFF - Date.now();
+    if (msLeft <= 0) {
+      setResetNominationsAllowed(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setResetNominationsAllowed(false), msLeft);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Real-time Firestore listener — nominations
   // NOTE: We limit to 100 results to prevent exceeding Firebase's 6MB response size limit
@@ -1186,7 +1204,13 @@ function Dashboard({
     if (!confirm("This will permanently delete all " + nominations.length + " nominations. Judge scores will also be cleared. Are you absolutely sure?")) {
       return;
     }
-    
+    // Re-check after the confirm dialogs, which could have been left open past the cutoff.
+    if (Date.now() >= RESET_NOMINATIONS_CUTOFF) {
+      setResetNominationsAllowed(false);
+      toast.error("Resetting all nominations is no longer available.");
+      return;
+    }
+
     setResettingNominations(true);
     try {
       // Delete all nominations
@@ -2199,7 +2223,7 @@ function Dashboard({
                         resetNominations();
                         setShowAdminMenu(false);
                       }}
-                      disabled={true}
+                      disabled={!resetNominationsAllowed || resettingNominations || nominations.length === 0}
                       className="w-full flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm transition hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed text-red-700"
                     >
                       <Trash2 className="h-4 w-4 flex-shrink-0" />
