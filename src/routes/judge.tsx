@@ -50,6 +50,7 @@ import {
   AWARD_CATEGORIES,
   getCriteriaForCategory,
   computeWeightedAverage,
+  type EvaluationCriterion,
 } from "@/data/awards";
 import { getJudgeBreakdown, isJudgeScoreComplete } from "@/lib/nomination-judging";
 import { convertOfficeToPdfUrl } from "@/lib/office-to-pdf";
@@ -209,6 +210,49 @@ function StarPicker({
                   ? "Very good"
                   : "Exceptional"}
       </span>
+    </div>
+  );
+}
+
+// ── One criterion's rating panel (shown under its question's answer) ─────────
+function CriterionRating({
+  number,
+  criterion,
+  value,
+  onChange,
+  disabled,
+}: {
+  number: number;
+  criterion: EvaluationCriterion;
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-4 transition ${
+        value > 0 ? "border-yellow-300/60 bg-yellow-50/40" : "border-primary/10 bg-gray-50"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <Label className="block text-sm font-semibold text-foreground">
+            <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+              {number}
+            </span>
+            Your rating · {criterion.label}
+          </Label>
+          {criterion.description && (
+            <p className="mt-0.5 ml-7 text-xs text-muted-foreground">{criterion.description}</p>
+          )}
+        </div>
+        {value > 0 && (
+          <span className="shrink-0 text-xs font-bold text-yellow-600">{value}/5</span>
+        )}
+      </div>
+      <div className="mt-3">
+        <StarPicker value={value} onChange={onChange} disabled={disabled} />
+      </div>
     </div>
   );
 }
@@ -672,17 +716,22 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
     if (existing?.criteriaScores) {
       setCriteriaInput(existing.criteriaScores);
     } else {
-      const criteria = getCriteriaForCategory(nom.categoryId);
-      setCriteriaInput(Object.fromEntries(criteria.map((c) => [c.id, 1])));
+      // Start unrated: the judge must pick stars for every criterion before submitting.
+      setCriteriaInput({});
     }
     setCommentInput(existing?.comment ?? "");
   }
 
   async function saveScore() {
     if (!detail || !uid) return;
+    const criteria = getCriteriaForCategory(detail.categoryId);
+    const unrated = criteria.filter((c) => !((criteriaInput[c.id] ?? 0) > 0));
+    if (unrated.length > 0) {
+      toast.error(`Rate every criterion before submitting. Still to rate: ${unrated.map((c) => c.label).join(", ")}.`);
+      return;
+    }
     setSaving(true);
     try {
-      const criteria = getCriteriaForCategory(detail.categoryId);
       const overall = computeWeightedAverage(criteriaInput, criteria);
       await setDoc(doc(db, "judge_scores", `${detail.id}_${uid}`), {
         nominationId: detail.id,
@@ -984,6 +1033,25 @@ function JudgeNominationDetail({
   const criteria = getCriteriaForCategory(nom.categoryId);
   const overallPreview = computeWeightedAverage(criteriaInput, criteria);
   const ratedCount = criteria.filter((c) => (criteriaInput[c.id] ?? 0) > 0).length;
+  const unratedCriteria = criteria.filter((c) => !((criteriaInput[c.id] ?? 0) > 0));
+  // Each criterion is rated right under the answer to its question. Any criterion whose
+  // question isn't shown (e.g. an unknown category) is rated in "Your Evaluation" instead.
+  const ratingFor = (c: EvaluationCriterion) => (
+    <CriterionRating
+      key={c.id}
+      number={criteria.indexOf(c) + 1}
+      criterion={c}
+      value={criteriaInput[c.id] ?? 0}
+      onChange={(v) => setCriteriaInput({ ...criteriaInput, [c.id]: v })}
+      disabled={!scoringOpen}
+    />
+  );
+  const criterionByQuestion = new Map(
+    catData ? criteria.filter((c) => c.questionId).map((c) => [c.questionId!, c]) : [],
+  );
+  const criteriaRatedElsewhere = criteria.filter(
+    (c) => !c.questionId || !criterionByQuestion.has(c.questionId),
+  );
 
   const evidenceFiles = useMemo(() => {
     type EvidenceFile = {
@@ -1331,7 +1399,7 @@ function JudgeNominationDetail({
                   </p>
                 </div>
               </div>
-            ) : activePreview.kind === "office" && !activePdfUrl ? (
+            ) : activePreview.kind === "office" && !activePdfUrl && !activeHtml ? (
               <div className="grid h-full place-items-center rounded-lg border border-dashed border-amber-300/80 bg-amber-50 p-4 text-center">
                 <div className="max-w-sm space-y-3">
                   <p className="text-sm font-semibold text-amber-900">Preview unavailable</p>
@@ -1471,16 +1539,37 @@ function JudgeNominationDetail({
             )}
           </div>
 
-          {/* Answers + evidence */}
-          {nom.answers && Object.keys(nom.answers).length > 0 && (
+          {/* Answers + evidence, each followed by the judge's rating for that question */}
+          {(catData || (nom.answers && Object.keys(nom.answers).length > 0)) && (
             <div>
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-primary">
-                Answers &amp; Evidence
-              </p>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+                  Answers &amp; Evidence
+                  {criterionByQuestion.size > 0 && (
+                    <span className="font-normal normal-case tracking-normal text-muted-foreground">
+                      {" "}
+                      · rate each answer as you read it
+                    </span>
+                  )}
+                </p>
+                <Badge variant="outline" className="shrink-0 border-primary/20 text-[11px]">
+                  {ratedCount}/{criteria.length} rated
+                </Badge>
+              </div>
+              {!scoringOpen && (
+                <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Real judging not yet activated by admin — cannot submit scores</span>
+                </div>
+              )}
               <div className="space-y-4">
                 {catData
-                  ? catData.questions.map((q) =>
-                      nom.answers[q.id] || nom.uploads?.[q.id] ? (
+                  ? catData.questions.map((q) => {
+                      const questionCriterion = criterionByQuestion.get(q.id);
+                      const hasContent = !!(nom.answers?.[q.id] || nom.uploads?.[q.id]);
+                      // Unanswered questions still show when they carry a rating
+                      if (!hasContent && !questionCriterion) return null;
+                      return (
                         <div
                           key={q.id}
                           className="rounded-xl border border-primary/10 bg-white p-4 shadow-sm"
@@ -1489,7 +1578,10 @@ function JudgeNominationDetail({
                             {q.section}
                           </p>
                           <p className="mb-2 text-xs italic text-muted-foreground">{q.prompt}</p>
-                          {nom.answers[q.id] && (
+                          {!hasContent && (
+                            <p className="text-sm text-muted-foreground">No answer or evidence provided.</p>
+                          )}
+                          {nom.answers?.[q.id] && (
                             <p className="whitespace-pre-wrap text-sm leading-relaxed">
                               {nom.answers[q.id]}
                             </p>
@@ -1572,10 +1664,15 @@ function JudgeNominationDetail({
                               </div>
                             );
                           })}
+                          {questionCriterion && (
+                            <div className="mt-4 border-t border-primary/10 pt-4">
+                              {ratingFor(questionCriterion)}
+                            </div>
+                          )}
                         </div>
-                      ) : null,
-                    )
-                  : Object.entries(nom.answers).map(([k, v]) => (
+                      );
+                    })
+                  : Object.entries(nom.answers ?? {}).map(([k, v]) => (
                       <div
                         key={k}
                         className="rounded-xl border border-primary/10 bg-white p-4 shadow-sm"
@@ -1682,57 +1779,16 @@ function JudgeNominationDetail({
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Rate each criterion 1–5 stars. Your overall score (weighted average) is added to the leaderboard total.
+              {criteriaRatedElsewhere.length === criteria.length
+                ? "Rate each criterion 1–5 stars."
+                : "Rate each answer 1–5 stars under its question above."}{" "}
+              Your overall score (weighted average) is added to the leaderboard total.
             </p>
 
-            {!scoringOpen && (
-              <div
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm border border-amber-200 bg-amber-50 text-amber-700`}
-              >
-                <AlertTriangle className="h-4 w-4" />
-                <span>Real judging not yet activated by admin — cannot submit scores</span>
-              </div>
+            {/* Criteria with no question on screen to sit under */}
+            {criteriaRatedElsewhere.length > 0 && (
+              <div className="space-y-3">{criteriaRatedElsewhere.map(ratingFor)}</div>
             )}
-
-            {/* Per-criterion star pickers */}
-            <div className="space-y-3">
-              {criteria.map((c, i) => (
-                <div
-                  key={c.id}
-                  className={`rounded-xl border p-4 transition ${
-                    (criteriaInput[c.id] ?? 0) > 0
-                      ? "border-yellow-300/60 bg-yellow-50/40"
-                      : "border-primary/10 bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <Label className="block text-sm font-semibold text-foreground">
-                        <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
-                          {i + 1}
-                        </span>
-                        {c.label}
-                      </Label>
-                      {c.description && (
-                        <p className="mt-0.5 ml-7 text-xs text-muted-foreground">{c.description}</p>
-                      )}
-                    </div>
-                    {(criteriaInput[c.id] ?? 0) > 0 && (
-                      <span className="shrink-0 text-xs font-bold text-yellow-600">
-                        {criteriaInput[c.id]}/5
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-3">
-                    <StarPicker
-                      value={criteriaInput[c.id] ?? 0}
-                      onChange={(v) => setCriteriaInput({ ...criteriaInput, [c.id]: v })}
-                      disabled={!scoringOpen}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
 
             {/* Comment */}
             <div className="rounded-xl border border-primary/15 bg-blue-50/40 p-4">
@@ -1785,7 +1841,8 @@ function JudgeNominationDetail({
             )}
             {ratedCount < criteria.length && scoringOpen && realJudgingActive && (
               <p className="text-center text-xs text-amber-600">
-                Rate all {criteria.length} criteria to submit your evaluation.
+                Rate all {criteria.length} criteria to submit your evaluation. Still to rate:{" "}
+                {unratedCriteria.map((c) => c.label).join(", ")}.
               </p>
             )}
             {hasScore && (

@@ -24,6 +24,8 @@ export type AwardCategory = {
 
 export type EvaluationCriterion = {
   id: string;
+  /** The nomination question this criterion scores; judges rate it right under that answer */
+  questionId?: string;
   /** Short label shown above the star picker */
   label: string;
   /** Optional helper text describing what to assess */
@@ -39,48 +41,48 @@ export type EvaluationCriterion = {
 // criterion, 1–5 rating scale).
 
 const CRITERIA_LIVING_VALUES: EvaluationCriterion[] = [
-  { id: "lv-c1", label: "Core Values", description: "Which University core value(s) (Accountability, Respect, Integrity, Honesty, Transparency) did the nominee consistently demonstrate?", max: 5, weight: 25 },
-  { id: "lv-c2", label: "Lasting Impact", description: "Did the nominee's actions make a positive and lasting impact in their unit or department, or beyond?", max: 5, weight: 25 },
-  { id: "lv-c3", label: "Teamwork & Fairness", description: "Evidence of teamwork, respect, fairness, and contribution to shared goals.", max: 5, weight: 25 },
-  { id: "lv-c4", label: "Leadership & Sustainability", description: "Examples of leadership, responsibility, and commitment to sustainability.", max: 5, weight: 25 },
+  { id: "lv-c1", questionId: "lv-1", label: "Core Values", description: "Which University core value(s) (Accountability, Respect, Integrity, Honesty, Transparency) did the nominee consistently demonstrate?", max: 5, weight: 25 },
+  { id: "lv-c2", questionId: "lv-2", label: "Lasting Impact", description: "Did the nominee's actions make a positive and lasting impact in their unit or department, or beyond?", max: 5, weight: 25 },
+  { id: "lv-c3", questionId: "lv-3", label: "Teamwork & Fairness", description: "Evidence of teamwork, respect, fairness, and contribution to shared goals.", max: 5, weight: 25 },
+  { id: "lv-c4", questionId: "lv-4", label: "Leadership & Sustainability", description: "Examples of leadership, responsibility, and commitment to sustainability.", max: 5, weight: 25 },
 ];
 
 const CRITERIA_BEST_UNIT: EvaluationCriterion[] = [
-  { id: "bpu-c1", label: "Strategic Alignment", description: "How does the unit align its strategies and activities with ENVISION2030 and the DUT Way?", max: 5, weight: 20 },
-  { id: "bpu-c2", label: "Service Standards", description: "Does the unit deliver consistently high standards of service and performance?", max: 5, weight: 20 },
-  { id: "bpu-c3", label: "Measurable Impact", description: "What measurable impact has the unit had on student/university well-being, engagement, or success?", max: 5, weight: 20 },
-  { id: "bpu-c4", label: "Innovation", description: "Innovative approaches introduced by the unit.", max: 5, weight: 20 },
-  { id: "bpu-c5", label: "Professionalism & Values", description: "Does the unit uphold professionalism, respect, integrity, and excellence?", max: 5, weight: 20 },
+  { id: "bpu-c1", questionId: "bpu-1", label: "Strategic Alignment", description: "How does the unit align its strategies and activities with ENVISION2030 and the DUT Way?", max: 5, weight: 20 },
+  { id: "bpu-c2", questionId: "bpu-2", label: "Service Standards", description: "Does the unit deliver consistently high standards of service and performance?", max: 5, weight: 20 },
+  { id: "bpu-c3", questionId: "bpu-3", label: "Measurable Impact", description: "What measurable impact has the unit had on student/university well-being, engagement, or success?", max: 5, weight: 20 },
+  { id: "bpu-c4", questionId: "bpu-4", label: "Innovation", description: "Innovative approaches introduced by the unit.", max: 5, weight: 20 },
+  { id: "bpu-c5", questionId: "bpu-5", label: "Professionalism & Values", description: "Does the unit uphold professionalism, respect, integrity, and excellence?", max: 5, weight: 20 },
 ];
 
 const CRITERIA_LEADERSHIP_MENTORSHIP: EvaluationCriterion[] = [
-  { id: "lm-c1", label: "Leadership & Integrity", description: "Did the nominee demonstrate outstanding leadership and integrity?", max: 5, weight: 20 },
-  { id: "lm-c2", label: "Mentorship", description: "Examples of mentorship that supported colleagues or students.", max: 5, weight: 20 },
-  { id: "lm-c3", label: "Influence on Development", description: "How did the nominee positively influence the development of others?", max: 5, weight: 20 },
-  { id: "lm-c4", label: "Developing Future Leaders", description: "Did they invest in developing future leaders?", max: 5, weight: 20 },
-  { id: "lm-c5", label: "Values-Reflected Leadership", description: "Does their leadership reflect DUT values?", max: 5, weight: 20 },
+  { id: "lm-c1", questionId: "lm-1", label: "Leadership & Integrity", description: "Did the nominee demonstrate outstanding leadership and integrity?", max: 5, weight: 20 },
+  { id: "lm-c2", questionId: "lm-2", label: "Mentorship", description: "Examples of mentorship that supported colleagues or students.", max: 5, weight: 20 },
+  { id: "lm-c3", questionId: "lm-3", label: "Influence on Development", description: "How did the nominee positively influence the development of others?", max: 5, weight: 20 },
+  { id: "lm-c4", questionId: "lm-4", label: "Developing Future Leaders", description: "Did they invest in developing future leaders?", max: 5, weight: 20 },
+  { id: "lm-c5", questionId: "lm-5", label: "Values-Reflected Leadership", description: "Does their leadership reflect DUT values?", max: 5, weight: 20 },
 ];
 
 const CRITERIA_RISING_STAR: EvaluationCriterion[] = [
-  { id: "rs-c1", label: "Early Contributions", description: "Significant contributions made within the nominee's first 5 years.", max: 5, weight: 20 },
-  { id: "rs-c2", label: "Initiative & Problem-Solving", description: "Examples of initiative and problem-solving that positively influenced their unit or the university.", max: 5, weight: 20 },
-  { id: "rs-c3", label: "Community Influence", description: "How have they positively influenced the university community?", max: 5, weight: 20 },
-  { id: "rs-c4", label: "Learning & Growth", description: "Commitment to learning and growth.", max: 5, weight: 20 },
-  { id: "rs-c5", label: "Upholding DUT Values", description: "Evidence of upholding DUT values.", max: 5, weight: 20 },
+  { id: "rs-c1", questionId: "rs-1", label: "Early Contributions", description: "Significant contributions made within the nominee's first 5 years.", max: 5, weight: 20 },
+  { id: "rs-c2", questionId: "rs-2", label: "Initiative & Problem-Solving", description: "Examples of initiative and problem-solving that positively influenced their unit or the university.", max: 5, weight: 20 },
+  { id: "rs-c3", questionId: "rs-3", label: "Community Influence", description: "How have they positively influenced the university community?", max: 5, weight: 20 },
+  { id: "rs-c4", questionId: "rs-4", label: "Learning & Growth", description: "Commitment to learning and growth.", max: 5, weight: 20 },
+  { id: "rs-c5", questionId: "rs-5", label: "Upholding DUT Values", description: "Evidence of upholding DUT values.", max: 5, weight: 20 },
 ];
 
 const CRITERIA_BEST_COLLABORATION: EvaluationCriterion[] = [
-  { id: "bc-c1", label: "Collaborative Project", description: "Quality of the collaborative project or initiative described.", max: 5, weight: 25 },
-  { id: "bc-c2", label: "Trust & Communication", description: "Did the team demonstrate trust and effective communication?", max: 5, weight: 25 },
-  { id: "bc-c3", label: "Cross-Department Collaboration", description: "Did the collaboration bridge multiple roles or departments?", max: 5, weight: 25 },
-  { id: "bc-c4", label: "Measurable Outcomes", description: "Measurable outcomes or results achieved.", max: 5, weight: 25 },
+  { id: "bc-c1", questionId: "bc-1", label: "Collaborative Project", description: "Quality of the collaborative project or initiative described.", max: 5, weight: 25 },
+  { id: "bc-c2", questionId: "bc-2", label: "Trust & Communication", description: "Did the team demonstrate trust and effective communication?", max: 5, weight: 25 },
+  { id: "bc-c3", questionId: "bc-3", label: "Cross-Department Collaboration", description: "Did the collaboration bridge multiple roles or departments?", max: 5, weight: 25 },
+  { id: "bc-c4", questionId: "bc-4", label: "Measurable Outcomes", description: "Measurable outcomes or results achieved.", max: 5, weight: 25 },
 ];
 
 const CRITERIA_OUTSTANDING_REGISTRARS: EvaluationCriterion[] = [
-  { id: "or-c1", label: "Above and Beyond", description: "Did the nominee go above and beyond to enhance the student/staff experience?", max: 5, weight: 25 },
-  { id: "or-c2", label: "Creativity & Innovation", description: "Examples of creativity or innovation in service delivery.", max: 5, weight: 25 },
-  { id: "or-c3", label: "Measurable Impact", description: "Measurable positive impact on students, staff or structures (performance, satisfaction, well-being).", max: 5, weight: 25 },
-  { id: "or-c4", label: "Collaboration", description: "Evidence of collaboration with other departments.", max: 5, weight: 25 },
+  { id: "or-c1", questionId: "or-1", label: "Above and Beyond", description: "Did the nominee go above and beyond to enhance the student/staff experience?", max: 5, weight: 25 },
+  { id: "or-c2", questionId: "or-2", label: "Creativity & Innovation", description: "Examples of creativity or innovation in service delivery.", max: 5, weight: 25 },
+  { id: "or-c3", questionId: "or-3", label: "Measurable Impact", description: "Measurable positive impact on students, staff or structures (performance, satisfaction, well-being).", max: 5, weight: 25 },
+  { id: "or-c4", questionId: "or-4", label: "Collaboration", description: "Evidence of collaboration with other departments.", max: 5, weight: 25 },
 ];
 
 /** Criteria map keyed by category id */

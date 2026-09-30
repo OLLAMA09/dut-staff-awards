@@ -550,7 +550,6 @@ function AdminPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-hero">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_top,oklch(0.90_0.04_260)_0%,transparent_60%)]" />
       {/* Force Password Change Modal */}
       {usedTempPassword && !passwordChanged && currentUser && (
         <ForcePasswordChangeModal
@@ -2011,7 +2010,8 @@ function Dashboard({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset>
+      {/* Transparent, so the panel content sits straight on the page background */}
+      <SidebarInset className="bg-transparent">
         {/* Text sitting directly on the slate page background is white — only white
             reads clearly on that mid-tone. */}
         <div className="flex items-center gap-2 border-b border-white/15 px-4 py-3 text-white sm:px-6">
