@@ -6,6 +6,7 @@
  * - Which judges have completed scores for this specific nomination (all criteria rated)
  */
 
+import { debugLog } from "@/lib/debug-log";
 import { getCriteriaForCategory } from "@/data/awards";
 
 export type JudgeScore = {
@@ -82,7 +83,7 @@ export function getNominationJudgingStatus(
       })
       .map(s => s.judgeEmail);
     
-    console.log(`[JUDGING] ${nominationId} - PENDING: ${completedJudges}/${activeJudges} judges complete. Missing: ${missingJudges.join(', ')}`);
+    debugLog(`[JUDGING] ${nominationId} - PENDING: ${completedJudges}/${activeJudges} judges complete. Missing: ${missingJudges.join(', ')}`);
   }
   
   return status;

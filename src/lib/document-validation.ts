@@ -5,6 +5,7 @@
  * for each nomination question that specifies evidence requirements.
  */
 
+import { debugLog } from "@/lib/debug-log";
 import { AWARD_CATEGORIES, type AwardCategory } from "@/data/awards";
 import type { EvidenceUploads } from "@/components/EvidenceUploader";
 
@@ -92,7 +93,7 @@ export function validateDocumentsForCategory(
 
   // Debug: Log what we received
   if (typeof window !== 'undefined') {
-    console.log('📋 [Validation] Input uploads structure:', {
+    debugLog('📋 [Validation] Input uploads structure:', {
       uploadKeys: Object.keys(uploads),
       uploadStructure: uploads,
       requirementCount: requirements.length,
@@ -105,7 +106,7 @@ export function validateDocumentsForCategory(
     const questionUploads = uploads[req.questionId];
     
     if (typeof window !== 'undefined') {
-      console.log(`📋 [Validation] Question "${req.questionId}":`, {
+      debugLog(`📋 [Validation] Question "${req.questionId}":`, {
         questionExists: !!questionUploads,
         questionUploadKeys: questionUploads ? Object.keys(questionUploads) : [],
         evidenceLabelCount: req.evidenceLabels.length,
@@ -124,7 +125,7 @@ export function validateDocumentsForCategory(
         flatUploadsBySlot = questionUploads as Record<string, unknown[]>;
         
         if (typeof window !== 'undefined') {
-          console.log(`  ✓ Detected nested structure for "${req.questionId}":`, {
+          debugLog(`  ✓ Detected nested structure for "${req.questionId}":`, {
             slotKeys: Object.keys(flatUploadsBySlot),
             slotCounts: Object.fromEntries(
               Object.entries(flatUploadsBySlot).map(([k, v]) => [k, Array.isArray(v) ? v.length : 'not-array'])
@@ -146,7 +147,7 @@ export function validateDocumentsForCategory(
       });
       
       if (typeof window !== 'undefined' && Object.keys(flatUploadsBySlot).length > 0) {
-        console.log(`  ⚠️ Using flat structure for "${req.questionId}":`, {
+        debugLog(`  ⚠️ Using flat structure for "${req.questionId}":`, {
           slotKeys: Object.keys(flatUploadsBySlot),
         });
       }
@@ -171,7 +172,7 @@ export function validateDocumentsForCategory(
     }
 
     if (typeof window !== 'undefined') {
-      console.log(`  📄 Question "${req.questionId}" evidence check:`, {
+      debugLog(`  📄 Question "${req.questionId}" evidence check:`, {
         allSlotsHaveEvidence,
         requiredSlots: req.evidenceLabels.length,
         missingSlots,
@@ -203,7 +204,7 @@ export function validateDocumentsForCategory(
   }
 
   if (typeof window !== 'undefined') {
-    console.log('📊 [Validation] Summary:', {
+    debugLog('📊 [Validation] Summary:', {
       isValid: missingDocuments.length === 0,
       uploadedCount,
       requiredCount,

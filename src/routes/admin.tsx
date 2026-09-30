@@ -1,6 +1,7 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { debugLog } from "@/lib/debug-log";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import {
   Lock,
@@ -946,7 +947,7 @@ function Dashboard({
       .then((snap) => {
         if (isMounted) {
           const scores = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as (typeof judgeScores)[number]);
-          console.log(`[Firestore] ✅ PRE-LOADED ${scores.length} judge scores from cache at ${new Date().toLocaleTimeString()}`);
+          debugLog(`[Firestore] ✅ PRE-LOADED ${scores.length} judge scores from cache at ${new Date().toLocaleTimeString()}`);
           setJudgeScores(scores);
           setJudgeScoresLoaded(true);  // Mark loaded so stats can calculate correctly
         }
@@ -962,7 +963,7 @@ function Dashboard({
       (snap) => {
         if (isMounted) {
           const scores = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as (typeof judgeScores)[number]);
-          console.log(`[Firestore] 🔄 LISTENER UPDATE: ${scores.length} judge scores at ${new Date().toLocaleTimeString()}`);
+          debugLog(`[Firestore] 🔄 LISTENER UPDATE: ${scores.length} judge scores at ${new Date().toLocaleTimeString()}`);
           setJudgeScores(scores);
         }
       },
@@ -1328,11 +1329,11 @@ function Dashboard({
 
   const stats = useMemo(
     () => {
-      console.log(`[STATS] Calculating with ${judgeScores.length} judge scores loaded (ready: ${judgeScoresLoaded})`);
+      debugLog(`[STATS] Calculating with ${judgeScores.length} judge scores loaded (ready: ${judgeScoresLoaded})`);
       
       // Don't calculate until judge scores are pre-loaded
       if (!judgeScoresLoaded) {
-        console.log(`[STATS] Skipping calculation - judge scores not yet loaded`);
+        debugLog(`[STATS] Skipping calculation - judge scores not yet loaded`);
         return {
           total: nominations.length,
           pending: nominations.filter((n) => n.status === "pending").length,
@@ -1356,7 +1357,7 @@ function Dashboard({
         selfNominated: nominations.filter((n) => n.isSelfNomination).length,
       };
       
-      console.log(`[STATS] Result:`, result);
+      debugLog(`[STATS] Result:`, result);
       return result;
     },
     [nominations, judgeScores, judgeScoresLoaded],

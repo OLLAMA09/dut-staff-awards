@@ -1,6 +1,7 @@
 ﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
+import { debugLog } from "@/lib/debug-log";
 import { initializeClarityUser, clearClarityUser } from "@/lib/clarity-integration";
 import { motion } from "framer-motion";
 import {
@@ -451,7 +452,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
         const scores = snap.docs.map((d) => ({ ...d.data() } as JudgeScoreDoc));
         setAllScores(scores);
         setScoresLoaded(true);
-        console.log(`[Firestore] ✅ PRE-LOADED ${scores.length} judge scores for leaderboard`);
+        debugLog(`[Firestore] ✅ PRE-LOADED ${scores.length} judge scores for leaderboard`);
       }
     }).catch(err => {
       console.error("[Firestore] Failed to pre-load scores:", err);
