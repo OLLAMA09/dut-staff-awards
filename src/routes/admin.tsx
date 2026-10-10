@@ -39,6 +39,7 @@ import {
   AlertCircle,
   MoreVertical,
   ChevronsUpDown,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -110,6 +111,7 @@ import {
 } from "@/lib/audit-logging";
 import { exportJudgesToExcel, exportByCategory } from "@/lib/export-judges";
 import { exportLeaderboardByCategory, exportLeaderboardUnified } from "@/lib/export-leaderboard";
+import { exportScorecard, type ScorecardNomination, type ScorecardScore } from "@/lib/export-scorecard";
 import {
   signIn,
   signOut as firebaseSignOut,
@@ -794,6 +796,7 @@ function Dashboard({
   const [nomineeEmailResults, setNomineeEmailResults] = useState<{ [key: string]: { success: boolean; message: string } }>({});
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [sendingShortlistEmails, setSendingShortlistEmails] = useState(false);
+  const [exportingScorecard, setExportingScorecard] = useState(false);
   const [shortlistEmailResults, setShortlistEmailResults] = useState<{ email: string; success: boolean; error?: string }[]>([]);
   const [showVideoPreview, setShowVideoPreview] = useState<{ url: string; name: string } | null>(null);
   
@@ -1294,6 +1297,35 @@ function Dashboard({
 
     // Log audit action
     logExportResults(rows.length).catch((err) => console.error("Failed to log export:", err));
+  }
+
+  async function exportScorecardReport() {
+    setExportingScorecard(true);
+    try {
+      // Fetch fresh rather than using the live lists, which are capped (100 nominations /
+      // 500 scores). Rows match the leaderboard: nominations still in judging (shortlisted).
+      const [nomSnap, scoreSnap] = await Promise.all([
+        getDocs(query(collection(db, "nominations"), where("status", "==", "shortlisted"))),
+        getDocs(collection(db, "judge_scores")),
+      ]);
+      const result = await exportScorecard(
+        nomSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ScorecardNomination, "id">) })),
+        scoreSnap.docs.map((d) => d.data() as ScorecardScore),
+      );
+      if (result.success) {
+        toast.success(result.message);
+        logExportJudgeReport("scorecard", result.evaluatorCount).catch((err) =>
+          console.error("Failed to log export:", err),
+        );
+      } else {
+        toast.error(result.message);
+      }
+    } catch (err) {
+      console.error("Scorecard export failed:", err);
+      toast.error("Couldn't load the results for the scorecard. Please try again.");
+    } finally {
+      setExportingScorecard(false);
+    }
   }
 
   async function addCategory(e: React.FormEvent) {
@@ -2173,7 +2205,19 @@ function Dashboard({
                         {judgeScores.length}
                       </Badge>
                     </button>
-                    
+
+                    <button
+                      onClick={() => {
+                        exportScorecardReport();
+                        setShowAdminMenu(false);
+                      }}
+                      disabled={exportingScorecard || stats.shortlisted === 0}
+                      className="w-full flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm transition hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 flex-shrink-0 text-primary" />
+                      <span className="flex-1 text-left">{exportingScorecard ? "Building Scorecard…" : "Scorecard (Excel)"}</span>
+                    </button>
+
                     <button
                       onClick={() => {
                         exportCsv();
@@ -2599,7 +2643,8 @@ function Dashboard({
                   <div>
                     <h4 className="font-medium text-sm">Export Judge Data</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Download judge scores organized by category or performance metrics.
+                      Download judge scores organized by category or performance metrics, or the
+                      Evaluation Committee scorecard (E1–En per judge, Average, Final, top 3 highlighted).
                     </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
@@ -2618,6 +2663,20 @@ function Dashboard({
                     >
                       <Download className="h-4 w-4" />
                       Summary Report
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={exportScorecardReport}
+                      disabled={exportingScorecard}
+                    >
+                      {exportingScorecard ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileSpreadsheet className="h-4 w-4" />
+                      )}
+                      Scorecard
                     </Button>
                   </div>
                 </div>
