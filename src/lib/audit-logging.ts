@@ -212,6 +212,24 @@ export async function logResolveDuplicateNominations(
 }
 
 /**
+ * Log a duplicate-nomination decision that lets several nominations of the same person
+ * go through together, one per category
+ */
+export async function logKeepDuplicateNominations(
+  nomineeName: string,
+  categoryNames: string[],
+  keptIds: string[],
+): Promise<string> {
+  return logAuditAction({
+    action: 'RESOLVE_DUPLICATE_NOMINATIONS',
+    description: `Let ${keptIds.length} nominations for ${nomineeName} go through, one in each of ${categoryNames.join(', ')}`,
+    affectedCount: keptIds.length,
+    metadata: { nomineeName, categoryNames, keptIds },
+    status: 'success',
+  });
+}
+
+/**
  * Log nomination deletion
  */
 export async function logDeleteNomination(nomineeName: string, categoryName: string): Promise<string> {

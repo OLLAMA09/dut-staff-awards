@@ -1,12 +1,15 @@
 /**
  * Duplicate nominations: the same person nominated more than once — in the same award
  * category or across categories, by the same nominator or by different ones. Only one
- * nomination per person can go through.
+ * nomination per person can go through, unless an admin lets them all go through.
  *
  * Every nomination is kept. An admin chooses the one that goes through; the others are
  * set aside with status "rejected" plus `duplicateOf` (the chosen nomination's id) and
  * `statusBeforeDuplicate`, so the choice can be undone. Judges only ever load
  * shortlisted nominations, so set-aside ones never reach them.
+ *
+ * When the nominations are in different award categories, the admin can instead let
+ * them all go through — one per category. Each of those is marked `keptWithDuplicates`.
  */
 
 export type DuplicateStatus = "pending" | "shortlisted" | "rejected";
@@ -21,6 +24,8 @@ export type DuplicateFields = {
   duplicateOf?: string;
   /** The status a set-aside nomination had before it was set aside, restored on undo */
   statusBeforeDuplicate?: DuplicateStatus;
+  /** The admin let this nomination go through alongside this person's nominations in other categories */
+  keptWithDuplicates?: boolean;
 };
 
 const normalise = (value?: string) => (value ?? "").toLowerCase().replace(/\s+/g, "");
@@ -78,8 +83,33 @@ export const isActive = (n: DuplicateFields) => n.status !== "rejected";
 /** Set aside because another nomination of the same person was chosen to go through. */
 export const isSetAside = (n: DuplicateFields) => n.status === "rejected" && !!n.duplicateOf;
 
-/** True while two or more nominations in the group are still in the running. */
-export const needsDecision = (group: DuplicateFields[]) => group.filter(isActive).length > 1;
+/** True when no two of these nominations are in the same category. */
+export const inDifferentCategories = (noms: DuplicateFields[]) =>
+  new Set(noms.map((n) => n.categoryId)).size === noms.length;
+
+/**
+ * True while two or more nominations in the group are still in the running, unless the
+ * admin let all of them go through together (one per category). A nomination that
+ * arrives after that decision needs a new one.
+ */
+export const needsDecision = (group: DuplicateFields[]) => {
+  const active = group.filter(isActive);
+  if (active.length < 2) return false;
+  return !(active.every((n) => n.keptWithDuplicates) && inDifferentCategories(active));
+};
+
+/** The undecided nominations can all go through together: each is in a different category. */
+export const canKeepAll = (group: DuplicateFields[]) => {
+  const active = group.filter(isActive);
+  return active.length > 1 && inDifferentCategories(active);
+};
+
+/**
+ * A set-aside nomination can go through alongside the ones still in the running when none
+ * of those is in its category.
+ */
+export const canKeepAlongside = (n: DuplicateFields, group: DuplicateFields[]) =>
+  isSetAside(n) && !group.some((other) => isActive(other) && other.categoryId === n.categoryId);
 
 /** The distinct categories a group's nominations were made in. */
 export const groupCategories = (group: (DuplicateFields & { categoryName?: string })[]) => [

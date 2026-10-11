@@ -8,6 +8,7 @@ import {
   LogOut,
   Download,
   CheckCircle2,
+  CheckCheck,
   XCircle,
   Clock,
   Trash2,
@@ -73,6 +74,8 @@ import {
 import { validateDocumentsForCategory, getIncompleteItemsList } from "@/lib/document-validation";
 import { authedFetch } from "@/lib/authed-fetch";
 import {
+  canKeepAll,
+  canKeepAlongside,
   groupCategories,
   groupDuplicates,
   isActive,
@@ -98,6 +101,7 @@ import {
   logAuditActionError,
   logUpdateNominationStatus,
   logResolveDuplicateNominations,
+  logKeepDuplicateNominations,
   logDeleteNomination,
   logAddCategory,
   logDeleteCategory,
@@ -222,6 +226,8 @@ type Nomination = {
   duplicateOf?: string;
   /** Status before being set aside as a duplicate — restored if the choice is undone */
   statusBeforeDuplicate?: NominationStatus;
+  /** Let through alongside this person's nominations in other categories */
+  keptWithDuplicates?: boolean;
 };
 
 type PreviewKind = "pdf" | "office" | "image" | "video" | "html";
@@ -1517,6 +1523,7 @@ function Dashboard({
         ...(isSetAside(chosen) ? { status: chosen.statusBeforeDuplicate ?? "pending" } : {}),
         duplicateOf: deleteField(),
         statusBeforeDuplicate: deleteField(),
+        keptWithDuplicates: deleteField(),
         updatedAt: serverTimestamp(),
       });
       for (const n of others) {
@@ -1524,6 +1531,7 @@ function Dashboard({
           // Already set aside: just point it at the new choice, keeping its original status
           ...(isSetAside(n) ? {} : { status: "rejected", statusBeforeDuplicate: n.status }),
           duplicateOf: chosen.id,
+          keptWithDuplicates: deleteField(),
           updatedAt: serverTimestamp(),
         });
       }
@@ -1548,12 +1556,79 @@ function Dashboard({
     }
   }
 
-  /** Undo a duplicate decision: every set-aside nomination in the group gets its old status back. */
+  /**
+   * Let a person's nominations go through together, one per category: every nomination
+   * still in the running, plus `alsoKeep` (a set-aside one) when given. Only offered when
+   * no two of them are in the same category.
+   */
+  async function keepDuplicatesTogether(group: Nomination[], alsoKeep?: Nomination) {
+    if (!canManage) return;
+    const active = group.filter(isActive);
+    const toKeep = alsoKeep ? [...active, alsoKeep] : active;
+    if (toKeep.length < 2 || new Set(toKeep.map((n) => n.categoryId)).size !== toKeep.length) return;
+    const categoryOf = (n: Nomination) => n.categoryName ?? n.categoryId;
+    const nominee = group[0].nomineeName;
+    const message = alsoKeep
+      ? `Let ${alsoKeep.nominatorName}'s nomination of ${nominee} for ${categoryOf(alsoKeep)} go through as well?\n\n` +
+        `It goes through alongside ${active.map((n) => `the ${categoryOf(n)} nomination`).join(" and ")}. ` +
+        `Each award judges its own nomination. You can undo this.`
+      : `Let ${toKeep.length === 2 ? "both" : `all ${toKeep.length}`} nominations of ${nominee} go through, one in each award?\n\n` +
+        toKeep.map((n) => `• ${categoryOf(n)}: by ${n.nominatorName}`).join("\n") +
+        `\n\nEach can then be shortlisted and judged in its own award. You can undo this.`;
+    if (!confirm(message)) return;
+
+    setResolvingDuplicate(true);
+    try {
+      const batch = writeBatch(db);
+      for (const n of toKeep) {
+        batch.update(doc(db, "nominations", n.id), {
+          ...(isSetAside(n)
+            ? {
+                status: n.statusBeforeDuplicate ?? "pending",
+                duplicateOf: deleteField(),
+                statusBeforeDuplicate: deleteField(),
+              }
+            : {}),
+          keptWithDuplicates: true,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      await batch.commit();
+      toast.success(
+        `${toKeep.length === 2 ? "Both" : `All ${toKeep.length}`} nominations of ${nominee} go through, one in each award.`,
+      );
+      await logKeepDuplicateNominations(
+        nominee,
+        toKeep.map(categoryOf),
+        toKeep.map((n) => n.id),
+      ).catch((err) => console.error("Failed to log duplicate decision:", err));
+    } catch (err) {
+      console.error("Failed to keep duplicate nominations:", err);
+      toast.error("Couldn't save your choice. Please try again.");
+      await logAuditActionError(
+        "RESOLVE_DUPLICATE_NOMINATIONS",
+        `Failed to keep nominations ${toKeep.map((n) => n.id).join(", ")} together`,
+        err as Error,
+      ).catch(() => {});
+    } finally {
+      setResolvingDuplicate(false);
+    }
+  }
+
+  /**
+   * Undo a duplicate decision: every set-aside nomination in the group gets its old status
+   * back, and nominations let through together are no longer marked as such.
+   */
   async function undoDuplicateChoice(group: Nomination[]) {
     if (!canManage) return;
     const setAside = group.filter(isSetAside);
-    if (setAside.length === 0) return;
-    if (!confirm(`Bring back the ${setAside.length} set-aside nomination${setAside.length !== 1 ? "s" : ""} for ${group[0].nomineeName}? You'll need to choose again.`)) return;
+    const kept = group.filter((n) => n.keptWithDuplicates && !isSetAside(n));
+    if (setAside.length === 0 && kept.length === 0) return;
+    const question =
+      setAside.length > 0
+        ? `Bring back the ${setAside.length} set-aside nomination${setAside.length !== 1 ? "s" : ""} for ${group[0].nomineeName}?`
+        : `Undo letting ${kept.length === 2 ? "both" : `all ${kept.length}`} nominations of ${group[0].nomineeName} go through?`;
+    if (!confirm(`${question} You'll need to choose again.`)) return;
 
     setResolvingDuplicate(true);
     try {
@@ -1563,6 +1638,13 @@ function Dashboard({
           status: n.statusBeforeDuplicate ?? "pending",
           duplicateOf: deleteField(),
           statusBeforeDuplicate: deleteField(),
+          keptWithDuplicates: deleteField(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      for (const n of kept) {
+        batch.update(doc(db, "nominations", n.id), {
+          keptWithDuplicates: deleteField(),
           updatedAt: serverTimestamp(),
         });
       }
@@ -1572,7 +1654,7 @@ function Dashboard({
         group[0].nomineeName,
         group[0].categoryName,
         null,
-        setAside.map((n) => n.id),
+        [...setAside, ...kept].map((n) => n.id),
       ).catch((err) => console.error("Failed to log duplicate undo:", err));
     } catch (err) {
       console.error("Failed to undo duplicate choice:", err);
@@ -2345,7 +2427,9 @@ function Dashboard({
                   </p>
                   <p className="mt-0.5 text-xs text-amber-800">
                     Every nomination is kept. Choose the one that goes through — the others are set
-                    aside, and you can undo this. Until you choose, none of them can be shortlisted.
+                    aside, and you can undo this. If they're for different awards, you can let them
+                    all go through instead, one per award. Until you choose, none of them can be
+                    shortlisted.
                   </p>
                 </div>
               </div>
@@ -2358,6 +2442,7 @@ function Dashboard({
                   formatDate={formatDate}
                   onView={setDetailNom}
                   onChoose={chooseDuplicate}
+                  onKeepTogether={keepDuplicatesTogether}
                   onUndo={undoDuplicateChoice}
                 />
               ))}
@@ -3227,6 +3312,7 @@ function Dashboard({
               duplicateGroup={duplicateGroups.get(detailNom.id)}
               duplicateBusy={resolvingDuplicate}
               onChooseDuplicate={chooseDuplicate}
+              onKeepDuplicatesTogether={keepDuplicatesTogether}
               onUndoDuplicate={undoDuplicateChoice}
               onViewNomination={setDetailNom}
               onUpdate={update}
@@ -3855,6 +3941,7 @@ function DuplicateGroupCard({
   formatDate,
   onView,
   onChoose,
+  onKeepTogether,
   onUndo,
 }: {
   group: Nomination[];
@@ -3865,17 +3952,29 @@ function DuplicateGroupCard({
   formatDate: (ts: Nomination["createdAt"], opts?: { withTime?: boolean }) => string;
   onView: (n: Nomination) => void;
   onChoose: (n: Nomination) => void;
+  /** Let the nominations still in the running (plus `alsoKeep`) go through together, one per category */
+  onKeepTogether: (group: Nomination[], alsoKeep?: Nomination) => void;
   onUndo: (group: Nomination[]) => void;
 }) {
   const undecided = needsDecision(group);
   const stillIn = group.filter(isActive);
+  // Several nominations go through together, one per category
+  const keptTogether = !undecided && stillIn.length > 1;
+  const keepAllOffered = undecided && canKeepAll(group);
+  const bothOrAll = stillIn.length === 2 ? "both" : `all ${stillIn.length}`;
   const categories = groupCategories(group);
   const acrossCategories = categories.length > 1;
   const summary = undecided
-    ? `Nominated ${group.length} times${acrossCategories ? ` across ${categories.length} categories` : ""}. Choose the nomination that goes through.`
-    : stillIn.length === 1
-      ? `${stillIn[0].nominatorName}'s nomination goes through. The others are set aside or rejected.`
-      : "None of these nominations is still in the running.";
+    ? `Nominated ${group.length} times${acrossCategories ? ` across ${categories.length} categories` : ""}. ` +
+      (keepAllOffered
+        ? `Choose the nomination that goes through, or use ${bothOrAll} — one in each award.`
+        : "Choose the nomination that goes through.")
+    : keptTogether
+      ? `${bothOrAll[0].toUpperCase()}${bothOrAll.slice(1)} nominations go through, one in each award.` +
+        (group.length > stillIn.length ? " The others are set aside or rejected." : "")
+      : stillIn.length === 1
+        ? `${stillIn[0].nominatorName}'s nomination goes through. The others are set aside or rejected.`
+        : "None of these nominations is still in the running.";
 
   return (
     <div className="rounded-xl border border-amber-200 bg-card p-4">
@@ -3889,18 +3988,31 @@ function DuplicateGroupCard({
           </p>
           <p className="mt-0.5 text-xs text-amber-800">{summary}</p>
         </div>
-        {canManage && group.some(isSetAside) && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={busy}
-            onClick={() => onUndo(group)}
-            className="h-7 px-2 text-xs"
-          >
-            <RotateCcw className="mr-1 h-3.5 w-3.5" /> Undo choice
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {canManage && keepAllOffered && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => onKeepTogether(group)}
+              className="h-7 bg-gold px-2 text-xs font-semibold text-primary hover:bg-gold/90"
+            >
+              <CheckCheck className="mr-1 h-3.5 w-3.5" /> Use {bothOrAll}
+            </Button>
+          )}
+          {canManage && group.some((n) => isSetAside(n) || (n.keptWithDuplicates && isActive(n))) && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => onUndo(group)}
+              className="h-7 px-2 text-xs"
+            >
+              <RotateCcw className="mr-1 h-3.5 w-3.5" /> Undo choice
+            </Button>
+          )}
+        </div>
       </div>
       <ul className="mt-3 space-y-2">
         {group.map((n) => {
@@ -3943,7 +4055,19 @@ function DuplicateGroupCard({
                   <Eye className="mr-1 h-3.5 w-3.5" /> View
                 </Button>
               )}
-              {canManage && (undecided ? isActive(n) : isSetAside(n)) && (
+              {canManage && !undecided && canKeepAlongside(n, group) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  className="h-7 border-gold px-2 text-xs font-semibold text-primary hover:bg-gold/10"
+                  onClick={() => onKeepTogether(group, n)}
+                >
+                  <CheckCheck className="mr-1 h-3.5 w-3.5" /> Also use this one
+                </Button>
+              )}
+              {canManage && (undecided || keptTogether ? isActive(n) : isSetAside(n)) && (
                 <Button
                   type="button"
                   size="sm"
@@ -3952,7 +4076,11 @@ function DuplicateGroupCard({
                   onClick={() => onChoose(n)}
                 >
                   <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-                  {undecided ? "Use this one" : "Use this one instead"}
+                  {keptTogether || (undecided && keepAllOffered)
+                    ? "Use only this one"
+                    : undecided
+                      ? "Use this one"
+                      : "Use this one instead"}
                 </Button>
               )}
             </li>
@@ -3969,6 +4097,7 @@ function NominationDetail({
   duplicateGroup,
   duplicateBusy,
   onChooseDuplicate,
+  onKeepDuplicatesTogether,
   onUndoDuplicate,
   onViewNomination,
   onUpdate,
@@ -3984,6 +4113,7 @@ function NominationDetail({
   duplicateGroup?: Nomination[];
   duplicateBusy: boolean;
   onChooseDuplicate: (n: Nomination) => void;
+  onKeepDuplicatesTogether: (group: Nomination[], alsoKeep?: Nomination) => void;
   onUndoDuplicate: (group: Nomination[]) => void;
   onViewNomination: (n: Nomination) => void;
   onUpdate: (id: string, s: NominationStatus) => Promise<void>;
@@ -4640,6 +4770,7 @@ function NominationDetail({
               formatDate={formatDate}
               onView={onViewNomination}
               onChoose={onChooseDuplicate}
+              onKeepTogether={onKeepDuplicatesTogether}
               onUndo={onUndoDuplicate}
             />
           )}
@@ -4901,8 +5032,10 @@ function NominationDetail({
               {shortlistBlocked && (
                 <p className="w-full text-xs text-amber-800">
                   {isSetAside(nom)
-                    ? "Set aside: another nomination of this person goes through. Use “Use this one instead” above to switch."
-                    : "This person has more than one nomination here. Choose the one that goes through (above) before shortlisting."}
+                    ? duplicateGroup && canKeepAlongside(nom, duplicateGroup)
+                      ? "Set aside: another nomination of this person goes through. Use “Also use this one” above to let this one go through too, since it's for a different award."
+                      : "Set aside: another nomination of this person goes through. Use the choices above to change this."
+                    : "This person has more than one nomination. Choose the one that goes through (above) before shortlisting."}
                 </p>
               )}
               <Button
