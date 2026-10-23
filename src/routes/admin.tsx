@@ -122,6 +122,7 @@ import {
   subscribeToAuthState,
   resetPassword,
   registerUser,
+  createAccountForUser,
 } from "@/lib/auth-firebase";
 import { setNominationsOpen } from "@/lib/nomination-settings";
 import SiteNav from "@/components/SiteNav";
@@ -1106,12 +1107,7 @@ function Dashboard({
 
     setCreatingAccount(true);
     try {
-      const cred = await registerUser(newAccountEmail, newAccountPassword);
-      await setDoc(doc(db, "users", cred.user.uid), {
-        email: cred.user.email,
-        role: newAccountRole,
-        createdAt: serverTimestamp(),
-      });
+      await createAccountForUser(newAccountEmail, newAccountPassword, newAccountRole);
       toast.success(`Account created successfully for ${newAccountRole === "admin" ? "Administrator" : "Judge"} (${newAccountEmail})`);
       setNewAccountEmail("");
       setNewAccountPassword("");

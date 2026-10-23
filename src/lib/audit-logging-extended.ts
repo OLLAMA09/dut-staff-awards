@@ -78,6 +78,11 @@ export function resetSessionId(): void {
   currentSessionId = generateSessionId();
 }
 
+// Firestore rejects undefined field values, so drop optional fields callers didn't provide
+function stripUndefined<T extends Record<string, any>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T;
+}
+
 /**
  * Log any admin or judge module interaction
  */
@@ -89,15 +94,16 @@ export async function logModuleInteraction(log: Omit<ExtendedAuditLog, 'id' | 't
       return null;
     }
 
-    const auditEntry: ExtendedAuditLog = {
+    const auditEntry: ExtendedAuditLog = stripUndefined({
       ...log,
+      metadata: log.metadata && stripUndefined(log.metadata),
       userUid: user.uid,
       userEmail: user.email ?? 'unknown',
       timestamp: serverTimestamp(),
       sessionId: currentSessionId,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
       ipAddress: 'N/A',
-    };
+    });
 
     const docRef = await addDoc(collection(db, 'audit_logs_extended'), auditEntry);
     console.log(`[Audit] ${log.action} by ${log.userRole} logged`, { module: log.module, resourceId: log.affectedResourceId });
