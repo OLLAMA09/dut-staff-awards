@@ -79,4 +79,13 @@ describe("buildScorecard", () => {
     expect(evaluators).toEqual([]);
     expect(groups[0].rows[0]).toMatchObject({ scores: [], average: null, final: null, place: null });
   });
+
+  it("keeps a real 0 — a judge who rated every criterion 0 — in the average", () => {
+    const { groups, evaluators } = buildScorecard(
+      [nom("n1", "A", "living-values")],
+      [{ ...score("n1", "j1", 0), criteriaScores: { "lv-c1": 0, "lv-c2": 0 } }, score("n1", "j2", 4)],
+    );
+    expect(evaluators).toHaveLength(2);
+    expect(groups[0].rows[0]).toMatchObject({ scores: [0, 4], average: 2, final: 40 });
+  });
 });

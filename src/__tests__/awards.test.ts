@@ -96,6 +96,12 @@ describe("computeWeightedAverage", () => {
     expect(result).toBeCloseTo(4, 5);
   });
 
+  it("counts a criterion rated 0 as a real 0, pulling the average down", () => {
+    // (0 + 4) / 2 = 2
+    const result = computeWeightedAverage({ a: 0, b: 4 }, uniform);
+    expect(result).toBeCloseTo(2, 5);
+  });
+
   it("ignores criteria not in the scores object (partial scoring)", () => {
     // Only 'a' scored — result is based on 1 criterion
     const result = computeWeightedAverage({ a: 4 }, uniform);

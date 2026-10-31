@@ -87,6 +87,7 @@ import {
   getJudgingDetails,
   getActivejudgeCount,
   getJudgeBreakdown,
+  hasJudgeRating,
   type JudgeScore,
 } from "@/lib/nomination-judging";
 import {
@@ -1498,7 +1499,7 @@ function Dashboard({
     const group = duplicateGroups.get(chosen.id) ?? [];
     const others = group.filter((n) => n.id !== chosen.id && (isActive(n) || isSetAside(n)));
     const scored = others.filter(
-      (n) => !isSetAside(n) && judgeScores.some((s) => s.nominationId === n.id && s.score > 0),
+      (n) => !isSetAside(n) && judgeScores.some((s) => s.nominationId === n.id && hasJudgeRating(s)),
     );
     const forCategory =
       groupCategories(group).length > 1 ? ` for ${chosen.categoryName ?? chosen.categoryId}` : "";
@@ -4848,8 +4849,8 @@ function NominationDetail({
                     const hasIncompleteSubmission = judgeScores.some(s => 
                       s.nominationId === nom.id && 
                       s.judgeUid === judge.judgeUid && 
-                      s.score > 0 && 
-                      Object.keys((s.criteriaScores || {})).filter(k => (s.criteriaScores || {})[k] > 0).length < getCriteriaForCategory(nom.categoryId).length
+                      hasJudgeRating(s) &&
+                      Object.keys((s.criteriaScores || {})).filter(k => (s.criteriaScores || {})[k] >= 0).length < getCriteriaForCategory(nom.categoryId).length
                     );
                     
                     return (
@@ -5353,7 +5354,7 @@ function LeaderboardAdminPanel() {
     const nomineeMap = new Map<string, any>();
 
     for (const s of rankedScores) {
-      if (s.score === 0) continue;
+      if (!hasJudgeRating(s)) continue;
       const key = s.nominationId;
       if (!nomineeMap.has(key)) {
         const catMatch = AWARD_CATEGORIES.find((c) => c.name === s.categoryName);

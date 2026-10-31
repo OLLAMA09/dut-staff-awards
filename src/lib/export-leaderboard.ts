@@ -1,4 +1,4 @@
-import { JudgeScore } from "@/lib/nomination-judging";
+import { JudgeScore, hasJudgeRating } from "@/lib/nomination-judging";
 import * as XLSX from "xlsx";
 
 interface LeaderboardRow {
@@ -31,7 +31,7 @@ export function exportLeaderboardByCategory(judgeScores: JudgeScore[], nominatio
     const scoresByNominee = new Map<string, NomineeWithScores>();
 
     for (const score of judgeScores) {
-      if (!score.score || score.score === 0) continue; // Skip unscored
+      if (!hasJudgeRating(score)) continue; // Skip unscored (a rated 0 still counts)
       const key = `${score.nominationId}`;
 
       if (!scoresByNominee.has(key)) {
@@ -136,7 +136,7 @@ export function exportLeaderboardUnified(judgeScores: JudgeScore[], nominations:
     const scoresByNominee = new Map<string, NomineeWithScores>();
 
     for (const score of judgeScores) {
-      if (!score.score || score.score === 0) continue;
+      if (!hasJudgeRating(score)) continue;
       const key = `${score.nominationId}`;
 
       if (!scoresByNominee.has(key)) {

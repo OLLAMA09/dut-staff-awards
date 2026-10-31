@@ -20,6 +20,7 @@ import { collection, onSnapshot, query, orderBy, doc, getDoc, addDoc, serverTime
 import { db } from "@/lib/firebase";
 import { signIn, signOut as firebaseSignOut, subscribeToAuthState } from "@/lib/auth-firebase";
 import { AWARD_THEME, AWARD_CATEGORIES, getCriteriaForCategory } from "@/data/awards";
+import { hasJudgeRating } from "@/lib/nomination-judging";
 import SiteNav from "@/components/SiteNav";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -489,7 +490,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
     const nomineeMap = new Map<string, NomineeEntry>();
 
     for (const s of allScores) {
-      if (s.score === 0) continue; // skip unscored
+      if (!hasJudgeRating(s)) continue; // skip unscored (a rated 0 still counts)
       if (shortlistedIds && !shortlistedIds.has(s.nominationId)) continue;
       const key = s.nominationId;
       if (!nomineeMap.has(key)) {
@@ -516,7 +517,7 @@ function LeaderboardContent({ role }: { role: string | null }) {
       // Accumulate per-criterion ratings for the breakdown view.
       if (s.criteriaScores) {
         for (const [critId, value] of Object.entries(s.criteriaScores)) {
-          if (typeof value !== "number" || value <= 0) continue;
+          if (typeof value !== "number" || value < 0) continue;
           const totals = entry.criteriaTotals[critId] ?? { sum: 0, count: 0 };
           totals.sum += value;
           totals.count += 1;

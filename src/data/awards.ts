@@ -18,7 +18,7 @@ export type AwardCategory = {
 
 // ─── Judge evaluation criteria ────────────────────────────────────────────────
 // Each category has its own set of judge criteria derived from its nomination
-// questions. Judges rate 1–5 stars per criterion; the leaderboard sums the totals.
+// questions. Judges rate 0–5 stars per criterion; the leaderboard sums the totals.
 //
 // Keep `id` values stable once scoring begins — changing an id orphans saved scores.
 
@@ -107,7 +107,10 @@ export function getCriteriaForCategory(categoryId?: string): EvaluationCriterion
   return CRITERIA_BY_CATEGORY[categoryId] ?? EVALUATION_CRITERIA;
 }
 
-/** Weighted average (0–5 scale) of a set of per-criterion star ratings. */
+/**
+ * Weighted average (0–5 scale) of a set of per-criterion star ratings.
+ * A criterion rated 0 counts as 0; one with no rating (no key) is left out.
+ */
 export function computeWeightedAverage(
   criteriaScores: Record<string, number>,
   criteria: EvaluationCriterion[] = EVALUATION_CRITERIA,
@@ -116,7 +119,7 @@ export function computeWeightedAverage(
   let weightTotal = 0;
   for (const c of criteria) {
     const raw = criteriaScores[c.id];
-    if (typeof raw !== "number" || raw <= 0) continue;
+    if (typeof raw !== "number" || raw < 0) continue;
     const max = c.max ?? 5;
     const weight = c.weight ?? 1;
     // Normalise each criterion onto a 0–5 scale before weighting.

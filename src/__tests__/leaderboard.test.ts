@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { AWARD_CATEGORIES, getCriteriaForCategory } from "@/data/awards";
+import { hasJudgeRating } from "@/lib/nomination-judging";
 
 // ─── Pure helpers mirrored from LeaderboardContent ──────────────────────────
 
@@ -35,7 +36,7 @@ function buildNomineeMap(allScores: JudgeScoreDoc[]): Map<string, NomineeEntry> 
   const nomineeMap = new Map<string, NomineeEntry>();
 
   for (const s of allScores) {
-    if (s.score === 0) continue;
+    if (!hasJudgeRating(s)) continue;
     const key = s.nominationId;
     if (!nomineeMap.has(key)) {
       const catMatch = AWARD_CATEGORIES.find((c) => c.name === s.categoryName);
@@ -59,7 +60,7 @@ function buildNomineeMap(allScores: JudgeScoreDoc[]): Map<string, NomineeEntry> 
 
     if (s.criteriaScores) {
       for (const [critId, value] of Object.entries(s.criteriaScores)) {
-        if (typeof value !== "number" || value <= 0) continue;
+        if (typeof value !== "number" || value < 0) continue;
         const totals = entry.criteriaTotals[critId] ?? { sum: 0, count: 0 };
         totals.sum += value;
         totals.count += 1;
@@ -81,11 +82,23 @@ describe("buildNomineeMap", () => {
     expect(buildNomineeMap([]).size).toBe(0);
   });
 
-  it("skips score=0 entries (unscored)", () => {
+  it("skips score=0 entries with no ratings (unscored)", () => {
     const map = buildNomineeMap([
       { nominationId: "n1", nomineeName: "Alice", categoryName: "Dean", score: 0 },
+      { nominationId: "n2", nomineeName: "Bob", categoryName: "Dean", score: 0, criteriaScores: {} },
     ]);
     expect(map.size).toBe(0);
+  });
+
+  it("keeps a score of 0 when the judge rated every criterion 0", () => {
+    const map = buildNomineeMap([
+      { nominationId: "n1", nomineeName: "Alice", categoryName: "Dean", score: 0, criteriaScores: { "academic": 0, "leadership": 0 } },
+      { nominationId: "n1", nomineeName: "Alice", categoryName: "Dean", score: 4 },
+    ]);
+    const entry = map.get("n1")!;
+    expect(entry.judgeCount).toBe(2);
+    expect(entry.totalScore).toBeCloseTo(4);
+    expect(entry.avgScore).toBeCloseTo(2);
   });
 
   it("creates one entry per unique nominationId", () => {
@@ -120,12 +133,12 @@ describe("buildNomineeMap", () => {
     expect(entry.criteriaTotals["leadership"].count).toBe(1);
   });
 
-  it("ignores criteriaScore values that are 0 or negative", () => {
+  it("counts criteriaScore values of 0 and ignores negative ones", () => {
     const map = buildNomineeMap([
       { nominationId: "n1", nomineeName: "Alice", categoryName: "Dean", score: 3, criteriaScores: { "academic": 0, "leadership": -1 } },
     ]);
     const entry = map.get("n1")!;
-    expect(Object.keys(entry.criteriaTotals).length).toBe(0);
+    expect(entry.criteriaTotals).toEqual({ academic: { sum: 0, count: 1 } });
   });
 
   it("resolves categoryId from AWARD_CATEGORIES by name when not provided", () => {

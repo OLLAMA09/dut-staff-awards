@@ -22,8 +22,18 @@ export type JudgeScore = {
 };
 
 /**
+ * Whether a saved judge score holds a real rating. Judges can give a criterion 0
+ * stars, so an overall score of 0 still counts when its criteria were rated; only
+ * a doc with no ratings at all is unscored.
+ */
+export function hasJudgeRating(judgeScore: Pick<JudgeScore, "score" | "criteriaScores">): boolean {
+  if (judgeScore.score > 0) return true;
+  return Object.values(judgeScore.criteriaScores ?? {}).some((v) => typeof v === "number" && v >= 0);
+}
+
+/**
  * Determines if a judge's score for a nomination is "complete"
- * A score is complete if the judge has started scoring (has a non-zero score value)
+ * A score is complete if the judge has started scoring (has rated at least one criterion)
  * Missing individual criteria are treated as 0 for calculation purposes
  */
 export function isJudgeScoreComplete(
@@ -31,10 +41,10 @@ export function isJudgeScoreComplete(
   categoryId: string,
 ): boolean {
   if (!judgeScore) return false;
-  
-  // If they have any score value > 0, they started judging - count as complete
+
+  // If they have rated anything (0 included), they started judging - count as complete
   // Individual missing criteria will be treated as 0 in calculations
-  return judgeScore.score > 0;
+  return hasJudgeRating(judgeScore);
 }
 
 /**

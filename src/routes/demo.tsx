@@ -198,6 +198,8 @@ const DEMO_NOMINEES: DemoNominee[] = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+const MIN_COMMENT_LENGTH = 10;
+
 type DemoScore = {
   criteriaScores: Record<string, number>;
   comment: string;
@@ -462,6 +464,7 @@ function DemoPage() {
   const [scores, setScores] = useState<Record<string, DemoScore>>({});
   const [criteriaInput, setCriteriaInput] = useState<Record<string, number>>({});
   const [commentInput, setCommentInput] = useState("");
+  const [commentTouched, setCommentTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [tab, setTab] = useState<"nominees" | "leaderboard">("nominees");
@@ -469,6 +472,9 @@ function DemoPage() {
   const criteria = selected ? getCriteriaForCategory(selected.categoryId) : [];
   const ratedCount = criteria.filter((c) => (criteriaInput[c.id] ?? 0) > 0).length;
   const overallPreview = computeWeightedAverage(criteriaInput, criteria);
+  const commentLength = commentInput.trim().length;
+  const commentValid = commentLength >= MIN_COMMENT_LENGTH;
+  const showCommentError = (commentTouched || commentInput.length > 0) && !commentValid;
 
   function openNominee(n: DemoNominee) {
     setSelected(n);
@@ -476,6 +482,7 @@ function DemoPage() {
     const existing = scores[n.id];
     setCriteriaInput(existing?.criteriaScores ?? {});
     setCommentInput(existing?.comment ?? "");
+    setCommentTouched(false);
   }
 
   function closeNominee() {
@@ -484,7 +491,7 @@ function DemoPage() {
   }
 
   async function submitScore() {
-    if (!selected || ratedCount === 0) return;
+    if (!selected || ratedCount === 0 || !commentValid) return;
     setSaving(true);
     await new Promise((r) => setTimeout(r, 700));
     const overall = computeWeightedAverage(criteriaInput, criteria);
@@ -600,33 +607,54 @@ function DemoPage() {
                         <div className="mt-3">
                           <StarPicker
                             value={criteriaInput[c.id] ?? 0}
-                            onChange={(v) => setCriteriaInput((prev) => ({ ...prev, [c.id]: v }))}
+                            onChange={(v) =>
+                              setCriteriaInput((prev) => {
+                                // The demo stays 1–5: a cleared star is unrated, not a 0.
+                                const next = { ...prev };
+                                if (v === 0) delete next[c.id];
+                                else next[c.id] = v;
+                                return next;
+                              })
+                            }
                           />
                         </div>
                       </div>
                     ))}
 
                     {/* Comment */}
-                    <div className="rounded-xl border border-primary/15 bg-blue-50/40 p-4">
-                      <Label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <div className={`rounded-xl border p-4 transition ${showCommentError ? "border-red-300 bg-red-50/40" : "border-primary/15 bg-blue-50/40"}`}>
+                      <Label htmlFor="demo-comment" className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
                         <MessageSquare className="h-4 w-4 text-primary" />
-                        Comments & Justification
-                        <span className="ml-auto text-xs font-normal text-muted-foreground">{commentInput.length}/1000</span>
+                        Comments & Justification <span className="text-red-500">*</span>
+                        <span className={`ml-auto text-xs font-normal ${showCommentError ? "text-red-600" : "text-muted-foreground"}`}>{commentInput.length}/1000</span>
                       </Label>
                       <Textarea
+                        id="demo-comment"
                         value={commentInput}
                         onChange={(e) => setCommentInput(e.target.value.slice(0, 1000))}
+                        onBlur={() => setCommentTouched(true)}
                         placeholder="Write your evaluation notes — strengths, concerns, reasoning for your ratings…"
                         rows={5}
-                        className="resize-y bg-white"
+                        aria-invalid={showCommentError}
+                        aria-describedby="demo-comment-hint"
+                        className={`resize-y bg-white ${showCommentError ? "border-red-400 focus-visible:ring-red-400" : ""}`}
                       />
-                      <p className="mt-1.5 text-[11px] text-muted-foreground">Visible to admin only — not shown to nominees.</p>
+                      {showCommentError ? (
+                        <p id="demo-comment-hint" className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-red-600">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          Comment must be at least {MIN_COMMENT_LENGTH} characters — {MIN_COMMENT_LENGTH - commentLength} more needed.
+                        </p>
+                      ) : (
+                        <p id="demo-comment-hint" className="mt-1.5 text-[11px] text-muted-foreground">
+                          Minimum {MIN_COMMENT_LENGTH} characters. Visible to admin only — not shown to nominees.
+                        </p>
+                      )}
                     </div>
 
                     {/* Submit */}
                     <Button
                       onClick={submitScore}
-                      disabled={saving || ratedCount === 0}
+                      disabled={saving || ratedCount === 0 || !commentValid}
                       className="w-full bg-primary text-primary-foreground disabled:opacity-50"
                       size="lg"
                     >
@@ -646,8 +674,10 @@ function DemoPage() {
                       )}
                     </Button>
 
-                    {ratedCount === 0 && (
+                    {ratedCount === 0 ? (
                       <p className="text-center text-xs text-amber-600">Rate at least one criterion above to enable submission.</p>
+                    ) : !commentValid && (
+                      <p className="text-center text-xs text-amber-600">Write at least {MIN_COMMENT_LENGTH} characters of justification to enable submission.</p>
                     )}
 
                     {savedId === selected.id && (

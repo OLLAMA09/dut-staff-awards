@@ -1,5 +1,6 @@
 import type { Borders, Cell, Fill, Worksheet } from "exceljs";
 import { AWARD_CATEGORIES, AWARD_THEME } from "@/data/awards";
+import { hasJudgeRating } from "@/lib/nomination-judging";
 
 /**
  * Evaluation Committee scorecard export (.xlsx).
@@ -26,6 +27,7 @@ export type ScorecardScore = {
   judgeUid: string;
   judgeEmail: string;
   score: number;
+  criteriaScores?: Record<string, number>;
 };
 
 /** Each judge's overall score is a weighted average on a 0–5 scale. */
@@ -69,7 +71,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 /** Groups, scores and ranks the scorecard rows. Exported for tests. */
 export function buildScorecard(nominations: ScorecardNomination[], scores: ScorecardScore[]) {
   const included = new Set(nominations.map((n) => n.id));
-  const relevant = scores.filter((s) => included.has(s.nominationId) && s.score > 0);
+  const relevant = scores.filter((s) => included.has(s.nominationId) && hasJudgeRating(s));
 
   // Stable evaluator numbering: alphabetical by judge email.
   const byJudge = new Map<string, Evaluator>();

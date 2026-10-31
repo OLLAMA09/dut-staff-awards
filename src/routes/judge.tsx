@@ -160,18 +160,22 @@ type JudgeScore = {
   updatedAt: { toDate?: () => Date } | null;
 };
 
+const RATING_LABELS = ["Not demonstrated", "Poor", "Fair", "Good", "Very good", "Exceptional"];
+
 // ── Interactive 0-5 star picker ───────────────────────────────────────────────
+// `undefined` means not rated yet; 0 is a real rating the judge picks on purpose.
 function StarPicker({
   value,
   onChange,
   disabled,
 }: {
-  value: number;
-  onChange: (v: number) => void;
+  value: number | undefined;
+  onChange: (v: number | undefined) => void;
   disabled?: boolean;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const display = hovered ?? value;
+  const display = hovered ?? value ?? 0;
+  const zeroActive = (hovered ?? value) === 0;
 
   return (
     <div
@@ -179,11 +183,25 @@ function StarPicker({
       onMouseLeave={() => setHovered(null)}
       aria-label="Star rating"
     >
+      <button
+        type="button"
+        onClick={() => onChange(value === 0 ? undefined : 0)}
+        onMouseEnter={() => setHovered(0)}
+        className={`mr-1 flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-bold transition hover:scale-110 focus-visible:outline-none ${
+          zeroActive
+            ? "border-red-400 bg-red-50 text-red-600"
+            : "border-muted-foreground/30 text-muted-foreground/60"
+        }`}
+        aria-label="0 stars"
+        aria-pressed={value === 0}
+      >
+        0
+      </button>
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          onClick={() => onChange(value === star ? 0 : star)}
+          onClick={() => onChange(value === star ? undefined : star)}
           onMouseEnter={() => setHovered(star)}
           className="transition-transform hover:scale-110 focus-visible:outline-none"
           aria-label={`${star} star${star !== 1 ? "s" : ""}`}
@@ -198,17 +216,7 @@ function StarPicker({
         </button>
       ))}
       <span className="ml-2 self-center text-sm font-bold text-foreground">
-        {value === 0
-          ? "No rating"
-          : value === 1
-            ? "Poor"
-            : value === 2
-              ? "Fair"
-              : value === 3
-                ? "Good"
-                : value === 4
-                  ? "Very good"
-                  : "Exceptional"}
+        {value === undefined ? "No rating" : RATING_LABELS[value]}
       </span>
     </div>
   );
@@ -224,14 +232,14 @@ function CriterionRating({
 }: {
   number: number;
   criterion: EvaluationCriterion;
-  value: number;
-  onChange: (v: number) => void;
+  value: number | undefined;
+  onChange: (v: number | undefined) => void;
   disabled?: boolean;
 }) {
   return (
     <div
       className={`rounded-xl border p-4 transition ${
-        value > 0 ? "border-yellow-300/60 bg-yellow-50/40" : "border-primary/10 bg-gray-50"
+        value !== undefined ? "border-yellow-300/60 bg-yellow-50/40" : "border-primary/10 bg-gray-50"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -246,7 +254,7 @@ function CriterionRating({
             <p className="mt-0.5 ml-7 text-xs text-muted-foreground">{criterion.description}</p>
           )}
         </div>
-        {value > 0 && (
+        {value !== undefined && (
           <span className="shrink-0 text-xs font-bold text-yellow-600">{value}/5</span>
         )}
       </div>
@@ -469,8 +477,8 @@ const JUDGE_STEPS = [
   },
   {
     num: 4,
-    title: "Rate each criterion 1–5 stars",
-    body: "The right panel shows the evaluation criteria for that award category. Rate each criterion from 1 (Poor) to 5 (Exceptional). You can rate as many or as few criteria as you like per session — your ratings auto-save when you click Submit.",
+    title: "Rate each criterion 0–5 stars",
+    body: "The right panel shows the evaluation criteria for that award category. Rate each criterion from 0 (Not demonstrated) to 5 (Exceptional) — tap the 0 button if the nomination shows no evidence for a criterion. You can rate as many or as few criteria as you like per session — your ratings auto-save when you click Submit.",
   },
   {
     num: 5,
@@ -725,7 +733,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
   async function saveScore() {
     if (!detail || !uid) return;
     const criteria = getCriteriaForCategory(detail.categoryId);
-    const unrated = criteria.filter((c) => !((criteriaInput[c.id] ?? 0) > 0));
+    const unrated = criteria.filter((c) => typeof criteriaInput[c.id] !== "number");
     if (unrated.length > 0) {
       toast.error(`Rate every criterion before submitting. Still to rate: ${unrated.map((c) => c.label).join(", ")}.`);
       return;
@@ -928,7 +936,7 @@ function JudgeDashboard({ onLogout, loggingOut }: { onLogout: () => void; loggin
         {filtered.map((nom) => {
           const scored = myScores[nom.id];
           const criteria = getCriteriaForCategory(nom.categoryId);
-          const completedCount = scored ? Object.keys((scored.criteriaScores || {})).filter(k => (scored.criteriaScores || {})[k] > 0).length : 0;
+          const completedCount = scored ? Object.keys((scored.criteriaScores || {})).filter(k => (scored.criteriaScores || {})[k] >= 0).length : 0;
           const totalCount = criteria.length;
           const isIncomplete = scored && completedCount < totalCount;
           
@@ -1034,8 +1042,9 @@ function JudgeNominationDetail({
   const catData = AWARD_CATEGORIES.find((c) => c.id === nom.categoryId);
   const criteria = getCriteriaForCategory(nom.categoryId);
   const overallPreview = computeWeightedAverage(criteriaInput, criteria);
-  const ratedCount = criteria.filter((c) => (criteriaInput[c.id] ?? 0) > 0).length;
-  const unratedCriteria = criteria.filter((c) => !((criteriaInput[c.id] ?? 0) > 0));
+  const isRated = (c: EvaluationCriterion) => typeof criteriaInput[c.id] === "number";
+  const ratedCount = criteria.filter(isRated).length;
+  const unratedCriteria = criteria.filter((c) => !isRated(c));
   // Each criterion is rated right under the answer to its question. Any criterion whose
   // question isn't shown (e.g. an unknown category) is rated in "Your Evaluation" instead.
   const ratingFor = (c: EvaluationCriterion) => (
@@ -1043,8 +1052,14 @@ function JudgeNominationDetail({
       key={c.id}
       number={criteria.indexOf(c) + 1}
       criterion={c}
-      value={criteriaInput[c.id] ?? 0}
-      onChange={(v) => setCriteriaInput({ ...criteriaInput, [c.id]: v })}
+      value={criteriaInput[c.id]}
+      onChange={(v) => {
+        // Clearing a rating drops the key so it reads as unrated, not as a 0.
+        const next = { ...criteriaInput };
+        if (v === undefined) delete next[c.id];
+        else next[c.id] = v;
+        setCriteriaInput(next);
+      }}
       disabled={!scoringOpen}
     />
   );
@@ -1786,8 +1801,8 @@ function JudgeNominationDetail({
             </div>
             <p className="text-xs text-white/85">
               {criteriaRatedElsewhere.length === criteria.length
-                ? "Rate each criterion 1–5 stars."
-                : "Rate each answer 1–5 stars under its question above."}{" "}
+                ? "Rate each criterion 0–5 stars."
+                : "Rate each answer 0–5 stars under its question above."}{" "}
               Your overall score (weighted average) is added to the leaderboard total.
             </p>
 
