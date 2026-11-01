@@ -1271,13 +1271,13 @@ function JudgeNominationDetail({
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Document Preview
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] italic text-white">
             Preview PDFs and Office files in-app with keyboard-friendly controls.
           </p>
         </div>
         <div className="border-b border-primary/10 px-4 py-3">
           <label
-            className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+            className="mb-1 block text-[10px] font-semibold uppercase italic tracking-wider text-white"
             htmlFor="judge-preview-selector"
           >
             Select document
@@ -1301,9 +1301,9 @@ function JudgeNominationDetail({
             )}
           </select>
           {activePreview && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-[11px] italic text-white">
               Current selection:{" "}
-              <span className="font-medium text-foreground">{activePreview.evidenceLabel}</span>
+              <span className="font-medium">{activePreview.evidenceLabel}</span>
             </p>
           )}
         </div>
@@ -1396,7 +1396,7 @@ function JudgeNominationDetail({
             </Button>
           </div>
         </div>
-        <div className="flex items-center justify-between px-4 py-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between px-4 py-2 text-[11px] italic text-white">
           <span>{activePreview ? activePreview.file.name : "No document selected"}</span>
           {activePreview && (
             <span>

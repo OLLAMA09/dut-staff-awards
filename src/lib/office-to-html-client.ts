@@ -53,6 +53,18 @@ async function docxToHtml(buffer: ArrayBuffer): Promise<string> {
   return result.value || "<p><em>No content extracted from document.</em></p>";
 }
 
+// A blank tab has no "!ref", and sheet_to_html throws on it (decode_range of
+// undefined) — which would otherwise sink the preview of the whole workbook.
+// Any other per-sheet failure is contained to that sheet for the same reason.
+function sheetToHtml(sheet: XLSX.WorkSheet | undefined): string {
+  if (!sheet?.["!ref"]) return "<p><em>(Empty sheet)</em></p>";
+  try {
+    return XLSX.utils.sheet_to_html(sheet, { id: undefined });
+  } catch {
+    return "<p><em>(This sheet could not be displayed)</em></p>";
+  }
+}
+
 function xlsxToHtml(buffer: ArrayBuffer): string {
   // Same hardening as the server pipeline: never evaluate formulas, no raw
   // cell HTML, and a sane row/sheet ceiling so a malicious workbook can't
@@ -74,9 +86,7 @@ function xlsxToHtml(buffer: ArrayBuffer): string {
         /[<>&"']/g,
         (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
       );
-      const sheet = workbook.Sheets[sheetName];
-      const tableHtml = XLSX.utils.sheet_to_html(sheet, { id: undefined });
-      return `<h2 style="margin-top:24px;">${safeSheetName}</h2>${tableHtml}`;
+      return `<h2 style="margin-top:24px;">${safeSheetName}</h2>${sheetToHtml(workbook.Sheets[sheetName])}`;
     })
     .join('<hr style="margin:24px 0;"/>');
 }
